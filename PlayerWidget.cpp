@@ -213,11 +213,9 @@ void PlayerWidget::prevFrame(){
     displayFrame();
 }
 
-/*! \brief displays previous frame.
+/*! \brief seek to frame number
 *
-*	Displays the previous frame from the current player position.
-*	The frame number is calculated and may not be correct.
-*	@see toPreviousFrame()
+*	Displays the given frame number
 */
 void PlayerWidget::seekToFrame(qint64 num){
     // Check we've loaded a video successfully
@@ -233,6 +231,45 @@ void PlayerWidget::seekToFrame(qint64 num){
     displayFrame();
 }
 
+/*! \brief seek to time percentage
+*
+*	Displays the frame near the given percentage
+*   @param double value from 0 to 1
+*/
+void PlayerWidget::seekToTimePercentage(double perc){
+    // Check we've loaded a video successfully
+    if (!isVideoLoaded())
+        return;
+
+    int ms = decoder.getVideoLengthMs() * perc;
+    // Seek to the desired ms
+    if(!decoder.seekMs(ms))
+    {
+       QMessageBox::critical(NULL,"Error","Seek failed, invalid time");
+       return;
+    }
+    displayFrame();
+}
+
+/*! \brief seek to given time
+*
+*	Displays the frame near the given time
+*   @param time in milliseconds
+*/
+void PlayerWidget::seekToTime(qint64 ms){
+    // Check we've loaded a video successfully
+    if (!isVideoLoaded())
+        return;
+
+    // Seek to the desired ms
+    if(!decoder.seekMs(ms))
+    {
+       QMessageBox::critical(NULL,"Error","Seek failed, invalid time");
+       return;
+    }
+    displayFrame();
+}
+
 /*! \brief Get current frame number.
 *
 *	This functions is used to get the current frame number.
@@ -240,6 +277,15 @@ void PlayerWidget::seekToFrame(qint64 num){
 */
 qint64 PlayerWidget::currentFrameNumber(){
     return decoder.getFrameNumber();
+}
+
+/*! \brief Get current frame time.
+*
+*	This functions is used to get the time of the current frame.
+*	@return current frame time.
+*/
+qint64 PlayerWidget::currentFrameTime(){
+    return decoder.getFrameTime();
 }
 
 /*! \brief Get the previous frame number.
@@ -266,4 +312,12 @@ qint64 PlayerWidget::nextFrameNumber(){
 */
 qint64 PlayerWidget::getNumFrames(){
     return numFrames;
+}
+
+/*! \brief Get number of frames
+*
+*	Retrieve the number of frames
+*/
+qint64 PlayerWidget::getVideoLengthMs(){
+    return decoder.getVideoLengthMs();
 }

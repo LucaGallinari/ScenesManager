@@ -17,7 +17,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 	qDebug() << "Starting up";
 
+    // TODO: decoder shoudl not be a parameter
     player = new PlayerWidget(decoder, ui->labelVideoFrame, 33);
+
+    connect(this, SIGNAL(frameChanged()), this, SLOT(updateSlider()));
 }
 
 MainWindow::~MainWindow()
@@ -35,6 +38,12 @@ void MainWindow::changeEvent(QEvent *e)
     default:
         break;
     }
+}
+
+void MainWindow::updateSlider()
+{
+    double val = player->currentFrameTime() / (double) player->getVideoLengthMs();
+    ui->videoSlider->setValue(val * 100); //TODO: parameterize 100
 }
 
 /******************
@@ -59,20 +68,16 @@ void MainWindow::on_actionLoad_video_triggered()
 ****** BUTTONS
 *******************/
 
-/**
-    Display next frame
-**/
 void MainWindow::on_nextFrameBtn_clicked()
 {
     player->nextFrame();
+    emit frameChanged();
 }
 
-/**
-	Display prev frame
-**/
 void MainWindow::on_prevFrameBtn_clicked()
 {
-     player->prevFrame();
+    player->prevFrame();
+    emit frameChanged();
 }
 
 void MainWindow::on_seekFrameBtn_clicked()
@@ -96,33 +101,15 @@ void MainWindow::on_seekFrameBtn_clicked()
     }
 
     player->seekToFrame(frameNum);
+    emit frameChanged();
 }
 
-/*
-void MainWindow::on_pushButtonSeekMillisecond_clicked()
+void MainWindow::on_videoSlider_sliderReleased()
 {
-   // Check we've loaded a video successfully
-   if(!checkVideoLoadOk())
-      return;
-
-   bool ok;
-
-   int ms = ui->lineEditMillisecond->text().toInt(&ok);
-   if(!ok || ms < 0)
-   {
-      QMessageBox::critical(this,"Error","Invalid time");
-      return;
-   }
-
-   // Seek to the desired frame
-   if(!decoder.seekMs(ms))
-   {
-      QMessageBox::critical(this,"Error","Seek failed");
-      return;
-   }
-   // Display the frame
-   displayFrame();
+    if (!player->isVideoLoaded())
+        return;
+    int value = ui->videoSlider->value();
+    player->seekToTimePercentage(value/100.0); //TODO: parameterize 100
+    emit frameChanged();
 }
-
-*/
 

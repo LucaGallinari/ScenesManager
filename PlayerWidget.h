@@ -23,7 +23,6 @@ private:
     qint64 numFrames;
     qint64 videoLength; // ms
 
-
     void displayFrame();
 
     //  Default stuff
@@ -42,8 +41,10 @@ public:
 
     //  Getters
     qint64 getNumFrames();
+    qint64 getVideoLengthMs();
     bool   isVideoLoaded();
     qint64 currentFrameNumber();
+    qint64 currentFrameTime();
     qint64 previousFrameNumber();
     qint64 nextFrameNumber();
 
@@ -51,8 +52,8 @@ public:
     void prevFrame();
     void nextFrame();
     void seekToFrame(qint64);
-
-
+    void seekToTime(qint64 ms);
+    void seekToTimePercentage(double perc);
 
 /*
 private Q_SLOTS:
@@ -60,14 +61,6 @@ private Q_SLOTS:
 	void seek(int);
 	void playPause();
     void stopVideo();
-
-	void updateSlider();
-
-    void updatePosBuffer(qint64 pos);
-    void updateFrameNum();
-
-	void previousFrame();
-	void nextFrame();
 	
     void showInfo();
     void setVariables();
@@ -76,7 +69,7 @@ signals:
     void playbackStop();
     void frameChanged();
     void playbackPlay();
-   */
+*/
 };
 
 #endif // PLAYERWIDGET_H

@@ -559,3 +559,12 @@ int QVideoDecoder::getFrameNumber()
       return -1;
    return LastFrameNumber;
 }
+
+int QVideoDecoder::getFrameTime()
+{
+    if(!isOk())
+       return -1;
+    return DesiredFrameTime;
+}
+
+

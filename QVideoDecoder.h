@@ -89,6 +89,7 @@ class QVideoDecoder
       virtual int getVideoLengthMs();
 
       virtual int getFrameNumber();
+      virtual int getFrameTime();
 
 
       virtual bool isOk();
