@@ -88,6 +88,8 @@ class QVideoDecoder
       virtual bool seekFrame(int64_t frame);
       virtual int getVideoLengthMs();
 
+      virtual int getFrameNumber();
+
 
       virtual bool isOk();
 };

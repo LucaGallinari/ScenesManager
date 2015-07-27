@@ -8,11 +8,13 @@ TEMPLATE = app
 
 SOURCES +=  main.cpp \
             mainwindow.cpp \
-            QVideoDecoder.cpp
+            QVideoDecoder.cpp \
+    PlayerWidget.cpp
 
 HEADERS +=  mainwindow.h \
             QVideoDecoder.h \
-            ffmpeg.h
+            ffmpeg.h \
+    PlayerWidget.h
 
 FORMS += mainwindow.ui
 RESOURCES += resource.qrc \

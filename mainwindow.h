@@ -8,8 +8,8 @@
 #include <QMainWindow>
 #include <QDebug>
 
+#include "PlayerWidget.h"
 #include "QVideoDecoder.h"
-
 
 namespace Ui {
 	class MainWindow;
@@ -24,26 +24,12 @@ public:
 
 protected:
 	QVideoDecoder decoder;
+    PlayerWidget *player;
 
 	void changeEvent(QEvent *e);
 
-	// Helper
-	void image2Pixmap(QImage &img,QPixmap &pixmap);
-
-	// Decoder demo
-	void displayFrame();
-	void loadVideo(QString fileName);
-	void errLoadVideo();
-	bool checkVideoLoadOk();
-	void nextFrame();
-	void prevFrame();
-
 private:
-	Ui::MainWindow *ui;
-	QTimer *timer;
-
-    // video parameters
-    int numFrames;
+    Ui::MainWindow *ui;
 
 private slots:
     void on_nextFrameBtn_clicked();

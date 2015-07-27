@@ -552,3 +552,10 @@ int QVideoDecoder::getVideoLengthMs()
 
    return l;
 }
+
+int QVideoDecoder::getFrameNumber()
+{
+   if(!isOk())
+      return -1;
+   return LastFrameNumber;
+}
