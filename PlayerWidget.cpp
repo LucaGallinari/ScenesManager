@@ -11,19 +11,13 @@
 *
 *   TODO
 */
-PlayerWidget::PlayerWidget(QVideoDecoder decoder, QLabel *frameLbl, int frameRate)
+PlayerWidget::PlayerWidget(QLabel *frameLbl, int frameRate)
 {
     playState = false;
-    this->decoder = decoder;
     this->frameLbl = frameLbl;
     this->frameRate = frameRate;
+    this->frameLbl->setMinimumSize(1,1);
 	
-    /** Connects the slider to the functions
-	connect(m_slider, SIGNAL(sliderMoved(int)), SLOT(seek(int)));
-	connect(m_player, SIGNAL(positionChanged(qint64)), SLOT(updateSlider()));
-	connect(m_player, SIGNAL(started()), SLOT(updateSlider()));
-    */
-
     initializeIcons();
 }
 
@@ -56,8 +50,6 @@ void PlayerWidget::image2Pixmap(QImage &img,QPixmap &pixmap)
    painter.end();
 }
 
-
-
 /*! \brief display last loaded frame.
 *
 *   Retrieve and display last loaded frame.
@@ -79,10 +71,24 @@ void PlayerWidget::displayFrame()
     // Convert the QImage to a QPixmap and display it
     QPixmap p;
     image2Pixmap(img,p);
-    frameLbl->setPixmap(p);
+
+    // set a scaled pixmap to a w x h window keeping its aspect ratio
+    frameLbl->setPixmap(p.scaled(frameLbl->width(),frameLbl->height(),Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
     // Display the video size
     //frameInfoLbl->setText(QString("Size %2 ms. Display: #%3 @ %4 ms.").arg(decoder.getVideoLengthMs()).arg(en).arg(et));
+}
+
+/*! \brief reload and display last frame.
+*
+*   Reload last decoded frame, usefull when a resize event occurs.
+*/
+void PlayerWidget::reloadFrame()
+{
+    // this is needed otherwise a "Load video first"
+    // error is thrown on app startup
+    if (decoder.isOk()==true)
+        displayFrame();
 }
 
 /*! \brief play/pause functions.

@@ -27,6 +27,7 @@ protected:
     PlayerWidget *player;
 
 	void changeEvent(QEvent *e);
+    void resizeEvent(QResizeEvent *e);
 
 private:
     Ui::MainWindow *ui;

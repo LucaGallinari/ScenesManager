@@ -18,7 +18,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	qDebug() << "Starting up";
 
     // TODO: decoder shoudl not be a parameter
-    player = new PlayerWidget(decoder, ui->labelVideoFrame, 33);
+    player = new PlayerWidget(ui->labelVideoFrame, 33);
 
     connect(this, SIGNAL(frameChanged()), this, SLOT(updateSlider()));
 }
@@ -38,6 +38,12 @@ void MainWindow::changeEvent(QEvent *e)
     default:
         break;
     }
+}
+
+void MainWindow::resizeEvent(QResizeEvent *e)
+{
+    QMainWindow::resizeEvent(e);
+    player->reloadFrame();
 }
 
 void MainWindow::updateSlider()

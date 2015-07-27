@@ -33,7 +33,7 @@ private:
     void image2Pixmap(QImage &img,QPixmap &pixmap);
 
 public:
-    explicit PlayerWidget(QVideoDecoder decoder, QLabel *frameLbl, int frameRate);
+    explicit PlayerWidget(QLabel *frameLbl, int frameRate);
     ~PlayerWidget();
 	
     //  Set the media to play.
@@ -49,6 +49,7 @@ public:
     qint64 nextFrameNumber();
 
     //  Actions
+    void reloadFrame();
     void prevFrame();
     void nextFrame();
     void seekToFrame(qint64);
