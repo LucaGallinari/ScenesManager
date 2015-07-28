@@ -11,12 +11,26 @@
 *
 *   TODO
 */
-PlayerWidget::PlayerWidget(QLabel *frameLbl, int frameRate)
+// TODO: find a better solution for passing QLabel and QPushButton
+PlayerWidget::PlayerWidget(
+    QWidget *parent,
+    QWidget *mainwin,
+    QLabel *frameLbl,
+    int fps,
+    QPushButton *playPauseBtn
+) : QWidget(parent)
 {
     playState = false;
     this->frameLbl = frameLbl;
-    this->frameRate = frameRate;
+    this->fps = fps;
+    this->frameMs = 1000 / fps;
     this->frameLbl->setMinimumSize(1,1);
+    this->playPauseBtn = playPauseBtn;
+
+    playbackTimer = new QTimer(this);
+    connect(playbackTimer, SIGNAL(timeout()), this, SLOT(updateFrame()));
+
+    connect(this, SIGNAL(frameChanged()), mainwin, SLOT(updateSlider()));
 	
     initializeIcons();
 }
@@ -30,14 +44,14 @@ PlayerWidget::~PlayerWidget()
 *	Initialize player icons based on the resources in "playericons.qrc" file.
 */
 void PlayerWidget::initializeIcons(){
-    play  = QPixmap(":/icons/playB.png");
-    pause = QPixmap(":/icons/pauseB.png");
+    playIcon  = QPixmap(":/icons/playB.png");
+    pauseIcon = QPixmap(":/icons/pauseB.png");
 }
 
 /*! \brief from QImage to QPixmap.
 *
 *   Convert a QImage to a QPixmap.
-*	@param image as QImage
+*	@param img as QImage
 *	@param pixmap as QPixmap
 */
 void PlayerWidget::image2Pixmap(QImage &img,QPixmap &pixmap)
@@ -79,58 +93,18 @@ void PlayerWidget::displayFrame()
     //frameInfoLbl->setText(QString("Size %2 ms. Display: #%3 @ %4 ms.").arg(decoder.getVideoLengthMs()).arg(en).arg(et));
 }
 
-/*! \brief reload and display last frame.
+/*! \brief load and display the next frame
 *
-*   Reload last decoded frame, usefull when a resize event occurs.
+*   Load and display the next frame and emit the signal frameChanged()
 */
-void PlayerWidget::reloadFrame()
+void PlayerWidget::updateFrame()
 {
-    // this is needed otherwise a "Load video first"
-    // error is thrown on app startup
-    if (decoder.isOk()==true)
-        displayFrame();
-}
-
-/*! \brief play/pause functions.
-*
-*	Change the state of the player.
-*	If the player isn't playing starts, otherwhise if it's pause changes it's status to playing
-*	and resume the playback of the media.
-
-void PlayerWidget::playPause()
-{
-    if (m_player->file() != "")
-        playState = !playState;
-    else return;
-
-    if (!m_player->isPlaying()) {
-            m_player->play();
-    } else {
-        m_player->pause(!m_player->isPaused());
+    if (!nextFrame()) {
+        playbackTimer->stop();
+        return;
     }
-    changePlayPause();
-    emitterCheck();
+    emit frameChanged();
 }
-*/
-
-/*! \brief change play/pause button icon.
-*
-*	Changes the icon on the play/pause button based on
-*	the player behavior.
-
-void PlayerWidget::changePlayPause(){
-    //if(!m_player->isPlaying()) return;
-    if(playState){
-        ui->playPauseBtn->setToolTip("Pause");
-        ui->playPauseBtn->setIcon(QIcon(pause));
-        //m_playBtn->setIconSize(pause.rect().size());
-        //m_playBtn->setFixedSize(pause.rect().size());
-    }else{
-        ui->playPauseBtn->setToolTip("Play");
-        ui->playPauseBtn->setIcon(QIcon(play));
-    }
-}
-*/
 
 
 /*
@@ -149,10 +123,123 @@ void PlayerWidget::setVariables(){
 
 /******************* PUBLIC METHODS ************/
 
+/***************************************
+ *********    FRAME ACTIONS    *********
+ ***************************************/
+
+/*! \brief reload and display last frame.
+*
+*   Reload last decoded frame, usefull when a resize event occurs.
+*/
+void PlayerWidget::reloadFrame()
+{
+    // this is needed otherwise a "Load video first"
+    // error is thrown on app startup if used inside resizeEvent
+    if (decoder.isOk()==true)
+        displayFrame();
+}
+
+/*! \brief displays next frame.
+*
+*	Displays the next frame from the current player position.
+*	The frame number is calculated and may not be correct.
+*	@see prevFrame()
+*/
+bool PlayerWidget::nextFrame(){
+    if (!decoder.seekNextFrame())
+    {
+        QMessageBox::critical(NULL, "Error", "seekNextFrame failed");
+        return false;
+    }
+    displayFrame();
+    return true;
+}
+
+/*! \brief displays previous frame.
+*
+*	Displays the previous frame from the current player position.
+*	The frame number is calculated and may not be correct.
+*	@see nextFrame()
+*/
+bool PlayerWidget::prevFrame(){
+    if (!decoder.seekPrevFrame())
+    {
+        QMessageBox::critical(NULL, "Error", "seekPrevFrame failed");
+        return false;
+    }
+    displayFrame();
+    return true;
+}
+
+/*! \brief seek to frame number
+*
+*	Displays the given frame number
+*   @param num frame number
+*   @see seekToTime()
+*/
+void PlayerWidget::seekToFrame(qint64 num){
+    // Check we've loaded a video successfully
+    if (!isVideoLoaded())
+        return;
+
+    // Seek to the desired frame
+    if (!decoder.seekFrame(num))
+    {
+        QMessageBox::critical(NULL,"Error","Seek failed");
+        return;
+    }
+    displayFrame();
+}
+
+/*! \brief seek to given time
+*
+*	Displays the frame near the given time
+*   @param ms time in milliseconds
+*   @see seekToFrame()
+*/
+void PlayerWidget::seekToTime(qint64 ms){
+    // Check we've loaded a video successfully
+    if (!isVideoLoaded())
+        return;
+
+    // Seek to the desired ms
+    if(!decoder.seekMs(ms))
+    {
+       QMessageBox::critical(NULL,"Error","Seek failed, invalid time");
+       return;
+    }
+    displayFrame();
+}
+
+/*! \brief seek to given time percentage
+*
+*	Displays the frame near the given percentage of the entire video length
+*   @param perc double value from 0 to 1
+*/
+void PlayerWidget::seekToTimePercentage(double perc){
+    // Check we've loaded a video successfully
+    if (!isVideoLoaded())
+        return;
+
+    int ms = decoder.getVideoLengthMs() * perc;
+    // Seek to the desired ms
+    if(!decoder.seekMs(ms))
+    {
+       QMessageBox::critical(NULL,"Error","Seek failed, invalid time");
+       return;
+    }
+    displayFrame();
+}
+
+
+/***************************************
+ *********    VIDEO ACTIONS    *********
+ ***************************************/
+
 /*! \brief load a video.
 *
 *   Open and load a video by using ffmpeg's decoder.
-*	@param path to the video
+*	@param fileName path to the video
 */
 void PlayerWidget::loadVideo(QString fileName)
 {
@@ -177,109 +264,113 @@ void PlayerWidget::loadVideo(QString fileName)
    displayFrame();
 }
 
+/*! \brief play/pause the video.
+*
+*	Change the state of the player between play and pause.
+*	If the player isn't playing starts, otherwhise if it's paused it resumes the playback.
+*/
+void PlayerWidget::playPause()
+{
+    if (!isVideoLoaded())
+        return;
+
+    playState = !playState;
+
+    if (playState) {
+        if (playVideo()) {
+            playPauseBtn->setToolTip("Pause");
+            playPauseBtn->setIcon(QIcon(pauseIcon));
+        }
+    } else {
+        if (pauseVideo()) {
+            playPauseBtn->setToolTip("Play");
+            playPauseBtn->setIcon(QIcon(playIcon));
+        }
+    }
+}
+
+/*! \brief play the video.
+*
+*	Play the video by starting the timer.
+*   @see pauseVideo()
+*   @see stopVideo()
+*/
+bool PlayerWidget::playVideo()
+{
+    if (!isVideoLoaded())
+        return false;
+    playbackTimer->start(frameMs);
+    return true; //TODO: check if start() went ok
+}
+
+/*! \brief pause the video.
+*
+*	Pause the video by stopping the timer.
+*   @see playVideo()
+*   @see stopVideo()
+*/
+bool PlayerWidget::pauseVideo()
+{
+    if (!isVideoLoaded())
+        return false;
+    playbackTimer->stop();
+    return true; //TODO: check if stop() went ok
+}
+
+/*! \brief stop the video.
+*
+*	Stop the video playback and seek to its start point.
+*   @see playVideo()
+*   @see pauseVideo()
+*/
+bool PlayerWidget::stopVideo()
+{
+    if (!isVideoLoaded())
+        return false;
+    // pause if playing
+    if (playState) {
+        playPause();
+    }
+    // reset
+    seekToFrame(0);
+    emit frameChanged();
+    return true; //TODO: check if playPuase() and seekToFrame() went ok
+}
+
+
+/***************************************
+ *********        GETTERS      *********
+ ***************************************/
+
 /*! \brief a video was loaded?
 *
 *   Checks if a video has been previously loaded.
 */
 bool PlayerWidget::isVideoLoaded()
 {
-    if (decoder.isOk()==false)
-    {
+    if (decoder.isOk()==false) {
         QMessageBox::critical(NULL,"Error","Load a video first");
         return false;
     }
     return true;
 }
 
-/*! \brief displays next frame.
+/*! \brief the video is playing?
 *
-*	Displays the next frame from the current player position.
-*	The frame number is calculated and may not be correct.
-*	@see toNextFrame()
+*   Checks if the video is playing.
 */
-void PlayerWidget::nextFrame(){
-    if (!decoder.seekNextFrame())
-    {
-        QMessageBox::critical(NULL, "Error", "seekNextFrame failed");
-    }
-    displayFrame();
-}
-
-/*! \brief displays previous frame.
-*
-*	Displays the previous frame from the current player position.
-*	The frame number is calculated and may not be correct.
-*	@see toPreviousFrame()
-*/
-void PlayerWidget::prevFrame(){
-    if (!decoder.seekPrevFrame())
-    {
-        QMessageBox::critical(NULL, "Error", "seekPrevFrame failed");
-    }
-    displayFrame();
-}
-
-/*! \brief seek to frame number
-*
-*	Displays the given frame number
-*/
-void PlayerWidget::seekToFrame(qint64 num){
-    // Check we've loaded a video successfully
-    if (!isVideoLoaded())
-        return;
-
-    // Seek to the desired frame
-    if (!decoder.seekFrame(num))
-    {
-        QMessageBox::critical(NULL,"Error","Seek failed");
-        return;
-    }
-    displayFrame();
-}
-
-/*! \brief seek to time percentage
-*
-*	Displays the frame near the given percentage
-*   @param double value from 0 to 1
-*/
-void PlayerWidget::seekToTimePercentage(double perc){
-    // Check we've loaded a video successfully
-    if (!isVideoLoaded())
-        return;
-
-    int ms = decoder.getVideoLengthMs() * perc;
-    // Seek to the desired ms
-    if(!decoder.seekMs(ms))
-    {
-       QMessageBox::critical(NULL,"Error","Seek failed, invalid time");
-       return;
-    }
-    displayFrame();
-}
-
-/*! \brief seek to given time
-*
-*	Displays the frame near the given time
-*   @param time in milliseconds
-*/
-void PlayerWidget::seekToTime(qint64 ms){
-    // Check we've loaded a video successfully
-    if (!isVideoLoaded())
-        return;
-
-    // Seek to the desired ms
-    if(!decoder.seekMs(ms))
-    {
-       QMessageBox::critical(NULL,"Error","Seek failed, invalid time");
-       return;
-    }
-    displayFrame();
+bool PlayerWidget::isVideoPlaying()
+{
+    return playState;
 }
 
 /*! \brief Get current frame number.
 *
 *	This functions is used to get the current frame number.
 *	@return current frame number.
+*   @see currentFrameTime()
+*   @see previousFrameNumber()
+*   @see nextFrameNumber()
 */
 qint64 PlayerWidget::currentFrameNumber(){
     return decoder.getFrameNumber();
@@ -289,6 +380,7 @@ qint64 PlayerWidget::currentFrameNumber(){
 *
 *	This functions is used to get the time of the current frame.
 *	@return current frame time.
+*   @see currentFrameNumber()
 */
 qint64 PlayerWidget::currentFrameTime(){
     return decoder.getFrameTime();
@@ -298,6 +390,8 @@ qint64 PlayerWidget::currentFrameTime(){
 *
 *	This functions is used to get the previous frame number.
 *	@return previous frame number.
+*   @see currentFrameNumber()
+*   @see nextFrameNumber()
 */
 qint64 PlayerWidget::previousFrameNumber(){
     return currentFrameNumber() - 1;
@@ -307,6 +401,8 @@ qint64 PlayerWidget::previousFrameNumber(){
 *
 *	This functions is used to get the next frame number.
 *	@return next frame number.
+*   @see currentFrameNumber()
+*   @see previousFrameNumber()
 */
 qint64 PlayerWidget::nextFrameNumber(){
     return currentFrameNumber() + 1;

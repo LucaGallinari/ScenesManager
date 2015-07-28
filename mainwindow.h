@@ -7,6 +7,7 @@
 
 #include <QMainWindow>
 #include <QDebug>
+#include <QWidget>
 
 #include "PlayerWidget.h"
 #include "QVideoDecoder.h"
@@ -32,6 +33,10 @@ protected:
 private:
     Ui::MainWindow *ui;
 
+public slots:
+    void updateSlider();
+    // TODO: moving slider page do not update the frame
+
 private slots:
     void on_nextFrameBtn_clicked();
     void on_prevFrameBtn_clicked();
@@ -41,8 +46,8 @@ private slots:
 	void on_actionLoad_video_triggered();
     void on_actionQuit_triggered();
 
-    void updateSlider();
-    // TODO: moving slider page do not update the frame
+    void on_playPauseBtn_clicked();
+    void on_stopBtn_clicked();
 
 signals:
     void frameChanged();

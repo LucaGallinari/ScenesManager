@@ -3,23 +3,30 @@
 
 #include <QVideoDecoder.h>
 #include <QLabel>
+#include <QTimer>
+#include <QPushButton>
 
 /**
 *	PlayerWidget class.
 */
-class PlayerWidget
+class PlayerWidget : public QWidget
 {
+    Q_OBJECT
+
 private:
     QVideoDecoder decoder;
     QLabel *frameLbl;
+    QPushButton *playPauseBtn;
+    QTimer *playbackTimer;
 
     //	Button's icons objects
-    QPixmap play;
-    QPixmap pause;
+    QPixmap playIcon;
+    QPixmap pauseIcon;
 
     //	Help variables
     bool playState;
-    int frameRate;
+    int fps; // frame per second
+    int frameMs; // ms of a single frame
     qint64 numFrames;
     qint64 videoLength; // ms
 
@@ -33,44 +40,46 @@ private:
     void image2Pixmap(QImage &img,QPixmap &pixmap);
 
 public:
-    explicit PlayerWidget(QLabel *frameLbl, int frameRate);
+    explicit PlayerWidget(
+        QWidget *parent = 0,
+        QWidget *mainwin = 0,
+        QLabel *frameLbl = 0,
+        int fps = 30,
+        QPushButton *playPauseBtn = 0
+    );
     ~PlayerWidget();
 	
-    //  Set the media to play.
-    void loadVideo(QString);
+    //  Frame actions
+    void reloadFrame();
+    bool prevFrame();
+    bool nextFrame();
+    void seekToFrame(qint64 num);
+    void seekToTime(qint64 ms);
+    void seekToTimePercentage(double perc);
+
+    //  Video actions
+    void loadVideo(QString fileName);
+    void playPause();
+    bool playVideo();
+    bool pauseVideo();
+    bool stopVideo();
 
     //  Getters
-    qint64 getNumFrames();
-    qint64 getVideoLengthMs();
     bool   isVideoLoaded();
+    bool   isVideoPlaying();
     qint64 currentFrameNumber();
     qint64 currentFrameTime();
     qint64 previousFrameNumber();
     qint64 nextFrameNumber();
+    qint64 getNumFrames();
+    qint64 getVideoLengthMs();
 
-    //  Actions
-    void reloadFrame();
-    void prevFrame();
-    void nextFrame();
-    void seekToFrame(qint64);
-    void seekToTime(qint64 ms);
-    void seekToTimePercentage(double perc);
-
-/*
-private Q_SLOTS:
-	void openMedia();
-	void seek(int);
-	void playPause();
-    void stopVideo();
-	
-    void showInfo();
-    void setVariables();
+private slots:
+    void updateFrame();
 
 signals:
-    void playbackStop();
     void frameChanged();
-    void playbackPlay();
-*/
+
 };
 
 #endif // PLAYERWIDGET_H
