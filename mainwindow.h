@@ -35,19 +35,22 @@ private:
 
 public slots:
     void updateSlider();
-    // TODO: moving slider page do not update the frame
 
 private slots:
+    //  Video
     void on_nextFrameBtn_clicked();
     void on_prevFrameBtn_clicked();
     void on_seekFrameBtn_clicked();
-    void on_videoSlider_sliderReleased();
+    void on_playPauseBtn_clicked();
+    void on_stopBtn_clicked();
 
+    //  Menu
 	void on_actionLoad_video_triggered();
     void on_actionQuit_triggered();
 
-    void on_playPauseBtn_clicked();
-    void on_stopBtn_clicked();
+    //  Slider
+    void on_videoSlider_actionTriggered(int action);
+    void on_videoSlider_sliderReleased();
 
 signals:
     void frameChanged();

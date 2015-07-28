@@ -1,5 +1,10 @@
 /*
 
+    ISSUE TODO:
+        - (EASY) playing until the end of the video then i can't use buttons
+        - (HARD) mkv num frames and length problem
+        -
+
 */
 
 #include <QFileDialog>
@@ -15,9 +20,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-	qDebug() << "Starting up";
+    qDebug() << "Starting up";
 
-    // TODO: decoder shoudl not be a parameter
+    // TODO: pass ui instead of all variables
     player = new PlayerWidget(0, this, ui->labelVideoFrame, 30, ui->playPauseBtn);
 
     connect(this, SIGNAL(frameChanged()), this, SLOT(updateSlider()));
@@ -49,8 +54,8 @@ void MainWindow::resizeEvent(QResizeEvent *e)
 void MainWindow::updateSlider()
 {
     double val = player->currentFrameTime() / (double) player->getVideoLengthMs();
-    ui->videoSlider->setValue(val * 100); //TODO: parameterize 100
-    qDebug() << "slider updated";
+    int max = ui->videoSlider->maximum() + 1; // TODO: should be class variable?
+    ui->videoSlider->setValue(round(val * max));
 }
 
 /******************
@@ -115,18 +120,6 @@ void MainWindow::on_seekFrameBtn_clicked()
     emit frameChanged();
 }
 
-void MainWindow::on_videoSlider_sliderReleased()
-{
-    if (!player->isVideoLoaded()) {
-        ui->videoSlider->setValue(0);
-        return;
-    }
-    int value = ui->videoSlider->value();
-    player->seekToTimePercentage(value/100.0); //TODO: parameterize 100
-    emit frameChanged();
-}
-
-
 void MainWindow::on_playPauseBtn_clicked()
 {
     player->playPause();
@@ -135,4 +128,33 @@ void MainWindow::on_playPauseBtn_clicked()
 void MainWindow::on_stopBtn_clicked()
 {
     player->stopVideo();
+}
+
+void MainWindow::on_videoSlider_actionTriggered(int action)
+{
+    // if siongle step page actions
+    if (action==3 || action==4) {
+        if (!player->isVideoLoaded()) {
+            ui->videoSlider->setValue(0);
+            return;
+        }
+        // the slider has not already been updated so i have to predict its future value
+        int ps = ui->videoSlider->pageStep(); // TODO: should be class variable?
+        int max = ui->videoSlider->maximum() + 1; // TODO: should be class variable?
+        int val = ui->videoSlider->value() + (action==3 ? ps : -ps);
+        if (val >= max) {
+            val = max - 1;
+        }
+        player->seekToTimePercentage(val / (double) max);
+    }
+}
+
+void MainWindow::on_videoSlider_sliderReleased()
+{
+    if (!player->isVideoLoaded()) {
+        ui->videoSlider->setValue(0);
+        return;
+    }
+    int max = ui->videoSlider->maximum() + 1; // TODO: should be class variable?
+    player->seekToTimePercentage(ui->videoSlider->value() / (double) max);
 }

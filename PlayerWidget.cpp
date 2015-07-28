@@ -221,7 +221,7 @@ void PlayerWidget::seekToTimePercentage(double perc){
     if (!isVideoLoaded())
         return;
 
-    int ms = decoder.getVideoLengthMs() * perc;
+    int ms = videoLength * perc;
     // Seek to the desired ms
     if(!decoder.seekMs(ms))
     {
@@ -421,5 +421,5 @@ qint64 PlayerWidget::getNumFrames(){
 *	Retrieve the number of frames
 */
 qint64 PlayerWidget::getVideoLengthMs(){
-    return decoder.getVideoLengthMs();
+    return videoLength;
 }
