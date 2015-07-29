@@ -21,7 +21,7 @@ private:
 
     //	Help variables
     bool playState;
-    int fps; // frame per second
+    double fps; // frame per second
     int frameMs; // ms of a single frame
     qint64 numFrames;
     qint64 videoLength; // ms
@@ -32,11 +32,7 @@ private:
     void image2Pixmap(QImage &img,QPixmap &pixmap);
 
 public:
-    explicit PlayerWidget(
-        QWidget *parent = 0,
-        QWidget *mainwin = 0,
-        int fps = 30
-    );
+    explicit PlayerWidget(QWidget *parent = 0, QWidget *mainwin = 0);
     ~PlayerWidget();
 	
     //  Frame actions

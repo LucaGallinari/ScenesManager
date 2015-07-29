@@ -33,11 +33,12 @@
 namespace ffmpeg {
 	extern "C" {
 
-        //#include "libavcodec/avcodec.h"
+        #include "libavcodec/avcodec.h"
         //#include "libavformat/avio.h"
         #include "libavformat/avformat.h"
         //#include "libavutil/mathematics.h"
-        //#include "libavutil/rational.h"
+        #include "libavutil/rational.h"
+		//#include "libavutil/avutil.h"
         //#include "libavutil/avstring.h"
         //#include "libavutil/dict.h"
         #include "libswscale/swscale.h"

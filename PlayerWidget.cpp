@@ -11,15 +11,9 @@
 *
 *   TODO
 */
-PlayerWidget::PlayerWidget(
-        QWidget *parent,
-        QWidget *mainwin,
-        int fps
-) : QWidget(parent)
+PlayerWidget::PlayerWidget(QWidget *parent,QWidget *mainwin) : QWidget(parent)
 {
     playState = false;
-    this->fps = fps;
-    this->frameMs = 1000 / fps;
 
     playbackTimer = new QTimer(this);
     connect(playbackTimer, SIGNAL(timeout()), this, SLOT(updateFrame()));
@@ -73,6 +67,7 @@ void PlayerWidget::displayFrame()
     QPixmap p;
     image2Pixmap(img,p);
 
+    qDebug() << "framEChange: " << currentFrameTime();
     emit newFrame(p);
     emit timeChanged(currentFrameTime());
 }
@@ -188,6 +183,7 @@ void PlayerWidget::seekToTimePercentage(double perc){
         return;
 
     int ms = videoLength * perc;
+    qDebug() << "ms: " << ms << ", vlen: " << videoLength << ", perc: " << perc;
     // Seek to the desired ms
     if(!decoder.seekMs(ms)) {
        QMessageBox::critical(NULL,"Error","Seek failed, invalid time");
@@ -209,8 +205,10 @@ void PlayerWidget::seekToTimePercentage(double perc){
 void PlayerWidget::loadVideo(QString fileName)
 {
    decoder.openFile(fileName);
-   numFrames = 150;//TODO: retrieve num frames decoder.getNumberOfFrames();
+   numFrames = decoder.getNumFrames();
    videoLength = decoder.getVideoLengthMs();
+   fps = decoder.getFps();
+   frameMs = round(1000 / fps);
 
    if (decoder.isOk()==false) {
       QMessageBox::critical(NULL,"Error","Error loading the video");

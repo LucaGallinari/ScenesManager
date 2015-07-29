@@ -192,6 +192,9 @@ bool QVideoDecoder::openFile(QString filename)
        pCodecCtx->width, pCodecCtx->height);
 
    ok=true;
+
+   dumpFormat(pFormatCtx,videoStream,"test video",0);
+
    return true;
 }
 bool QVideoDecoder::isOk()
@@ -227,7 +230,8 @@ bool QVideoDecoder::decodeSeekFrame(int after)
 
       // Compute desired frame time
       ffmpeg::AVRational millisecondbase = {1, 1000};
-      DesiredFrameTime = ffmpeg::av_rescale_q(after,pFormatCtx->streams[videoStream]->time_base,millisecondbase);
+      DesiredFrameTime = ffmpeg::av_rescale_q(after,getTimeBase(),millisecondbase);
+      //DesiredFrameTime = ffmpeg::av_rescale_q(after,pFormatCtx->streams[videoStream]->time_base,millisecondbase);
 
       //qDebug() << "Returning already available frame %d @ %d. DesiredFrameTime: %d\n",LastFrameNumber,LastFrameTime,DesiredFrameTime);
 
@@ -243,7 +247,7 @@ bool QVideoDecoder::decodeSeekFrame(int after)
       if(av_read_frame(pFormatCtx, &packet)<0)
          return false;                             // Frame read failed (e.g. end of stream)
 
-      //qDebug() << "Packet of stream %d, size %d\n",packet.stream_index,packet.size);
+	  qDebug() << QString("Packet of stream %1, size %2\n").arg(packet.stream_index).arg(packet.size);
 
       if(packet.stream_index==videoStream)
       {
@@ -252,31 +256,31 @@ bool QVideoDecoder::decodeSeekFrame(int after)
          int frameFinished;
          avcodec_decode_video2(pCodecCtx,pFrame,&frameFinished,&packet);
 
-         //qDebug() << "used %d out of %d bytes\n",len,packet.size);
+		 //qDebug() << QString("used %d out of %d bytes\n", len, packet.size);
 
-         //qDebug() << "Frame type: ");
-         //if(pFrame->pict_type == FF_B_TYPE)
-         //   qDebug() << "B\n");
-         //else if (pFrame->pict_type == FF_I_TYPE)
-         //   qDebug() << "I\n");
-         //else
-         //   qDebug() << "P\n");
+         qDebug() << "Frame type: ";
+		 /*
+		 if (pFrame->pict_type == AV_PICTURE_TYPE_B)
+            qDebug() << "B\n";
+		 else if (pFrame->pict_type == AV_PICTURE_TYPE_I)
+            qDebug() << "I\n";
+         else
+            qDebug() << "P\n";
+		 */
 
-
-         /*qDebug() << "codecctx time base: num: %d den: %d\n",pCodecCtx->time_base.num,pCodecCtx->time_base.den);
-         qDebug() << "formatctx time base: num: %d den: %d\n",pFormatCtx->streams[videoStream]->time_base.num,pFormatCtx->streams[videoStream]->time_base.den);
-         qDebug() << "pts: %ld\n",pts);
-         qDebug() << "dts: %ld\n",dts);*/
-
-
-
+		 qDebug() << QString("codecctx time base: num: %1 den: %2\n").arg(pCodecCtx->time_base.num).arg(pCodecCtx->time_base.den);
+		 qDebug() << QString("formatctx time base: num: %1 den: %2\n").arg(pFormatCtx->streams[videoStream]->time_base.num).arg(pFormatCtx->streams[videoStream]->time_base.den);
 
          // Did we get a video frame?
          if(frameFinished)
          {
             ffmpeg::AVRational millisecondbase = {1, 1000};
-            int f = packet.dts;
-            int t = ffmpeg::av_rescale_q(packet.dts,pFormatCtx->streams[videoStream]->time_base,millisecondbase);
+			int f = after;
+			//int f = packet.dts;
+			ffmpeg::AVRational rat = getTimeBase();
+			qDebug() << "rat: " << av_q2d(rat);
+			int t = ffmpeg::av_rescale_q(after, rat, millisecondbase);
+			//int t = ffmpeg::av_rescale_q(packet.dts, pFormatCtx->streams[videoStream]->time_base, millisecondbase);
             if(LastFrameOk==false)
             {
                LastFrameOk=true;
@@ -291,11 +295,11 @@ bool QVideoDecoder::decodeSeekFrame(int after)
                LastFrameTime=t;
                LastFrameNumber=f;
             }
-            //qDebug() << "Frame %d @ %d. LastLastT: %d. LastLastF: %d. LastFrameOk: %d\n",LastFrameNumber,LastFrameTime,LastLastFrameTime,LastLastFrameNumber,(int)LastFrameOk);
 
             // Is this frame the desired frame?
             if(after==-1 || LastFrameNumber>=after)
-            {
+			{
+				qDebug() << QString("Frame %1 @ %2. LastLastT: %3. LastLastF: %4. LastFrameOk: %5").arg((int)LastFrameNumber).arg(LastFrameTime).arg(LastLastFrameTime).arg(LastLastFrameNumber).arg((int)LastFrameOk);
                // It's the desired frame
 
                // Convert the image format (init the context the first time)
@@ -317,7 +321,8 @@ bool QVideoDecoder::decodeSeekFrame(int after)
                   memcpy(LastFrame.scanLine(y),pFrameRGB->data[0]+y*pFrameRGB->linesize[0],w*3);
 
                // Set the time
-               DesiredFrameTime = ffmpeg::av_rescale_q(after,pFormatCtx->streams[videoStream]->time_base,millisecondbase);
+               DesiredFrameTime = ffmpeg::av_rescale_q(after,getTimeBase(),millisecondbase);
+               // DesiredFrameTime = ffmpeg::av_rescale_q(after,pFormatCtx->streams[videoStream]->time_base,millisecondbase);
                LastFrameOk=true;
 
 
@@ -368,12 +373,12 @@ bool QVideoDecoder::seekMs(int tsms)
    if(!ok)
       return false;
 
-
    //qDebug() << "**** SEEK TO ms %d. LLT: %d. LT: %d. LLF: %d. LF: %d. LastFrameOk: %d\n",tsms,LastLastFrameTime,LastFrameTime,LastLastFrameNumber,LastFrameNumber,(int)LastFrameOk);
 
    // Convert time into frame number
-   DesiredFrameNumber = ffmpeg::av_rescale(tsms,pFormatCtx->streams[videoStream]->time_base.den,pFormatCtx->streams[videoStream]->time_base.num);
-   DesiredFrameNumber/=1000;
+   ffmpeg::AVRational rat = getTimeBase();
+   DesiredFrameNumber = ffmpeg::av_rescale(tsms, rat.den, rat.num);
+   DesiredFrameNumber /= 1000;
 
    return seekFrame(DesiredFrameNumber);
 }
@@ -411,8 +416,6 @@ bool QVideoDecoder::seekFrame(int64_t frame)
    //qDebug() << "\t decodeSeekFrame\n");
 
    return decodeSeekFrame(frame);
-
-   return true;
 }
 
 
@@ -474,14 +477,15 @@ void QVideoDecoder::dumpFormat(ffmpeg::AVFormatContext *ic,
     if (ic->nb_streams && !printed)
         return;
 
-	qDebug() << "AV_TIME_BASE: " << AV_TIME_BASE;
-
+    qDebug() << "AV_TIME_BASE: " << AV_TIME_BASE;
     qDebug() << (is_output ? "Output" : "Input")
 			 << "#" << index
              << "" << (is_output ? ic->oformat->name : ic->iformat->name)
              << "\n" << (is_output ? "to" : "from")
 			 << url << ":";
     if (!is_output) {
+        qDebug() << "FPS: " << getFps();
+        qDebug() << "Number of frames: " << getNumFrames();
         qDebug() << "Duration: ";
         //if (ic->duration != AV_NOPTS_VALUE)
         {
@@ -493,6 +497,7 @@ void QVideoDecoder::dumpFormat(ffmpeg::AVFormatContext *ic,
             hours = mins / 60;
             mins %= 60;
 			qDebug() << "\t" << hours << ":" << mins << ":" << secs << "." << (100 * us) / AV_TIME_BASE;
+            qDebug() << "\t" << ic->duration << "us";
         } //else {
             //qDebug() << "N/A");
         //}
@@ -542,13 +547,9 @@ int QVideoDecoder::getVideoLengthMs()
    if(!isOk())
       return -1;
 
-
    int secs = pFormatCtx->duration / AV_TIME_BASE;
    int us = pFormatCtx->duration % AV_TIME_BASE;
    int l = secs*1000 + us/1000;
-
-
-   dumpFormat(pFormatCtx,videoStream,"test video",0);
 
    return l;
 }
@@ -567,4 +568,33 @@ int QVideoDecoder::getFrameTime()
     return DesiredFrameTime;
 }
 
+double QVideoDecoder::getFps()
+{
+    double fps = av_q2d(pFormatCtx->streams[videoStream]->r_frame_rate);
 
+#if LIBAVFORMAT_BUILD >= CALC_FFMPEG_VERSION(52, 111, 0)
+    if (fps < EPS_ZERO)
+    {
+        fps = av_q2d(pFormatCtx->streams[videoStream]->avg_frame_rate);
+    }
+#endif
+
+    if (fps < EPS_ZERO)
+    {
+        fps = 1.0 / av_q2d(pFormatCtx->streams[videoStream]->codec->time_base);
+    }
+
+    return fps;
+}
+
+ffmpeg::AVRational QVideoDecoder::getTimeBase()
+{
+    double frameSec = 1.0 / av_q2d(pFormatCtx->streams[videoStream]->r_frame_rate);
+    ffmpeg::AVRational tb = ffmpeg::av_d2q(frameSec, 1000);
+    return tb;
+}
+
+int QVideoDecoder::getNumFrames()
+{
+    return round(getVideoLengthMs() * (getFps() / 1000.0));
+}

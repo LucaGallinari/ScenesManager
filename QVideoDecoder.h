@@ -35,6 +35,8 @@
 
 #include "ffmpeg.h"
 
+#define EPS_ZERO 0.000025	// epsilon for checking unsual results as taken from OpenCV FFmeg player
+
 class QVideoDecoder
 {
    protected:
@@ -90,6 +92,10 @@ class QVideoDecoder
 
       virtual int getFrameNumber();
       virtual int getFrameTime();
+
+      virtual double getFps();
+      virtual int getNumFrames();
+      virtual ffmpeg::AVRational getTimeBase();
 
 
       virtual bool isOk();

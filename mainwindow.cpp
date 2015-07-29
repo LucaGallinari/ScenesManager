@@ -2,8 +2,7 @@
 
     ISSUE TODO:
         - (EASY) playing until the end of the video then i can't use buttons
-        - (HARD) mkv num frames and length problem
-        -
+        - (MED)  mkv seek ms not working properly
 
 */
 
@@ -22,7 +21,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     qDebug() << "Starting up";
 
-    player = new PlayerWidget(0, this, 30);
+    player = new PlayerWidget(0, this);
 
     sliderPageStep = ui->videoSlider->pageStep();
     sliderMaxVal = ui->videoSlider->maximum() + 1;
@@ -114,8 +113,8 @@ void MainWindow::updateTime(qint64 time)
 {
     int ms = time % 1000;
     int s  = (time / 1000) % 60;
-    int m  = (time / 1000*60) % 60;
-    int h  = (time / 1000*60*60) % 24;
+    int m  = (time / (1000*60)) % 60;
+    int h  = (time / (1000*60*60)) % 24;
     ui->labelVideoInfo->setText(
         QString::number(h)+":"+
         QString("%1").arg(m, 2, 10, QChar('0'))+":"+
