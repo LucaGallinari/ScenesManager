@@ -6,22 +6,18 @@
 #include <QTimer>
 #include <QPushButton>
 
-/**
-*	PlayerWidget class.
-*/
-class PlayerWidget : public QWidget
-{
+namespace Ui {
+    class MainWindow;
+}
+
+class PlayerWidget : public QWidget {
     Q_OBJECT
 
 private:
-    QVideoDecoder decoder;
-    QLabel *frameLbl;
-    QPushButton *playPauseBtn;
-    QTimer *playbackTimer;
+    Ui::MainWindow *ui;
 
-    //	Button's icons objects
-    QPixmap playIcon;
-    QPixmap pauseIcon;
+    QVideoDecoder decoder;
+    QTimer *playbackTimer;
 
     //	Help variables
     bool playState;
@@ -32,10 +28,6 @@ private:
 
     void displayFrame();
 
-    //  Default stuff
-    void initializeIcons();
-    //void changePlayPause();
-
     //  Helpers
     void image2Pixmap(QImage &img,QPixmap &pixmap);
 
@@ -43,9 +35,7 @@ public:
     explicit PlayerWidget(
         QWidget *parent = 0,
         QWidget *mainwin = 0,
-        QLabel *frameLbl = 0,
-        int fps = 30,
-        QPushButton *playPauseBtn = 0
+        int fps = 30
     );
     ~PlayerWidget();
 	
@@ -73,12 +63,16 @@ public:
     qint64 nextFrameNumber();
     qint64 getNumFrames();
     qint64 getVideoLengthMs();
+    double currentTimePercentage();
 
 private slots:
     void updateFrame();
 
 signals:
     void frameChanged();
+    void newFrame(QPixmap img);
+    void timeChanged(qint64 ms);
+    void playPauseToggle(bool playState);
 
 };
 

@@ -33,8 +33,20 @@ protected:
 private:
     Ui::MainWindow *ui;
 
+    //	Button's icons objects
+    void initializeIcons();
+    QPixmap playIcon;
+    QPixmap pauseIcon;
+
+    //  Slider constant
+    int sliderPageStep;
+    int sliderMaxVal;
+
 public slots:
     void updateSlider();
+    void updateFrame(QPixmap p);
+    void updateTime(qint64 time); //ms
+    void changePlayPause(bool playState);
 
 private slots:
     //  Video

@@ -5,48 +5,36 @@
 #include <QPainter>
 
 #include "PlayerWidget.h"
-
+#include "mainwindow.h"
 
 /*! \brief PlayerWidget Constructor.
 *
 *   TODO
 */
-// TODO: find a better solution for passing QLabel and QPushButton
 PlayerWidget::PlayerWidget(
-    QWidget *parent,
-    QWidget *mainwin,
-    QLabel *frameLbl,
-    int fps,
-    QPushButton *playPauseBtn
+        QWidget *parent,
+        QWidget *mainwin,
+        int fps
 ) : QWidget(parent)
 {
     playState = false;
-    this->frameLbl = frameLbl;
     this->fps = fps;
     this->frameMs = 1000 / fps;
-    this->frameLbl->setMinimumSize(1,1);
-    this->playPauseBtn = playPauseBtn;
 
     playbackTimer = new QTimer(this);
     connect(playbackTimer, SIGNAL(timeout()), this, SLOT(updateFrame()));
 
+    // S&S to mainwin
+    connect(this, SIGNAL(newFrame(QPixmap)), mainwin, SLOT(updateFrame(QPixmap)));
+    connect(this, SIGNAL(timeChanged(qint64)), mainwin, SLOT(updateTime(qint64)));
+    connect(this, SIGNAL(playPauseToggle(bool)), mainwin, SLOT(changePlayPause(bool)));
     connect(this, SIGNAL(frameChanged()), mainwin, SLOT(updateSlider()));
-	
-    initializeIcons();
 }
 
 PlayerWidget::~PlayerWidget()
 {}
 
 /***************** PRIVATE METHODS ************/
-/*! \brief initialize player icons.
-*
-*	Initialize player icons based on the resources in "playericons.qrc" file.
-*/
-void PlayerWidget::initializeIcons(){
-    playIcon  = QPixmap(":/icons/playB.png");
-    pauseIcon = QPixmap(":/icons/pauseB.png");
-}
 
 /*! \brief from QImage to QPixmap.
 *
@@ -76,8 +64,7 @@ void PlayerWidget::displayFrame()
     // Decode a frame
     QImage img;
     int et,en;
-    if (!decoder.getFrame(img,&en,&et))
-    {
+    if (!decoder.getFrame(img,&en,&et)) {
         QMessageBox::critical(NULL,"Error","Error decoding the frame");
         return;
     }
@@ -86,11 +73,8 @@ void PlayerWidget::displayFrame()
     QPixmap p;
     image2Pixmap(img,p);
 
-    // set a scaled pixmap to a w x h window keeping its aspect ratio
-    frameLbl->setPixmap(p.scaled(frameLbl->width(),frameLbl->height(),Qt::KeepAspectRatio, Qt::SmoothTransformation));
-
-    // Display the video size
-    //frameInfoLbl->setText(QString("Size %2 ms. Display: #%3 @ %4 ms.").arg(decoder.getVideoLengthMs()).arg(en).arg(et));
+    emit newFrame(p);
+    emit timeChanged(currentFrameTime());
 }
 
 /*! \brief load and display the next frame
@@ -105,20 +89,6 @@ void PlayerWidget::updateFrame()
     }
     emit frameChanged();
 }
-
-
-/*
-void PlayerWidget::setVariables(){
-    frameRate = m_player->statistics().video.frame_rate;
-    frameMsec = 1000 / m_player->statistics().video.frame_rate;
-    numFrames = m_player->stopPosition() / frameMsec;
-    qDebug() << "File opened:";
-    qDebug() << "stopPos: " << m_player->stopPosition();
-    qDebug() << "frameRate: " << frameRate;
-    qDebug() << "frameMsec: " << frameMsec;
-    qDebug() << "numFrames: " << numFrames;
-}
-*/
 
 
 /******************* PUBLIC METHODS ************/
@@ -146,8 +116,7 @@ void PlayerWidget::reloadFrame()
 *	@see prevFrame()
 */
 bool PlayerWidget::nextFrame(){
-    if (!decoder.seekNextFrame())
-    {
+    if (!decoder.seekNextFrame()) {
         QMessageBox::critical(NULL, "Error", "seekNextFrame failed");
         return false;
     }
@@ -162,8 +131,7 @@ bool PlayerWidget::nextFrame(){
 *	@see nextFrame()
 */
 bool PlayerWidget::prevFrame(){
-    if (!decoder.seekPrevFrame())
-    {
+    if (!decoder.seekPrevFrame()) {
         QMessageBox::critical(NULL, "Error", "seekPrevFrame failed");
         return false;
     }
@@ -183,8 +151,7 @@ void PlayerWidget::seekToFrame(qint64 num){
         return;
 
     // Seek to the desired frame
-    if (!decoder.seekFrame(num))
-    {
+    if (!decoder.seekFrame(num)) {
         QMessageBox::critical(NULL,"Error","Seek failed");
         return;
     }
@@ -203,8 +170,7 @@ void PlayerWidget::seekToTime(qint64 ms){
         return;
 
     // Seek to the desired ms
-    if(!decoder.seekMs(ms))
-    {
+    if(!decoder.seekMs(ms)) {
        QMessageBox::critical(NULL,"Error","Seek failed, invalid time");
        return;
     }
@@ -223,8 +189,7 @@ void PlayerWidget::seekToTimePercentage(double perc){
 
     int ms = videoLength * perc;
     // Seek to the desired ms
-    if(!decoder.seekMs(ms))
-    {
+    if(!decoder.seekMs(ms)) {
        QMessageBox::critical(NULL,"Error","Seek failed, invalid time");
        return;
     }
@@ -247,15 +212,13 @@ void PlayerWidget::loadVideo(QString fileName)
    numFrames = 150;//TODO: retrieve num frames decoder.getNumberOfFrames();
    videoLength = decoder.getVideoLengthMs();
 
-   if (decoder.isOk()==false)
-   {
+   if (decoder.isOk()==false) {
       QMessageBox::critical(NULL,"Error","Error loading the video");
       return;
    }
 
    // Seek to the first frame
-   if (!decoder.seekFrame(0))
-   {
+   if (!decoder.seekFrame(0)) {
        QMessageBox::critical(NULL, "Error", "Seek the first frame failed");
        nextFrame(); // try to get the next frame instead of showing nothing
    }
@@ -267,7 +230,8 @@ void PlayerWidget::loadVideo(QString fileName)
 /*! \brief play/pause the video.
 *
 *	Change the state of the player between play and pause.
-*	If the player isn't playing starts, otherwhise if it's paused it resumes the playback.
+*	If the player isn't playing starts, otherwhise if it's
+*   paused it resumes the playback.
 */
 void PlayerWidget::playPause()
 {
@@ -277,16 +241,12 @@ void PlayerWidget::playPause()
     playState = !playState;
 
     if (playState) {
-        if (playVideo()) {
-            playPauseBtn->setToolTip("Pause");
-            playPauseBtn->setIcon(QIcon(pauseIcon));
-        }
+        playVideo();
     } else {
-        if (pauseVideo()) {
-            playPauseBtn->setToolTip("Play");
-            playPauseBtn->setIcon(QIcon(playIcon));
-        }
+        pauseVideo();
     }
+
+    emit playPauseToggle(playState);
 }
 
 /*! \brief play the video.
@@ -372,7 +332,7 @@ bool PlayerWidget::isVideoPlaying()
 *   @see previousFrameNumber()
 *   @see nextFrameNumber()
 */
-qint64 PlayerWidget::currentFrameNumber(){
+qint64 PlayerWidget::currentFrameNumber() {
     return decoder.getFrameNumber();
 }
 
@@ -382,7 +342,7 @@ qint64 PlayerWidget::currentFrameNumber(){
 *	@return current frame time.
 *   @see currentFrameNumber()
 */
-qint64 PlayerWidget::currentFrameTime(){
+qint64 PlayerWidget::currentFrameTime() {
     return decoder.getFrameTime();
 }
 
@@ -393,7 +353,7 @@ qint64 PlayerWidget::currentFrameTime(){
 *   @see currentFrameNumber()
 *   @see nextFrameNumber()
 */
-qint64 PlayerWidget::previousFrameNumber(){
+qint64 PlayerWidget::previousFrameNumber() {
     return currentFrameNumber() - 1;
 }
 
@@ -404,7 +364,7 @@ qint64 PlayerWidget::previousFrameNumber(){
 *   @see currentFrameNumber()
 *   @see previousFrameNumber()
 */
-qint64 PlayerWidget::nextFrameNumber(){
+qint64 PlayerWidget::nextFrameNumber() {
     return currentFrameNumber() + 1;
 }
 
@@ -412,7 +372,7 @@ qint64 PlayerWidget::nextFrameNumber(){
 *
 *	Retrieve the number of frames
 */
-qint64 PlayerWidget::getNumFrames(){
+qint64 PlayerWidget::getNumFrames() {
     return numFrames;
 }
 
@@ -420,6 +380,17 @@ qint64 PlayerWidget::getNumFrames(){
 *
 *	Retrieve the number of frames
 */
-qint64 PlayerWidget::getVideoLengthMs(){
+qint64 PlayerWidget::getVideoLengthMs() {
     return videoLength;
+}
+
+/*! \brief Percentage of time passed (0 to 1)
+*
+*	Calculated the ratio (0 to 1) of the current frame time compared to the
+*   total video length.
+*	@return ratio percentage decimal (0 to 1)
+*   @see currentFrameTime()
+*/
+double PlayerWidget::currentTimePercentage() {
+    return decoder.getFrameTime() / (double) videoLength;
 }

@@ -87,6 +87,9 @@
               <property name="text">
                <string/>
               </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
              </widget>
             </item>
             <item>
@@ -307,8 +310,8 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="resource.qrc"/>
   <include location="playericons.qrc"/>
+  <include location="resource.qrc"/>
  </resources>
  <connections/>
 </ui>
