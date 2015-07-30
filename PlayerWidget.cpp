@@ -15,6 +15,8 @@ PlayerWidget::PlayerWidget(QWidget *parent,QWidget *mainwin) : QWidget(parent)
 {
     playState = false;
 
+	_bmng = new ImagesBuffer(1);
+
     playbackTimer = new QTimer(this);
     connect(playbackTimer, SIGNAL(timeout()), this, SLOT(updateFrame()));
 
@@ -28,23 +30,6 @@ PlayerWidget::PlayerWidget(QWidget *parent,QWidget *mainwin) : QWidget(parent)
 PlayerWidget::~PlayerWidget()
 {}
 
-/***************** PRIVATE METHODS ************/
-
-/*! \brief from QImage to QPixmap.
-*
-*   Convert a QImage to a QPixmap.
-*	@param img as QImage
-*	@param pixmap as QPixmap
-*/
-void PlayerWidget::image2Pixmap(QImage &img,QPixmap &pixmap)
-{
-   // Convert the QImage to a QPixmap for display
-   pixmap = QPixmap(img.size());
-   QPainter painter;
-   painter.begin(&pixmap);
-   painter.drawImage(0,0,img);
-   painter.end();
-}
 
 /*! \brief display last loaded frame.
 *
@@ -52,23 +37,17 @@ void PlayerWidget::image2Pixmap(QImage &img,QPixmap &pixmap)
 */
 void PlayerWidget::displayFrame()
 {
-    if (!isVideoLoaded())
+	if (!_bmng->isVideoLoaded())
         return;
 
     // Decode a frame
-    QImage img;
-    int et,en;
-    if (!decoder.getFrame(img,&en,&et)) {
-        QMessageBox::critical(NULL,"Error","Error decoding the frame");
+	QPixmap img;
+	if (!_bmng->getMidFrame(img)) {
+        QMessageBox::critical(NULL,"Error","Error retrieving the frame");
         return;
     }
 
-    // Convert the QImage to a QPixmap and display it
-    QPixmap p;
-    image2Pixmap(img,p);
-
-    qDebug() << "framEChange: " << currentFrameTime();
-    emit newFrame(p);
+    emit newFrame(img);
     emit timeChanged(currentFrameTime());
 }
 
@@ -78,8 +57,9 @@ void PlayerWidget::displayFrame()
 */
 void PlayerWidget::updateFrame()
 {
+	qDebug() << "updateFrame";
     if (!nextFrame()) {
-        playbackTimer->stop();
+		stopVideo();
         return;
     }
     emit frameChanged();
@@ -100,7 +80,7 @@ void PlayerWidget::reloadFrame()
 {
     // this is needed otherwise a "Load video first"
     // error is thrown on app startup if used inside resizeEvent
-    if (decoder.isOk()==true)
+    if (_bmng->isVideoLoaded())
         displayFrame();
 }
 
@@ -111,7 +91,7 @@ void PlayerWidget::reloadFrame()
 *	@see prevFrame()
 */
 bool PlayerWidget::nextFrame(){
-    if (!decoder.seekNextFrame()) {
+	if (!_bmng->seekNextFrame()) {
         QMessageBox::critical(NULL, "Error", "seekNextFrame failed");
         return false;
     }
@@ -126,7 +106,7 @@ bool PlayerWidget::nextFrame(){
 *	@see nextFrame()
 */
 bool PlayerWidget::prevFrame(){
-    if (!decoder.seekPrevFrame()) {
+	if (!_bmng->seekPrevFrame()) {
         QMessageBox::critical(NULL, "Error", "seekPrevFrame failed");
         return false;
     }
@@ -141,16 +121,12 @@ bool PlayerWidget::prevFrame(){
 *   @see seekToTime()
 */
 void PlayerWidget::seekToFrame(qint64 num){
-    // Check we've loaded a video successfully
-    if (!isVideoLoaded())
-        return;
-
-    // Seek to the desired frame
-    if (!decoder.seekFrame(num)) {
-        QMessageBox::critical(NULL,"Error","Seek failed");
-        return;
-    }
+	if (!_bmng->seekToFrame(num)) {
+		QMessageBox::critical(NULL, "Error", "seekToFrame failed");
+		return;
+	}
     displayFrame();
+	return;
 }
 
 /*! \brief seek to given time
@@ -160,8 +136,8 @@ void PlayerWidget::seekToFrame(qint64 num){
 *   @see seekToFrame()
 */
 void PlayerWidget::seekToTime(qint64 ms){
-    // Check we've loaded a video successfully
-    if (!isVideoLoaded())
+    /*// Check we've loaded a video successfully
+	if (!_bmng->isVideoLoaded())
         return;
 
     // Seek to the desired ms
@@ -169,7 +145,7 @@ void PlayerWidget::seekToTime(qint64 ms){
        QMessageBox::critical(NULL,"Error","Seek failed, invalid time");
        return;
     }
-    displayFrame();
+    displayFrame();*/
 }
 
 /*! \brief seek to given time percentage
@@ -178,8 +154,8 @@ void PlayerWidget::seekToTime(qint64 ms){
 *   @param perc double value from 0 to 1
 */
 void PlayerWidget::seekToTimePercentage(double perc){
-    // Check we've loaded a video successfully
-    if (!isVideoLoaded())
+    /*// Check we've loaded a video successfully
+	if (!_bmng->isVideoLoaded())
         return;
 
     int ms = videoLength * perc;
@@ -189,7 +165,7 @@ void PlayerWidget::seekToTimePercentage(double perc){
        QMessageBox::critical(NULL,"Error","Seek failed, invalid time");
        return;
     }
-    displayFrame();
+    displayFrame();*/
 }
 
 
@@ -204,25 +180,18 @@ void PlayerWidget::seekToTimePercentage(double perc){
 */
 void PlayerWidget::loadVideo(QString fileName)
 {
-   decoder.openFile(fileName);
-   numFrames = decoder.getNumFrames();
-   videoLength = decoder.getVideoLengthMs();
-   fps = decoder.getFps();
-   frameMs = round(1000 / fps);
+	if (!_bmng->loadVideo(fileName)) {
+		QMessageBox::critical(NULL, "Error", "Error loading the video!");
+		return;
+	}
 
-   if (decoder.isOk()==false) {
-      QMessageBox::critical(NULL,"Error","Error loading the video");
-      return;
-   }
+	// Retrieve datas
+	fps = _bmng->getFps();
+	frameMs = _bmng->getFrameMs();
+	numFrames = _bmng->getNumFrames();
+	videoLength = _bmng->getVideoLengthMs();
 
-   // Seek to the first frame
-   if (!decoder.seekFrame(0)) {
-       QMessageBox::critical(NULL, "Error", "Seek the first frame failed");
-       nextFrame(); // try to get the next frame instead of showing nothing
-   }
-
-   // Display a frame
-   displayFrame();
+	displayFrame();
 }
 
 /*! \brief play/pause the video.
@@ -233,7 +202,7 @@ void PlayerWidget::loadVideo(QString fileName)
 */
 void PlayerWidget::playPause()
 {
-    if (!isVideoLoaded())
+	if (!_bmng->isVideoLoaded())
         return;
 
     playState = !playState;
@@ -255,7 +224,7 @@ void PlayerWidget::playPause()
 */
 bool PlayerWidget::playVideo()
 {
-    if (!isVideoLoaded())
+	if (!_bmng->isVideoLoaded())
         return false;
     playbackTimer->start(frameMs);
     return true; //TODO: check if start() went ok
@@ -269,7 +238,7 @@ bool PlayerWidget::playVideo()
 */
 bool PlayerWidget::pauseVideo()
 {
-    if (!isVideoLoaded())
+	if (!_bmng->isVideoLoaded())
         return false;
     playbackTimer->stop();
     return true; //TODO: check if stop() went ok
@@ -283,7 +252,7 @@ bool PlayerWidget::pauseVideo()
 */
 bool PlayerWidget::stopVideo()
 {
-    if (!isVideoLoaded())
+    if (!_bmng->isVideoLoaded())
         return false;
     // pause if playing
     if (playState) {
@@ -300,19 +269,6 @@ bool PlayerWidget::stopVideo()
  *********        GETTERS      *********
  ***************************************/
 
-/*! \brief a video was loaded?
-*
-*   Checks if a video has been previously loaded.
-*/
-bool PlayerWidget::isVideoLoaded()
-{
-    if (decoder.isOk()==false) {
-        QMessageBox::critical(NULL,"Error","Load a video first");
-        return false;
-    }
-    return true;
-}
-
 /*! \brief the video is playing?
 *
 *   Checks if the video is playing.
@@ -320,6 +276,15 @@ bool PlayerWidget::isVideoLoaded()
 bool PlayerWidget::isVideoPlaying()
 {
     return playState;
+}
+
+/*! \brief the video is playing?
+*
+*   Checks if the video is playing.
+*/
+bool PlayerWidget::isVideoLoaded()
+{
+	return _bmng->isVideoLoaded();
 }
 
 /*! \brief Get current frame number.
@@ -331,7 +296,7 @@ bool PlayerWidget::isVideoPlaying()
 *   @see nextFrameNumber()
 */
 qint64 PlayerWidget::currentFrameNumber() {
-    return decoder.getFrameNumber();
+    return _bmng->getMidFrameNumber();
 }
 
 /*! \brief Get current frame time.
@@ -341,7 +306,7 @@ qint64 PlayerWidget::currentFrameNumber() {
 *   @see currentFrameNumber()
 */
 qint64 PlayerWidget::currentFrameTime() {
-    return decoder.getFrameTime();
+	return _bmng->getMidFrameTime();
 }
 
 /*! \brief Get the previous frame number.
@@ -350,10 +315,10 @@ qint64 PlayerWidget::currentFrameTime() {
 *	@return previous frame number.
 *   @see currentFrameNumber()
 *   @see nextFrameNumber()
-*/
+
 qint64 PlayerWidget::previousFrameNumber() {
     return currentFrameNumber() - 1;
-}
+}*/
 
 /*! \brief Get the next frame number.
 *
@@ -361,10 +326,10 @@ qint64 PlayerWidget::previousFrameNumber() {
 *	@return next frame number.
 *   @see currentFrameNumber()
 *   @see previousFrameNumber()
-*/
+
 qint64 PlayerWidget::nextFrameNumber() {
     return currentFrameNumber() + 1;
-}
+}*/
 
 /*! \brief Get number of frames
 *
@@ -377,10 +342,10 @@ qint64 PlayerWidget::getNumFrames() {
 /*! \brief Get number of frames
 *
 *	Retrieve the number of frames
-*/
+
 qint64 PlayerWidget::getVideoLengthMs() {
     return videoLength;
-}
+}*/
 
 /*! \brief Percentage of time passed (0 to 1)
 *
@@ -390,5 +355,5 @@ qint64 PlayerWidget::getVideoLengthMs() {
 *   @see currentFrameTime()
 */
 double PlayerWidget::currentTimePercentage() {
-    return decoder.getFrameTime() / (double) videoLength;
+    return _bmng->getMidFrameTime() / (double) videoLength;
 }

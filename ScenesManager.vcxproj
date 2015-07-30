@@ -154,6 +154,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="ImagesBuffer.cpp" />
     <ClCompile Include="PlayerWidget.cpp" />
     <ClCompile Include="QVideoDecoder.cpp" />
     <ClCompile Include="main.cpp" />
@@ -181,6 +182,7 @@ endlocal
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
     </CustomBuild>
     <ClInclude Include="GeneratedFiles\ui_mainwindow.h" />
+    <ClInclude Include="ImagesBuffer.h" />
     <ClInclude Include="QVideoDecoder.h" />
     <ClInclude Include="ffmpeg.h" />
     <CustomBuild Include="mainwindow.h">

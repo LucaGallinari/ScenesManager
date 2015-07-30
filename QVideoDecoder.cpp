@@ -247,7 +247,7 @@ bool QVideoDecoder::decodeSeekFrame(int after)
       if(av_read_frame(pFormatCtx, &packet)<0)
          return false;                             // Frame read failed (e.g. end of stream)
 
-	  qDebug() << QString("Packet of stream %1, size %2\n").arg(packet.stream_index).arg(packet.size);
+	  //qDebug() << QString("Packet of stream %1, size %2\n").arg(packet.stream_index).arg(packet.size);
 
       if(packet.stream_index==videoStream)
       {
@@ -258,7 +258,7 @@ bool QVideoDecoder::decodeSeekFrame(int after)
 
 		 //qDebug() << QString("used %d out of %d bytes\n", len, packet.size);
 
-         qDebug() << "Frame type: ";
+         //qDebug() << "Frame type: ";
 		 /*
 		 if (pFrame->pict_type == AV_PICTURE_TYPE_B)
             qDebug() << "B\n";
@@ -268,8 +268,8 @@ bool QVideoDecoder::decodeSeekFrame(int after)
             qDebug() << "P\n";
 		 */
 
-		 qDebug() << QString("codecctx time base: num: %1 den: %2\n").arg(pCodecCtx->time_base.num).arg(pCodecCtx->time_base.den);
-		 qDebug() << QString("formatctx time base: num: %1 den: %2\n").arg(pFormatCtx->streams[videoStream]->time_base.num).arg(pFormatCtx->streams[videoStream]->time_base.den);
+		 //qDebug() << QString("codecctx time base: num: %1 den: %2\n").arg(pCodecCtx->time_base.num).arg(pCodecCtx->time_base.den);
+		 //qDebug() << QString("formatctx time base: num: %1 den: %2\n").arg(pFormatCtx->streams[videoStream]->time_base.num).arg(pFormatCtx->streams[videoStream]->time_base.den);
 
          // Did we get a video frame?
          if(frameFinished)
@@ -278,7 +278,7 @@ bool QVideoDecoder::decodeSeekFrame(int after)
 			int f = after;
 			//int f = packet.dts;
 			ffmpeg::AVRational rat = getTimeBase();
-			qDebug() << "rat: " << av_q2d(rat);
+			//qDebug() << "rat: " << av_q2d(rat);
 			int t = ffmpeg::av_rescale_q(after, rat, millisecondbase);
 			//int t = ffmpeg::av_rescale_q(packet.dts, pFormatCtx->streams[videoStream]->time_base, millisecondbase);
             if(LastFrameOk==false)
@@ -299,7 +299,7 @@ bool QVideoDecoder::decodeSeekFrame(int after)
             // Is this frame the desired frame?
             if(after==-1 || LastFrameNumber>=after)
 			{
-				qDebug() << QString("Frame %1 @ %2. LastLastT: %3. LastLastF: %4. LastFrameOk: %5").arg((int)LastFrameNumber).arg(LastFrameTime).arg(LastLastFrameTime).arg(LastLastFrameNumber).arg((int)LastFrameOk);
+				//qDebug() << QString("Frame %1 @ %2. LastLastT: %3. LastLastF: %4. LastFrameOk: %5").arg((int)LastFrameNumber).arg(LastFrameTime).arg(LastLastFrameTime).arg(LastLastFrameNumber).arg((int)LastFrameOk);
                // It's the desired frame
 
                // Convert the image format (init the context the first time)

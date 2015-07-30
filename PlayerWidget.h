@@ -2,22 +2,18 @@
 #define PLAYERWIDGET_H
 
 #include <QVideoDecoder.h>
+#include <ImagesBuffer.h>
 #include <QLabel>
 #include <QTimer>
 #include <QPushButton>
-
-namespace Ui {
-    class MainWindow;
-}
 
 class PlayerWidget : public QWidget {
     Q_OBJECT
 
 private:
-    Ui::MainWindow *ui;
 
-    QVideoDecoder decoder;
     QTimer *playbackTimer;
+	ImagesBuffer *_bmng;
 
     //	Help variables
     bool playState;
@@ -28,8 +24,6 @@ private:
 
     void displayFrame();
 
-    //  Helpers
-    void image2Pixmap(QImage &img,QPixmap &pixmap);
 
 public:
     explicit PlayerWidget(QWidget *parent = 0, QWidget *mainwin = 0);
@@ -44,21 +38,21 @@ public:
     void seekToTimePercentage(double perc);
 
     //  Video actions
-    void loadVideo(QString fileName);
+    void loadVideo(const QString fileName);
     void playPause();
     bool playVideo();
     bool pauseVideo();
     bool stopVideo();
 
     //  Getters
-    bool   isVideoLoaded();
+	bool   isVideoLoaded();
     bool   isVideoPlaying();
     qint64 currentFrameNumber();
     qint64 currentFrameTime();
-    qint64 previousFrameNumber();
-    qint64 nextFrameNumber();
+    //qint64 previousFrameNumber();
+    //qint64 nextFrameNumber();
     qint64 getNumFrames();
-    qint64 getVideoLengthMs();
+    //qint64 getVideoLengthMs();
     double currentTimePercentage();
 
 private slots:
