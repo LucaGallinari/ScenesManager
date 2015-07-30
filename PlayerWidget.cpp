@@ -15,7 +15,7 @@ PlayerWidget::PlayerWidget(QWidget *parent,QWidget *mainwin) : QWidget(parent)
 {
     playState = false;
 
-	_bmng = new ImagesBuffer(1);
+	_bmng = new ImagesBuffer(6);
 
     playbackTimer = new QTimer(this);
     connect(playbackTimer, SIGNAL(timeout()), this, SLOT(updateFrame()));

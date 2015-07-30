@@ -7,8 +7,8 @@
 
 struct Frame {
 	QPixmap img;
-	int num;
-	qint64 time;
+	int num = - 1;
+	qint64 time = - 1;
 };
 
 class ImagesBuffer

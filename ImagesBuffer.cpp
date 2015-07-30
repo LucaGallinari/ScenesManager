@@ -86,28 +86,31 @@ bool ImagesBuffer::seekToFrame(const qint64 num){
 	//if (dist >= _maxsize) { // out of bound
 	_buffer.clear();
 
-	int startFrameNumber = num - (_maxsize / 2);
+	int startFrameNumber = num - ((_maxsize - 1) / 2);
 	for (int i = 0; i < _maxsize; ++i) {
 		int actualFrameNumber = startFrameNumber + i;
-		// Seek to the desired frame
-		if (!decoder.seekFrame(actualFrameNumber)) {
-			QMessageBox::critical(NULL, "Error", "Seek failed");
-			return false;
-		}
-
-		// Decode the frame
-		QImage img;
-		int et, en;
-		if (!decoder.getFrame(img, &en, &et)) {
-			QMessageBox::critical(NULL, "Error", "Error decoding the frame");
-			return false;
-		}
-
-		// Update the buffer with this Frame
 		Frame f;
-		image2Pixmap(img, f.img);
-		f.num = actualFrameNumber;
-		f.time = decoder.getFrameTime();
+		if (actualFrameNumber >= 0 && actualFrameNumber < numFrames) {
+			// Seek to the desired frame
+			if (!decoder.seekFrame(actualFrameNumber)) {
+				QMessageBox::critical(NULL, "Error", "Seek failed");
+				return false;
+			}
+
+			// Decode the frame
+			QImage img;
+			int et, en;
+			if (!decoder.getFrame(img, &en, &et)) {
+				QMessageBox::critical(NULL, "Error", "Error decoding the frame");
+				return false;
+			}
+
+			// Update the buffer with this Frame
+			
+			image2Pixmap(img, f.img);
+			f.num = actualFrameNumber;
+			f.time = decoder.getFrameTime();
+		}
 		_buffer.push_back(f);
 	}
 	//} else { // overlap of some elements
@@ -124,26 +127,34 @@ bool ImagesBuffer::seekToFrame(const qint64 num){
 *	@return succes or not
 */
 bool ImagesBuffer::seekNextFrame(){
+	Frame f;
 
 	if (!isVideoLoaded())
 		return false;
 
-	// Seek next
-	decoder.seekFrame(_buffer.back().num + 1);
-
-	// Decode the frame
-	QImage img;
-	int et, en;
-	if (!decoder.getFrame(img, &en, &et)) {
-		QMessageBox::critical(NULL, "Error", "Error decoding the frame");
+	// no more frame after
+	if (_buffer[_mid].num == numFrames - 1)
 		return false;
-	}
 
-	// Update the buffer with this Frame
-	Frame f;
-	image2Pixmap(img, f.img);
-	f.num = decoder.getFrameNumber();
-	f.time = decoder.getFrameTime();
+	// we are not near the end of the video
+	if (_buffer.back().num + 1 < numFrames) {
+		// Seek next
+		decoder.seekFrame(_buffer.back().num + 1);
+
+		// Decode the frame
+		QImage img;
+		int et, en;
+		if (!decoder.getFrame(img, &en, &et)) {
+			QMessageBox::critical(NULL, "Error", "Error decoding the frame");
+			return false;
+		}
+
+		// Update the buffer with this Frame
+		image2Pixmap(img, f.img);
+		f.num = decoder.getFrameNumber();
+		f.time = decoder.getFrameTime();
+
+	}
 
 	_buffer.erase(_buffer.begin());		// remove first
 	_buffer.push_back(f);				// add last
@@ -159,26 +170,35 @@ bool ImagesBuffer::seekNextFrame(){
 *	@return succes or not
 */
 bool ImagesBuffer::seekPrevFrame(){
+	Frame f;
 
 	if (!isVideoLoaded())
 		return false;
 
-	// Seek next
-	decoder.seekFrame(_buffer.front().num - 1);
-
-	// Decode the frame
-	QImage img;
-	int et, en;
-	if (!decoder.getFrame(img, &en, &et)) {
-		QMessageBox::critical(NULL, "Error", "Error decoding the frame");
+	// no more frame before
+	if (_buffer[_mid].num == 0)
 		return false;
-	}
 
-	// Update the buffer with this Frame
-	Frame f;
-	image2Pixmap(img, f.img);
-	f.num = decoder.getFrameNumber();
-	f.time = decoder.getFrameTime();
+	// we are not near the end of the video
+	if (_buffer.front().num - 1 >= 0) {
+
+		// Seek next
+		decoder.seekFrame(_buffer.front().num - 1);
+
+		// Decode the frame
+		QImage img;
+		int et, en;
+		if (!decoder.getFrame(img, &en, &et)) {
+			QMessageBox::critical(NULL, "Error", "Error decoding the frame");
+			return false;
+		}
+
+		// Update the buffer with this Frame
+		image2Pixmap(img, f.img);
+		f.num = decoder.getFrameNumber();
+		f.time = decoder.getFrameTime();
+
+	}
 
 	_buffer.erase(_buffer.end() - 1);		// remove last
 	_buffer.emplace(_buffer.begin(), f);	// add first
@@ -227,7 +247,10 @@ void ImagesBuffer::dumpBuffer()
 {
 	qDebug() << "Dump del buffer:";
 	for (int i = 0; i < _buffer.size(); ++i) {
-		qDebug() << QString("%1 %2 %3").arg(i).arg(_buffer[i].num).arg(_buffer[i].time);
+		if (_buffer[i].num == -1)
+			qDebug() << QString("%1  -  -").arg(i);
+		else
+			qDebug() << "\t" << QString("%1 %2 %3 %4").arg(i).arg(_buffer[i].num).arg(_buffer[i].time).arg((i==_mid) ? " <-" : "");
 	}
 }
 
