@@ -30,7 +30,8 @@ ImagesBuffer::~ImagesBuffer()
 *	@param num number of the frame
 *	@return success or not
 */
-bool ImagesBuffer::getFrame(QPixmap &p, const qint64 num) {
+bool ImagesBuffer::getFrame(QPixmap &p, const qint64 num) 
+{
 	if (!isVideoLoaded())
 		return false;
 
@@ -73,7 +74,8 @@ bool ImagesBuffer::getMidFrame(QPixmap &p) {
 *   @param num frame number
 *	@return succes or not
 */
-bool ImagesBuffer::seekToFrame(const qint64 num){
+bool ImagesBuffer::seekToFrame(const qint64 num)
+{
 	if (!isVideoLoaded())
 		return false;
 
@@ -126,7 +128,8 @@ bool ImagesBuffer::seekToFrame(const qint64 num){
 *	Seek the buffer to the next frame number
 *	@return succes or not
 */
-bool ImagesBuffer::seekNextFrame(){
+bool ImagesBuffer::seekNextFrame()
+{
 	Frame f;
 
 	if (!isVideoLoaded())
@@ -167,9 +170,10 @@ bool ImagesBuffer::seekNextFrame(){
 /*! \brief seek previous frame number
 *
 *	Seek the buffer to the previous frame number
-*	@return succes or not
+*	@return success or not
 */
-bool ImagesBuffer::seekPrevFrame(){
+bool ImagesBuffer::seekPrevFrame()
+{
 	Frame f;
 
 	if (!isVideoLoaded())
@@ -208,13 +212,58 @@ bool ImagesBuffer::seekPrevFrame(){
 	// emit 
 }
 
+/*! \brief seek to given time
+*
+*	Displays the frame near the given time
+*   @param ms time in milliseconds
+*   @see seekToFrame()
+*	@return success or not
+*/
+bool ImagesBuffer::seekToTime(const qint64 ms)
+{
+	if (!isVideoLoaded())
+		return false;
+
+	// Seek to the desired ms
+	if (!seekToFrame(decoder.getNumFrameByTime(ms))) {
+		QMessageBox::critical(NULL,"Error","Seek failed, invalid time");
+		return false;
+	}
+	return true;
+}
+
+/*! \brief seek to given time percentage
+*
+*	Displays the frame near the given percentage of the entire video length
+*   @param perc double value from 0 to 1
+*	@return success or not
+*/
+bool ImagesBuffer::seekToTimePercentage(const double perc)
+{
+	if (!isVideoLoaded())
+		return false;
+
+	int ms = videoLength * perc;
+	qDebug() << "ms: " << ms << ", vlen: " << videoLength << ", perc: " << perc;
+
+	// Seek to the desired ms
+	if (!seekToFrame(decoder.getNumFrameByTime(ms))) {
+		QMessageBox::critical(NULL, "Error", "Seek failed, invalid time");
+		return false;
+	}
+	return true;
+}
+
+
+
 /*! \brief the frame is in the buffer?
 *
 *   Checks if the frame has been loaded before.
 *	@param num number of the frame
 *	@return the index of the element or -1
 */
-const int ImagesBuffer::isFrameLoaded(const qint64 num) {
+const int ImagesBuffer::isFrameLoaded(const qint64 num) 
+{
 	//TODO: we can use a number reference to one single frame?
 	for (int i = 0; i < _buffer.size(); ++i) {
 		if (_buffer[i].num == num) {

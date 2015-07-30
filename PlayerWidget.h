@@ -49,10 +49,7 @@ public:
     bool   isVideoPlaying();
     qint64 currentFrameNumber();
     qint64 currentFrameTime();
-    //qint64 previousFrameNumber();
-    //qint64 nextFrameNumber();
     qint64 getNumFrames();
-    //qint64 getVideoLengthMs();
     double currentTimePercentage();
 
 private slots:

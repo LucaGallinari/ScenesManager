@@ -57,7 +57,6 @@ void PlayerWidget::displayFrame()
 */
 void PlayerWidget::updateFrame()
 {
-	qDebug() << "updateFrame";
     if (!nextFrame()) {
 		stopVideo();
         return;
@@ -136,16 +135,12 @@ void PlayerWidget::seekToFrame(qint64 num){
 *   @see seekToFrame()
 */
 void PlayerWidget::seekToTime(qint64 ms){
-    /*// Check we've loaded a video successfully
-	if (!_bmng->isVideoLoaded())
-        return;
-
-    // Seek to the desired ms
-    if(!decoder.seekMs(ms)) {
-       QMessageBox::critical(NULL,"Error","Seek failed, invalid time");
-       return;
-    }
-    displayFrame();*/
+	if (!_bmng->seekToTime(ms)) {
+		QMessageBox::critical(NULL, "Error", "seekToFrame failed");
+		return;
+	}
+	displayFrame();
+	return;
 }
 
 /*! \brief seek to given time percentage
@@ -154,18 +149,12 @@ void PlayerWidget::seekToTime(qint64 ms){
 *   @param perc double value from 0 to 1
 */
 void PlayerWidget::seekToTimePercentage(double perc){
-    /*// Check we've loaded a video successfully
-	if (!_bmng->isVideoLoaded())
-        return;
-
-    int ms = videoLength * perc;
-    qDebug() << "ms: " << ms << ", vlen: " << videoLength << ", perc: " << perc;
-    // Seek to the desired ms
-    if(!decoder.seekMs(ms)) {
-       QMessageBox::critical(NULL,"Error","Seek failed, invalid time");
-       return;
-    }
-    displayFrame();*/
+	if (!_bmng->seekToTimePercentage(perc)) {
+		QMessageBox::critical(NULL, "Error", "seekToFrame failed");
+		return;
+	}
+	displayFrame();
+	return;
 }
 
 
@@ -292,8 +281,6 @@ bool PlayerWidget::isVideoLoaded()
 *	This functions is used to get the current frame number.
 *	@return current frame number.
 *   @see currentFrameTime()
-*   @see previousFrameNumber()
-*   @see nextFrameNumber()
 */
 qint64 PlayerWidget::currentFrameNumber() {
     return _bmng->getMidFrameNumber();
@@ -309,28 +296,6 @@ qint64 PlayerWidget::currentFrameTime() {
 	return _bmng->getMidFrameTime();
 }
 
-/*! \brief Get the previous frame number.
-*
-*	This functions is used to get the previous frame number.
-*	@return previous frame number.
-*   @see currentFrameNumber()
-*   @see nextFrameNumber()
-
-qint64 PlayerWidget::previousFrameNumber() {
-    return currentFrameNumber() - 1;
-}*/
-
-/*! \brief Get the next frame number.
-*
-*	This functions is used to get the next frame number.
-*	@return next frame number.
-*   @see currentFrameNumber()
-*   @see previousFrameNumber()
-
-qint64 PlayerWidget::nextFrameNumber() {
-    return currentFrameNumber() + 1;
-}*/
-
 /*! \brief Get number of frames
 *
 *	Retrieve the number of frames
@@ -338,14 +303,6 @@ qint64 PlayerWidget::nextFrameNumber() {
 qint64 PlayerWidget::getNumFrames() {
     return numFrames;
 }
-
-/*! \brief Get number of frames
-*
-*	Retrieve the number of frames
-
-qint64 PlayerWidget::getVideoLengthMs() {
-    return videoLength;
-}*/
 
 /*! \brief Percentage of time passed (0 to 1)
 *

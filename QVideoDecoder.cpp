@@ -598,3 +598,20 @@ int QVideoDecoder::getNumFrames()
 {
     return round(getVideoLengthMs() * (getFps() / 1000.0));
 }
+
+
+/**
+\brief get frame number by time
+**/
+int QVideoDecoder::getNumFrameByTime(int tsms)
+{
+	if (!ok)
+		return false;
+
+	// Convert time into frame number
+	ffmpeg::AVRational rat = getTimeBase();
+	DesiredFrameNumber = ffmpeg::av_rescale(tsms, rat.den, rat.num);
+	DesiredFrameNumber /= 1000;
+
+	return DesiredFrameNumber;
+}

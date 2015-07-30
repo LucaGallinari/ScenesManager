@@ -41,6 +41,8 @@ public:
 	bool seekToFrame(const qint64 num);
 	bool seekNextFrame();
 	bool seekPrevFrame();
+	bool seekToTime(const qint64 ms);
+	bool seekToTimePercentage(const double perc);
 
 	//  Video actions
 	bool loadVideo(const QString fileName);
@@ -58,11 +60,5 @@ public:
 	qint64 getMidFrameTime();
 
 };
-
-//bool prevFrame();
-//bool nextFrame();
-//void seekToTime(qint64 ms);
-//void seekToTimePercentage(double perc);
-
 
 #endif // IMAGESBUFFER_H

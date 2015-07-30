@@ -96,6 +96,7 @@ class QVideoDecoder
       virtual double getFps();
       virtual int getNumFrames();
       virtual ffmpeg::AVRational getTimeBase();
+	  virtual int getNumFrameByTime(int tsms);
 
 
       virtual bool isOk();
