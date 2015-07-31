@@ -25,47 +25,48 @@ public:
 
 protected:
 	QVideoDecoder decoder;
-    PlayerWidget *player;
+	PlayerWidget *player;
 
 	void changeEvent(QEvent *e);
-    void resizeEvent(QResizeEvent *e);
+	void resizeEvent(QResizeEvent *e);
 
 private:
-    Ui::MainWindow *ui;
+	Ui::MainWindow *ui;
 
-    //	Button's icons objects
-    void initializeIcons();
-    QPixmap playIcon;
-    QPixmap pauseIcon;
+	QPixmap playIcon;
+	QPixmap pauseIcon;
 
-    //  Slider constant
-    int sliderPageStep;
-    int sliderMaxVal;
+	//	Button's icons objects
+	void initializeIcons();
+
+	//  Slider constant
+	int sliderPageStep;
+	int sliderMaxVal;
 
 public slots:
-    void updateSlider();
-    void updateFrame(QPixmap p);
-    void updateTime(qint64 time); //ms
-    void changePlayPause(bool playState);
+	void updateSlider();
+	void updateFrame(QPixmap p);
+	void updateTime(qint64 time); //ms
+	void changePlayPause(bool playState);
 
 private slots:
-    //  Video
-    void on_nextFrameBtn_clicked();
-    void on_prevFrameBtn_clicked();
-    void on_seekFrameBtn_clicked();
-    void on_playPauseBtn_clicked();
-    void on_stopBtn_clicked();
+	//  Video
+	void on_nextFrameBtn_clicked();
+	void on_prevFrameBtn_clicked();
+	void on_seekFrameBtn_clicked();
+	void on_playPauseBtn_clicked();
+	void on_stopBtn_clicked();
 
-    //  Menu
+	//  Menu
 	void on_actionLoad_video_triggered();
-    void on_actionQuit_triggered();
+	void on_actionQuit_triggered();
 
-    //  Slider
-    void on_videoSlider_actionTriggered(int action);
-    void on_videoSlider_sliderReleased();
+	//  Slider
+	void on_videoSlider_actionTriggered(int action);
+	void on_videoSlider_sliderReleased();
 
 signals:
-    void frameChanged();
+	void frameChanged();
 };
 
 #endif // MAINWINDOW_H

@@ -15,7 +15,6 @@ ImagesBuffer::ImagesBuffer(const int maxsize = 1) : _maxsize(maxsize)
 	dumpBuffer();
 }
 
-
 ImagesBuffer::~ImagesBuffer()
 {
 	_buffer.clear();
@@ -24,7 +23,7 @@ ImagesBuffer::~ImagesBuffer()
 /*! \brief retrieve the frame with the given frame number.
 *
 *   Checks if the frame has already in the buffer, if not, retrieve
-*	the frame BUT do not update the buffer.
+*	the frame BUT DO NOT UPDATE THE BUFFER.
 *	The buffer will be updated only when calling seekToFrame().
 *	@param p where the image will be stored
 *	@param num number of the frame
@@ -42,31 +41,15 @@ bool ImagesBuffer::getFrame(QPixmap &p, const qint64 num)
 		return true;
 	}
 
-	// not in the buffer? seek and decode
-	// Seek to the desired frame
-	if (!decoder.seekFrame(num)) {
-		QMessageBox::critical(NULL, "Error", "Seek failed");
+	QImage img; 
+	if (!decoder.seekToAndGetFrame(num, img)) {
+		QMessageBox::critical(NULL, "Error", "Error seeking and decoding the frame");
 		return false;
 	}
 
-	// Decode the frame
-	QImage img;
-	int et, en;
-	if (!decoder.getFrame(img, &en, &et)) {
-		QMessageBox::critical(NULL, "Error", "Error decoding the frame");
-		return false;
-	}
-
-	// Convert the QImage to a QPixmap and display it
 	image2Pixmap(img, p);
 	return true;
 }
-
-bool ImagesBuffer::getMidFrame(QPixmap &p) {
-	p = _buffer[_mid].img;
-	return true;
-}
-
 
 /*! \brief seek to frame number
 *
@@ -83,44 +66,94 @@ bool ImagesBuffer::seekToFrame(const qint64 num)
 		if (_buffer[_mid].num == num) // already set
 			return true;
 	}
-	//int dist = abs(num - midNum);
 
-	//if (dist >= _maxsize) { // out of bound
-	_buffer.clear();
+	qint64 startFrameNumber = num - ((_maxsize - 1) / 2);
+	int numElements = _maxsize;
+	bool addBack = true;
 
-	int startFrameNumber = num - ((_maxsize - 1) / 2);
-	for (int i = 0; i < _maxsize; ++i) {
+	// no overlap if the buffer is empty
+	if (_buffer.size() != 0) {
+		qint64 dist = num - _buffer[_mid].num; // distance between old and new buffer
+		unsigned distAbs = abs(dist);
+		bool overlap = distAbs < _maxsize; // overlap between old and new buffer
+
+		if (overlap) {
+			qint64 numOverlap = _maxsize - distAbs; // num elements overlapping
+			if (dist > 0) { // seeking forward so erase first elements of the buffer
+				startFrameNumber += numOverlap; // update start frame number
+				_buffer.erase(_buffer.begin(), _buffer.begin() + distAbs);
+			}
+			else {
+				_buffer.erase(_buffer.end() - distAbs, _buffer.end());
+				addBack = false;
+			}
+			numElements -= numOverlap;
+		}
+		else { // no overlap, clear
+			_buffer.clear();
+		}
+	}
+
+	// fill the buffer from startNumber with numElements elements
+	if (!fillBuffer(startFrameNumber, numElements, addBack)) {
+		QMessageBox::critical(NULL, "Error", "Seek failed");
+		// TODO: buffer inconsistent, what to do?
+		return false;
+	}
+
+	dumpBuffer();
+	return true;
+	// emit 
+}
+
+/*! \brief fill the buffer
+*
+*	Fill the buffer starting from the gieven start fram number and adding
+*	numElements elements in front or back based on addBack.
+*   @param startFrameNumber start frame number
+*   @param numElements num elements to add
+*   @param addBack put elements back or in front
+*	@return succes or not
+*/
+bool ImagesBuffer::fillBuffer(
+	const qint64 startFrameNumber, 
+	const int numElements, 
+	const bool addBack
+)
+{
+	// Seek to the first frame
+	if (!decoder.seekFrame((startFrameNumber >= 0) ? startFrameNumber : 0)) {
+		return false;
+	}
+
+	for (int i = 0; i < numElements; ++i) {
 		int actualFrameNumber = startFrameNumber + i;
 		Frame f;
+		//	if out of bound retrieve and fill the image
 		if (actualFrameNumber >= 0 && actualFrameNumber < numFrames) {
-			// Seek to the desired frame
-			if (!decoder.seekFrame(actualFrameNumber)) {
-				QMessageBox::critical(NULL, "Error", "Seek failed");
-				return false;
-			}
 
 			// Decode the frame
 			QImage img;
-			int et, en;
-			if (!decoder.getFrame(img, &en, &et)) {
+			if (!decoder.getFrame(img)) {
 				QMessageBox::critical(NULL, "Error", "Error decoding the frame");
+				// TODO: buffer inconsistent, what to do?
 				return false;
 			}
 
 			// Update the buffer with this Frame
-			
 			image2Pixmap(img, f.img);
 			f.num = actualFrameNumber;
 			f.time = decoder.getFrameTime();
-		}
-		_buffer.push_back(f);
-	}
-	//} else { // overlap of some elements
 
-	//}
-	dumpBuffer();
+			// Seek next
+			decoder.seekNextFrame();
+		}
+		if (addBack)
+			_buffer.push_back(f);
+		else
+			_buffer.emplace(_buffer.begin() + i, f);
+	}
 	return true;
-	// emit 
 }
 
 /*! \brief seek next frame number
@@ -140,15 +173,12 @@ bool ImagesBuffer::seekNextFrame()
 		return false;
 
 	// we are not near the end of the video
-	if (_buffer.back().num + 1 < numFrames) {
-		// Seek next
-		decoder.seekFrame(_buffer.back().num + 1);
+	int targetNum = _buffer.back().num + 1;
+	if (targetNum > 0 && targetNum < numFrames) { // if .num=-1, tagertNum=0
 
-		// Decode the frame
 		QImage img;
-		int et, en;
-		if (!decoder.getFrame(img, &en, &et)) {
-			QMessageBox::critical(NULL, "Error", "Error decoding the frame");
+		if (!decoder.seekToAndGetFrame(targetNum, img)) {
+			QMessageBox::critical(NULL, "Error", "Error seeking and decoding the frame");
 			return false;
 		}
 
@@ -156,7 +186,6 @@ bool ImagesBuffer::seekNextFrame()
 		image2Pixmap(img, f.img);
 		f.num = decoder.getFrameNumber();
 		f.time = decoder.getFrameTime();
-
 	}
 
 	_buffer.erase(_buffer.begin());		// remove first
@@ -183,17 +212,12 @@ bool ImagesBuffer::seekPrevFrame()
 	if (_buffer[_mid].num == 0)
 		return false;
 
-	// we are not near the end of the video
-	if (_buffer.front().num - 1 >= 0) {
+	int targetNum = _buffer.front().num - 1;
+	if (targetNum >= 0) {
 
-		// Seek next
-		decoder.seekFrame(_buffer.front().num - 1);
-
-		// Decode the frame
 		QImage img;
-		int et, en;
-		if (!decoder.getFrame(img, &en, &et)) {
-			QMessageBox::critical(NULL, "Error", "Error decoding the frame");
+		if (!decoder.seekToAndGetFrame(targetNum, img)) {
+			QMessageBox::critical(NULL, "Error", "Error seeking and decoding the frame");
 			return false;
 		}
 
@@ -201,7 +225,6 @@ bool ImagesBuffer::seekPrevFrame()
 		image2Pixmap(img, f.img);
 		f.num = decoder.getFrameNumber();
 		f.time = decoder.getFrameTime();
-
 	}
 
 	_buffer.erase(_buffer.end() - 1);		// remove last
@@ -214,10 +237,10 @@ bool ImagesBuffer::seekPrevFrame()
 
 /*! \brief seek to given time
 *
-*	Displays the frame near the given time
+*	Seek the buffer to the frame close to the given time
 *   @param ms time in milliseconds
-*   @see seekToFrame()
 *	@return success or not
+*   @see seekToFrame()
 */
 bool ImagesBuffer::seekToTime(const qint64 ms)
 {
@@ -234,9 +257,11 @@ bool ImagesBuffer::seekToTime(const qint64 ms)
 
 /*! \brief seek to given time percentage
 *
-*	Displays the frame near the given percentage of the entire video length
+*	Seek the buffer to the frame close to the given percentage of the entire 
+*	video length
 *   @param perc double value from 0 to 1
 *	@return success or not
+*   @see seekToTime()
 */
 bool ImagesBuffer::seekToTimePercentage(const double perc)
 {
@@ -244,7 +269,6 @@ bool ImagesBuffer::seekToTimePercentage(const double perc)
 		return false;
 
 	int ms = videoLength * perc;
-	qDebug() << "ms: " << ms << ", vlen: " << videoLength << ", perc: " << perc;
 
 	// Seek to the desired ms
 	if (!seekToFrame(decoder.getNumFrameByTime(ms))) {
@@ -253,8 +277,6 @@ bool ImagesBuffer::seekToTimePercentage(const double perc)
 	}
 	return true;
 }
-
-
 
 /*! \brief the frame is in the buffer?
 *
@@ -274,7 +296,9 @@ const int ImagesBuffer::isFrameLoaded(const qint64 num)
 }
 
 
-/***************** PRIVATE METHODS ************/
+/**************************************
+************    HELPERS    ************
+***************************************/
 
 /*! \brief from QImage to QPixmap.
 *
@@ -297,16 +321,14 @@ void ImagesBuffer::dumpBuffer()
 	qDebug() << "Dump del buffer:";
 	for (int i = 0; i < _buffer.size(); ++i) {
 		if (_buffer[i].num == -1)
-			qDebug() << QString("%1  -  -").arg(i);
+			qDebug() << "\t" << QString("%1  -  -").arg(i);
 		else
 			qDebug() << "\t" << QString("%1 %2 %3 %4").arg(i).arg(_buffer[i].num).arg(_buffer[i].time).arg((i==_mid) ? " <-" : "");
 	}
 }
 
 
-
-
-/***************************************
+/**************************************
 *********    VIDEO ACTIONS    *********
 ***************************************/
 
@@ -337,9 +359,19 @@ bool ImagesBuffer::loadVideo(const QString fileName)
 }
 
 
-/***************************************
+/**************************************
 *********        GETTERS      *********
 ***************************************/
+
+/*! \brief get the buffer
+*
+*   Retrieve images buffer
+*	@param v where Frames will be stored
+*/
+void ImagesBuffer::getImagesBuffer(std::vector<Frame> &v)
+{
+	v = _buffer;
+}
 
 /*! \brief a video was loaded?
 *
@@ -382,6 +414,17 @@ qint64 ImagesBuffer::getVideoLengthMs() {
 	return videoLength;
 }
 
+/*! \brief retrieve the middle (current) frame
+*
+*   Retrieve the middle frame image
+*	@param p where the image will be stored
+*	@return success or not
+*/
+bool ImagesBuffer::getMidFrame(QPixmap &p) {
+	p = _buffer[_mid].img;
+	return true;
+}
+
 /*! \brief Get mid frame number.
 *
 *	This functions is used to get the current frame number.
@@ -407,5 +450,4 @@ qint64 ImagesBuffer::getMidFrameTime() {
 	if (_buffer.size() != 0)
 		return _buffer[_mid].time;
 	return -1;
-	// return decoder.getFrameTime();
 }

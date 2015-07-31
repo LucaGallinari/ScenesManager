@@ -29,6 +29,11 @@ class ImagesBuffer
 	//  Helpers
 	void image2Pixmap(QImage &img, QPixmap &pixmap);
 	void dumpBuffer();
+	bool fillBuffer(
+		const qint64 startFrameNumber,
+		const int numElements,
+		const bool addBack
+	);
 
 public:	
 
@@ -37,7 +42,6 @@ public:
 
 	//  Frame actions
 	bool getFrame(QPixmap &p, const qint64 num);
-	bool getMidFrame(QPixmap &p);
 	bool seekToFrame(const qint64 num);
 	bool seekNextFrame();
 	bool seekPrevFrame();
@@ -48,6 +52,7 @@ public:
 	bool loadVideo(const QString fileName);
 
 	//  Getters
+	void getImagesBuffer(std::vector<Frame> &v);
 	bool   isVideoLoaded();
 	const int isFrameLoaded(const qint64 num);
 
@@ -56,6 +61,7 @@ public:
 	qint64 getNumFrames();
 	qint64 getVideoLengthMs();
 
+	bool   getMidFrame(QPixmap &p);
 	qint64 getMidFrameNumber();
 	qint64 getMidFrameTime();
 

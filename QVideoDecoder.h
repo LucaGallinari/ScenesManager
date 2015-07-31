@@ -1,7 +1,7 @@
 /*
    QTFFmpegWrapper Demo
    Copyright (C) 2009,2010:
-         Daniel Roggen, droggen@gmail.com
+		 Daniel Roggen, droggen@gmail.com
 
    All rights reserved.
 
@@ -40,66 +40,67 @@
 class QVideoDecoder
 {
    protected:
-      // Basic FFmpeg stuff
-      ffmpeg::AVFormatContext *pFormatCtx;
-      int videoStream;
-      ffmpeg::AVCodecContext  *pCodecCtx;
-      ffmpeg::AVCodec         *pCodec;
-      ffmpeg::AVFrame         *pFrame;
-      ffmpeg::AVFrame         *pFrameRGB;
-      ffmpeg::AVPacket        packet;
-      ffmpeg::SwsContext      *img_convert_ctx;
-      uint8_t                 *buffer;
-      int                     numBytes;
+	  // Basic FFmpeg stuff
+	  ffmpeg::AVFormatContext *pFormatCtx;
+	  int videoStream;
+	  ffmpeg::AVCodecContext  *pCodecCtx;
+	  ffmpeg::AVCodec         *pCodec;
+	  ffmpeg::AVFrame         *pFrame;
+	  ffmpeg::AVFrame         *pFrameRGB;
+	  ffmpeg::AVPacket        packet;
+	  ffmpeg::SwsContext      *img_convert_ctx;
+	  uint8_t                 *buffer;
+	  int                     numBytes;
 
-      // State infos for the wrapper
-      bool ok;
-      QImage LastFrame;
-      int LastFrameTime,LastLastFrameTime,LastLastFrameNumber,LastFrameNumber;
-      int DesiredFrameTime,DesiredFrameNumber;
-      bool LastFrameOk;                // Set upon start or after a seek we don't have a frame yet
+	  // State infos for the wrapper
+	  bool ok;
+	  QImage LastFrame;
+	  int LastFrameTime,LastLastFrameTime,LastLastFrameNumber,LastFrameNumber;
+	  int DesiredFrameTime,DesiredFrameNumber;
+	  bool LastFrameOk;                // Set upon start or after a seek we don't have a frame yet
 
-      // Initialization functions
-      virtual bool initCodec();
-      virtual void InitVars();
+	  // Initialization functions
+	  virtual bool initCodec();
+	  virtual void InitVars();
 
-      // Helpers
-      virtual void dumpFormat(ffmpeg::AVFormatContext *ic,int index,const char *url,int is_output);
-      virtual void saveFramePPM(ffmpeg::AVFrame *pFrame, int width, int height, int iFrame);
+	  // Helpers
+	  virtual void dumpFormat(ffmpeg::AVFormatContext *ic,int index,const char *url,int is_output);
+	  virtual void saveFramePPM(ffmpeg::AVFrame *pFrame, int width, int height, int iFrame);
 
-      // Seek
-      virtual bool decodeSeekFrame(int after);
+	  // Seek
+	  virtual bool decodeSeekFrame(int after);
 
 	  // Play and pause
 	  bool	playing; // false = paused
 	  int	frameRate;
 
    public:
-      // Public interface
-      QVideoDecoder();
-      QVideoDecoder(QString file);
-      virtual ~QVideoDecoder();
+	  // Public interface
+	  QVideoDecoder();
+	  QVideoDecoder(QString file);
+	  virtual ~QVideoDecoder();
 
-      virtual bool openFile(QString file);
-      virtual void close();
+	  virtual bool openFile(QString file);
+	  virtual void close();
 
-      virtual bool getFrame(QImage&img,int *effectiveframenumber=0,int *effectiveframetime=0,int *desiredframenumber=0,int *desiredframetime=0);
-      virtual bool seekNextFrame();
+	  virtual bool getFrame(QImage&img,int *effectiveframenumber=0,int *effectiveframetime=0,int *desiredframenumber=0,int *desiredframetime=0);
+	  virtual bool seekNextFrame();
 	  virtual bool seekPrevFrame();
-      virtual bool seekMs(int ts);
-      virtual bool seekFrame(int64_t frame);
-      virtual int getVideoLengthMs();
+	  virtual bool seekMs(int ts);
+	  virtual bool seekFrame(int64_t frame);
+	  virtual bool seekToAndGetFrame(int64_t frame, QImage&img);
+	  virtual int getVideoLengthMs();
 
-      virtual int getFrameNumber();
-      virtual int getFrameTime();
+	  virtual int getFrameNumber();
+	  virtual int getFrameTime();
 
-      virtual double getFps();
-      virtual int getNumFrames();
-      virtual ffmpeg::AVRational getTimeBase();
+	  virtual double getFps();
+	  virtual int getNumFrames();
+	  virtual ffmpeg::AVRational getTimeBase();
 	  virtual int getNumFrameByTime(int tsms);
 
 
-      virtual bool isOk();
+	  virtual bool isOk();
 };
 
 #endif // __QVIDEODECODER_H
