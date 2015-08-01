@@ -13,13 +13,11 @@
 */
 PlayerWidget::PlayerWidget(
 	QWidget *parent, 
-	QWidget *mainwin, 
-	const int numPreviews
-) : QWidget(parent)
+	QWidget *mainwin,
+	ImagesBuffer *buff
+) : QWidget(parent), _bmng(buff)
 {
 	playState = false;
-
-	_bmng = new ImagesBuffer(numPreviews);
 
 	playbackTimer = new QTimer(this);
 	connect(playbackTimer, SIGNAL(timeout()), this, SLOT(updateFrame()));

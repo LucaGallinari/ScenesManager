@@ -10,7 +10,7 @@
 #include <QWidget>
 
 #include "PlayerWidget.h"
-#include "QVideoDecoder.h"
+#include "PreviewsWidget.h"
 
 namespace Ui {
 	class MainWindow;
@@ -24,8 +24,9 @@ public:
 	~MainWindow();
 
 protected:
-	QVideoDecoder decoder;
-	PlayerWidget *player;
+	PlayerWidget *_playerWidg;
+	PreviewsWidget *_prevWidg;
+	ImagesBuffer *_bmng;
 
 	void changeEvent(QEvent *e);
 	void resizeEvent(QResizeEvent *e);
@@ -65,8 +66,6 @@ private slots:
 	void on_videoSlider_actionTriggered(int action);
 	void on_videoSlider_sliderReleased();
 
-signals:
-	void frameChanged();
 };
 
 #endif // MAINWINDOW_H

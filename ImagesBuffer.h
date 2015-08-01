@@ -7,8 +7,8 @@
 
 struct Frame {
 	QPixmap img;
-	int num = - 1;
-	qint64 time = - 1;
+	int num = -1;
+	qint64 time = -1;
 };
 
 class ImagesBuffer
@@ -52,7 +52,7 @@ public:
 	bool loadVideo(const QString fileName);
 
 	//  Getters
-	void getImagesBuffer(std::vector<Frame> &v);
+	void getImagesBuffer(std::vector<Frame> &v, const int num = 0);
 	bool   isVideoLoaded();
 	const int isFrameLoaded(const qint64 num);
 
@@ -60,6 +60,7 @@ public:
 	int	   getFrameMs();
 	qint64 getNumFrames();
 	qint64 getVideoLengthMs();
+	bool   getDimensions(double &ratio, int *w=0, int *h=0);
 
 	bool   getMidFrame(QPixmap &p);
 	qint64 getMidFrameNumber();

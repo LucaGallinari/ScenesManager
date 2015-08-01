@@ -1,15 +1,13 @@
 /*
 
 	ISSUE TODO:
-		- (MED)  mkv seek ms not working properly
+		- (HARD)  mkv not working properly
 
 */
 
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QMessageBox>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -22,14 +20,17 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->setupUi(this);
 	qDebug() << "Starting up";
 
-	//TODO: parameter num previews
-	player = new PlayerWidget(0, this, 6);
+	//TODO: set this dynamically
+	int numPrev = 6;
+	_bmng = new ImagesBuffer(numPrev);
+	_prevWidg = new PreviewsWidget(0, _bmng);
+	_playerWidg = new PlayerWidget(0, this, _bmng);
+
+	ui->previewsLayout->addWidget(_prevWidg);
 
 	sliderPageStep = ui->videoSlider->pageStep();
 	sliderMaxVal = ui->videoSlider->maximum() + 1;
 	ui->labelVideoFrame->setMinimumSize(1,1);
-
-	connect(this, SIGNAL(frameChanged()), this, SLOT(updateSlider()));
 
 	initializeIcons();
 }
@@ -54,7 +55,8 @@ void MainWindow::changeEvent(QEvent *e)
 void MainWindow::resizeEvent(QResizeEvent *e)
 {
 	QMainWindow::resizeEvent(e);
-	player->reloadFrame();
+	_playerWidg->reloadFrame();
+	_prevWidg->reloadLayout();
 }
 
 /*! \brief initialize player icons.
@@ -74,7 +76,7 @@ void MainWindow::initializeIcons(){
 
 void MainWindow::updateSlider()
 {
-	ui->videoSlider->setValue(round(player->currentTimePercentage() * sliderMaxVal));
+	ui->videoSlider->setValue(round(_playerWidg->currentTimePercentage() * sliderMaxVal));
 }
 
 void MainWindow::changePlayPause(bool playState)
@@ -141,7 +143,8 @@ void MainWindow::on_actionLoad_video_triggered()
 	if (!fileName.isNull())
 	{
 		ui->videoSlider->setValue(0);
-		player->loadVideo(fileName);
+		_playerWidg->loadVideo(fileName);
+		_prevWidg->setupPreviews();
 	}
 }
 
@@ -152,23 +155,25 @@ void MainWindow::on_actionLoad_video_triggered()
 
 void MainWindow::on_nextFrameBtn_clicked()
 {
-	if (player->isVideoPlaying())
+	if (_playerWidg->isVideoPlaying())
 		return;
-	player->nextFrame();
-	emit frameChanged();
+	_playerWidg->nextFrame();
+	updateSlider();
+	_prevWidg->reloadAndDrawPreviews();
 }
 
 void MainWindow::on_prevFrameBtn_clicked()
 {
-	if (player->isVideoPlaying())
+	if (_playerWidg->isVideoPlaying())
 		return;
-	player->prevFrame();
-	emit frameChanged();
+	_playerWidg->prevFrame();
+	updateSlider();
+	_prevWidg->reloadAndDrawPreviews();
 }
 
 void MainWindow::on_seekFrameBtn_clicked()
 {
-	if (!player->isVideoLoaded() || player->isVideoPlaying())
+	if (!_playerWidg->isVideoLoaded() || _playerWidg->isVideoPlaying())
 		return;
 
 	// Ask for the frame number
@@ -176,7 +181,7 @@ void MainWindow::on_seekFrameBtn_clicked()
 	int frameNum = QInputDialog::getInt(
 		this,
 		tr("Seek to frame"), tr("Frame number:"),
-		0, 0, player->getNumFrames() - 1, 1,
+		0, 0, _playerWidg->getNumFrames() - 1, 1,
 		&ok
 	);
 
@@ -185,18 +190,22 @@ void MainWindow::on_seekFrameBtn_clicked()
 		return;
 	}
 
-	player->seekToFrame(frameNum);
-	emit frameChanged();
+	_playerWidg->seekToFrame(frameNum);
+	updateSlider();
+	_prevWidg->reloadAndDrawPreviews();
 }
 
 void MainWindow::on_playPauseBtn_clicked()
 {
-	player->playPause();
+	_playerWidg->playPause();
+	if (!_playerWidg->isVideoPlaying()) {
+		_prevWidg->reloadAndDrawPreviews();
+	}
 }
 
 void MainWindow::on_stopBtn_clicked()
 {
-	player->stopVideo(true);
+	_playerWidg->stopVideo(true);
 }
 
 
@@ -208,7 +217,7 @@ void MainWindow::on_videoSlider_actionTriggered(int action)
 {
 	// if siongle step page actions
 	if (action==3 || action==4) {
-		if (!player->isVideoLoaded()) {
+		if (!_playerWidg->isVideoLoaded()) {
 			ui->videoSlider->setValue(0);
 			return;
 		}
@@ -216,15 +225,17 @@ void MainWindow::on_videoSlider_actionTriggered(int action)
 		int val = ui->videoSlider->value() + (action==3 ? 1 : -1) * sliderPageStep;
 		if (val >= sliderMaxVal)
 			val = sliderMaxVal - 1;
-		player->seekToTimePercentage(val / (double) sliderMaxVal);
+		_playerWidg->seekToTimePercentage(val / (double)sliderMaxVal);
+		_prevWidg->reloadAndDrawPreviews();
 	}
 }
 
 void MainWindow::on_videoSlider_sliderReleased()
 {
-	if (!player->isVideoLoaded()) {
+	if (!_playerWidg->isVideoLoaded()) {
 		ui->videoSlider->setValue(0);
 		return;
 	}
-	player->seekToTimePercentage(ui->videoSlider->value() / (double) sliderMaxVal);
+	_playerWidg->seekToTimePercentage(ui->videoSlider->value() / (double)sliderMaxVal);
+	_prevWidg->reloadAndDrawPreviews();
 }

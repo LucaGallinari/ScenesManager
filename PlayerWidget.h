@@ -28,8 +28,8 @@ private:
 public:
 	explicit PlayerWidget(
 		QWidget *parent = 0, 
-		QWidget *mainwin = 0, 
-		const int numPreviews = 1
+		QWidget *mainwin = 0,
+		ImagesBuffer *buff = 0
 	);
 	~PlayerWidget();
 	

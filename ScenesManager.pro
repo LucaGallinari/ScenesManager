@@ -9,12 +9,16 @@ TEMPLATE = app
 SOURCES +=  main.cpp \
             mainwindow.cpp \
             QVideoDecoder.cpp \
-    PlayerWidget.cpp
+            PlayerWidget.cpp \
+            ImagesBuffer.cpp \
+            PreviewsWidget.cpp
 
 HEADERS +=  mainwindow.h \
             QVideoDecoder.h \
             ffmpeg.h \
-    PlayerWidget.h
+            PlayerWidget.h \
+            ImagesBuffer.h \
+            PreviewsWidget.h
 
 FORMS += mainwindow.ui
 RESOURCES += resource.qrc \

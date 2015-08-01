@@ -286,7 +286,6 @@ bool ImagesBuffer::seekToTimePercentage(const double perc)
 */
 const int ImagesBuffer::isFrameLoaded(const qint64 num) 
 {
-	//TODO: we can use a number reference to one single frame?
 	for (int i = 0; i < _buffer.size(); ++i) {
 		if (_buffer[i].num == num) {
 			return i;
@@ -367,10 +366,20 @@ bool ImagesBuffer::loadVideo(const QString fileName)
 *
 *   Retrieve images buffer
 *	@param v where Frames will be stored
+*	@param num number of elements to retrieve
 */
-void ImagesBuffer::getImagesBuffer(std::vector<Frame> &v)
+void ImagesBuffer::getImagesBuffer(std::vector<Frame> &v, const int num)
 {
-	v = _buffer;
+	// num not specified or _buffer not enough big
+	if (num == 0 || num >= _buffer.size())  { // copy the whole buffer
+		v = _buffer;
+	}
+	else { // copy just some elements
+		int _startIndex = _mid - ((num - 1) / 2);
+		for (int i = 0; i < num; ++i) {
+			v.push_back(_buffer[_startIndex + i]);
+		}
+	}
 }
 
 /*! \brief a video was loaded?
@@ -450,4 +459,28 @@ qint64 ImagesBuffer::getMidFrameTime() {
 	if (_buffer.size() != 0)
 		return _buffer[_mid].time;
 	return -1;
+}
+
+
+/*! \brief Get frame's dimensions
+*
+*	Retrieve information about frame's dimensions
+*	@param ratio frame's ratio as width / height
+*	@param w frame's width
+*	@param h frame's height
+*	@return success or not
+*/
+bool ImagesBuffer::getDimensions(double &ratio, int *w, int *h) 
+{
+	if (!isVideoLoaded() || _buffer.size()==0)
+		return false;
+
+	int wi = _buffer[_mid].img.width();
+	int he = _buffer[_mid].img.height();
+	ratio = wi / (double) he;
+	if (w)
+		*w = wi;
+	if (h)
+		*h = he;
+	return true;
 }
