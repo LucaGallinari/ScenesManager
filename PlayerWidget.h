@@ -61,6 +61,7 @@ private slots:
 
 signals:
 	void frameChanged();
+	void endOfStream();
 	void newFrame(QPixmap img);
 	void timeChanged(qint64 ms);
 	void playPauseToggle(bool playState);

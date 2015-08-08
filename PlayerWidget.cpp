@@ -27,6 +27,7 @@ PlayerWidget::PlayerWidget(
 	connect(this, SIGNAL(timeChanged(qint64)), mainwin, SLOT(updateTime(qint64)));
 	connect(this, SIGNAL(playPauseToggle(bool)), mainwin, SLOT(changePlayPause(bool)));
 	connect(this, SIGNAL(frameChanged()), mainwin, SLOT(updateSlider()));
+	connect(this, SIGNAL(endOfStream()), mainwin, SLOT(endOfStream()));
 }
 
 PlayerWidget::~PlayerWidget()
@@ -61,7 +62,7 @@ void PlayerWidget::updateFrame()
 {
 	if (!nextFrame()) {
 		stopVideo(false);
-		return;
+		emit endOfStream();
 	}
 	emit frameChanged();
 }
@@ -92,12 +93,13 @@ void PlayerWidget::reloadFrame()
 *	@see prevFrame()
 */
 bool PlayerWidget::nextFrame(){
-	if (!_bmng->seekNextFrame()) {
-		QMessageBox::critical(NULL, "Error", "seekNextFrame failed");
-		return false;
+	bool ok;
+	if (!(ok = _bmng->seekNextFrame())) {
+		// end of stream?
+		QMessageBox::critical(NULL, "Error", "End of stream");
 	}
 	displayFrame();
-	return true;
+	return ok;
 }
 
 /*! \brief displays previous frame.

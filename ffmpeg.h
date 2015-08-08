@@ -1,7 +1,7 @@
 /*
    QTFFmpegWrapper Demo
    Copyright (C) 2009,2010:
-         Daniel Roggen, droggen@gmail.com
+		 Daniel Roggen, droggen@gmail.com
 
    All rights reserved.
 
@@ -33,15 +33,15 @@
 namespace ffmpeg {
 	extern "C" {
 
-        #include "libavcodec/avcodec.h"
-        //#include "libavformat/avio.h"
-        #include "libavformat/avformat.h"
-        //#include "libavutil/mathematics.h"
-        #include "libavutil/rational.h"
+		#include "libavcodec/avcodec.h"
+		//#include "libavformat/avio.h"
+		#include "libavformat/avformat.h"
+		//#include "libavutil/mathematics.h"
+		#include "libavutil/rational.h"
 		//#include "libavutil/avutil.h"
-        //#include "libavutil/avstring.h"
-        //#include "libavutil/dict.h"
-        #include "libswscale/swscale.h"
+		//#include "libavutil/avstring.h"
+		//#include "libavutil/dict.h"
+		#include "libswscale/swscale.h"
 	}
 }
 

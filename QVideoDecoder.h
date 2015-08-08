@@ -25,82 +25,98 @@
 	SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef __QVIDEODECODER_H
-#define __QVIDEODECODER_H
+#ifndef QVIDEODECODER_H
+#define QVIDEODECODER_H
 
 #include <QIODevice>
-#include <QFile>
 #include <QImage>
 #include <QDebug>
 
 #include "ffmpeg.h"
 
-#define EPS_ZERO 0.000025	// epsilon for checking unsual results as taken from OpenCV FFmeg player
-
 class QVideoDecoder
 {
-   protected:
-	  // Basic FFmpeg stuff
-	  ffmpeg::AVFormatContext *pFormatCtx;
-	  int videoStream;
-	  ffmpeg::AVCodecContext  *pCodecCtx;
-	  ffmpeg::AVCodec         *pCodec;
-	  ffmpeg::AVFrame         *pFrame;
-	  ffmpeg::AVFrame         *pFrameRGB;
-	  ffmpeg::AVPacket        packet;
-	  ffmpeg::SwsContext      *img_convert_ctx;
-	  uint8_t                 *buffer;
-	  int                     numBytes;
+	protected:
+		// Basic FFmpeg stuff
+		ffmpeg::AVFormatContext	*pFormatCtx;
+		ffmpeg::AVCodecContext	*pCodecCtx;
+		ffmpeg::AVCodec			*pCodec;
+		ffmpeg::AVFrame			*pFrame;
+		ffmpeg::AVFrame			*pFrameRGB;
+		ffmpeg::AVPacket		packet;
+		ffmpeg::SwsContext		*img_convert_ctx;
+		uint8_t					*buffer;
+		int						videoStream; // index of the video stream
+		int						numBytes;
 
-	  // State infos for the wrapper
-	  bool ok;
-	  QImage LastFrame;
-	  int LastFrameTime,LastLastFrameTime,LastLastFrameNumber,LastFrameNumber;
-	  int DesiredFrameTime,DesiredFrameNumber;
-	  bool LastFrameOk;                // Set upon start or after a seek we don't have a frame yet
+		// Video informations
+		QString					type; // format type
+		int						w; // frame width
+		int						h; // framw height
+		qint64					duration; // video duration
+		qint64					startTs; // first real frame ts
+		qint64					firstDts; // dts of first packet, can differ from startTs
 
-	  // Initialization functions
-	  virtual bool initCodec();
-	  virtual void InitVars();
+		double					baseFrameRate; // fps
+		double					frameMSec; // ms of each frame
+		double					timeBase; // base time reference
+		ffmpeg::AVRational		timeBaseRat;
+		ffmpeg::AVRational		millisecondbase; // wanted base time reference
 
-	  // Helpers
-	  virtual void dumpFormat(ffmpeg::AVFormatContext *ic,int index,const char *url,int is_output);
-	  virtual void saveFramePPM(ffmpeg::AVFrame *pFrame, int width, int height, int iFrame);
+		// State infos
+		bool ok;
+		bool LastFrameOk; // last frame is valid
+		QImage LastFrame;
+		qint64 LastFrameNumber, LastFrameTime, LastIdealFrameNumber;
+		qint64 LastLastFrameNumber, LastLastFrameTime;
 
-	  // Seek
-	  virtual bool decodeSeekFrame(int after);
+		// Initialization functions
+		virtual void initCodec();
+		virtual void InitVars();
 
-	  // Play and pause
-	  bool	playing; // false = paused
-	  int	frameRate;
+		// Seek
+		virtual bool decodeSeekFrame(const qint64 idealFrameNumber);
+		virtual bool correctSeekToKeyFrame(const qint64 idealFrameNumber);
 
-   public:
-	  // Public interface
-	  QVideoDecoder();
-	  QVideoDecoder(QString file);
-	  virtual ~QVideoDecoder();
+		// Helpers
+		virtual void dumpFormat(const char *url, const int is_output);
+		virtual void saveFramePPM(const ffmpeg::AVFrame *pFrame, const int width, const int height, const int iFrame);
 
-	  virtual bool openFile(QString file);
-	  virtual void close();
+	public:
+		// Public interface
+		QVideoDecoder();
+		QVideoDecoder(const QString file);
+		virtual ~QVideoDecoder();
 
-	  virtual bool getFrame(QImage&img,int *effectiveframenumber=0,int *effectiveframetime=0,int *desiredframenumber=0,int *desiredframetime=0);
-	  virtual bool seekNextFrame();
-	  virtual bool seekPrevFrame();
-	  virtual bool seekMs(int ts);
-	  virtual bool seekFrame(int64_t frame);
-	  virtual bool seekToAndGetFrame(int64_t frame, QImage&img);
-	  virtual int getVideoLengthMs();
+		virtual bool openFile(const QString file);
+		virtual void close();
 
-	  virtual int getFrameNumber();
-	  virtual int getFrameTime();
+		virtual bool getFrame(QImage&img, qint64 *frameNum = 0, qint64 *frameTime = 0);
+		virtual bool seekNextFrame();
+		virtual bool seekPrevFrame();
+		virtual bool seekMs(const qint64 ts);
+		virtual bool seekFrame(const qint64 frame);
+		virtual bool seekToAndGetFrame(
+			const qint64 idealFrameNumber, 
+			QImage &img, 
+			qint64 *frameNum = 0, 
+			qint64 *frameTime = 0
+		);
 
-	  virtual double getFps();
-	  virtual int getNumFrames();
-	  virtual ffmpeg::AVRational getTimeBase();
-	  virtual int getNumFrameByTime(int tsms);
+		// Getters
+		virtual qint64 getActualFrameNumber();
+		virtual qint64 getIdealFrameNumber();
+		virtual qint64 getFrameTime();
 
+		virtual bool isOk();
+		virtual qint64 getVideoLengthMs();
+		virtual double getFps();
+		virtual qint64 getNumFrames();
+		virtual double getTimeBase();
+		virtual ffmpeg::AVRational getTimeBaseRat();
 
-	  virtual bool isOk();
+		virtual qint64 getNumFrameByTime(const qint64 tsms);
+
 };
 
-#endif // __QVIDEODECODER_H
+#endif // QVIDEODECODER_H

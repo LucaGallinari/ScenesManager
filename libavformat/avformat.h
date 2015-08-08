@@ -892,7 +892,7 @@ typedef struct AVStream {
      */
     int64_t duration;
 
-    int64_t nb_frames;                 ///< number of frames in this stream if known or 0
+	int64_t nb_frames;                 ///< number of frames in this stream if known or 0
 
     int disposition; /**< AV_DISPOSITION_* bit field */
 

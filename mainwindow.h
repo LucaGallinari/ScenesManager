@@ -49,6 +49,7 @@ public slots:
 	void updateFrame(QPixmap p);
 	void updateTime(qint64 time); //ms
 	void changePlayPause(bool playState);
+	void endOfStream();
 
 private slots:
 	//  Video

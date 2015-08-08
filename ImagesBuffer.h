@@ -7,8 +7,9 @@
 
 struct Frame {
 	QPixmap img;
-	int num = -1;
-	qint64 time = -1;
+	int num = -1;		// absolute frame number
+	qint64 time = -1;	// 
+	qint64 pts;			// decoder presentation timestamp
 };
 
 class ImagesBuffer
@@ -17,8 +18,8 @@ class ImagesBuffer
 	QVideoDecoder decoder;
 
 	std::vector<Frame> _buffer;	// Frame array
-	int _maxsize;
-	int _mid;					// mid element index
+	unsigned _maxsize;
+	unsigned _mid;					// mid element index
 
 	//	Help variables
 	double	fps;				// frame per second
@@ -37,7 +38,7 @@ class ImagesBuffer
 
 public:	
 
-	ImagesBuffer(const int maxsize);
+	ImagesBuffer(const unsigned maxsize);
 	~ImagesBuffer();
 
 	//  Frame actions

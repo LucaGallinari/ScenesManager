@@ -26,423 +26,609 @@
 */
 
 #include "QVideoDecoder.h"
-#include <limits.h>
+
 #include <stdint.h>
 
 
-/******************************************************************************
-*******************************************************************************
-* QVideoDecoder   QVideoDecoder   QVideoDecoder   QVideoDecoder   QVideoDecoder
-*******************************************************************************
-******************************************************************************/
-
-/******************************************************************************
-* PUBLIC   PUBLIC   PUBLIC   PUBLIC   PUBLIC   PUBLIC   PUBLIC   PUBLIC   PUBLIC
-******************************************************************************/
-
-
-/**
-   \brief Constructor - opens a video on later openFile call
-**/
+/*! \brief TODO
+*
+*   Constructor
+*/
 QVideoDecoder::QVideoDecoder()
 {
-   InitVars();
-   initCodec();
+	InitVars();
+	initCodec();
 }
-/**
-   \brief Constructor - opens directly a video
-**/
-QVideoDecoder::QVideoDecoder(QString file)
+/*! \brief TODO
+*
+*   Constructor
+*/
+QVideoDecoder::QVideoDecoder(const QString file)
 {
-   InitVars();
-   initCodec();
+	InitVars();
+	initCodec();
 
-   ok = openFile(file.toStdString().c_str());
+	ok = openFile(file.toStdString().c_str());
 }
 
+/*! \brief Destroyer
+*
+*   Destroyer
+*/
 QVideoDecoder::~QVideoDecoder()
 {
-   close();
+	close();
+	InitVars();
 }
 
+/*! \brief Codec initialization
+*
+*   Codec initialization
+*/
+void QVideoDecoder::initCodec()
+{
+	ffmpeg::avcodec_register_all();
+	ffmpeg::av_register_all();
+
+	qDebug() << "License: " << ffmpeg::avformat_license();
+	qDebug() << "AVCodec version: " << ffmpeg::avformat_version();
+	qDebug() << "AVFormat configuration: " << ffmpeg::avformat_configuration();
+}
+
+/*! \brief Variables initialization
+*
+*   Variables initialization
+*/
 void QVideoDecoder::InitVars()
 {
-   ok=false;
-   pFormatCtx=0;
-   pCodecCtx=0;
-   pCodec=0;
-   pFrame=0;
-   pFrameRGB=0;
-   buffer=0;
-   img_convert_ctx=0;
-
-   // play pause
-   playing = false;
-   frameRate = 30;
+	ok=false;
+	pFormatCtx=0;
+	pCodecCtx=0;
+	pCodec=0;
+	pFrame=0;
+	pFrameRGB=0;
+	buffer=0;
+	img_convert_ctx=0;
+	millisecondbase = { 1, 1000 };
 }
 
+/*! \brief Close the file and reset all variables
+*
+*   Close the file and reset all variables
+*/
 void QVideoDecoder::close()
 {
-   if(!ok)
-	  return;
+	if(!ok)
+		return;
 
-   // Free the RGB image
-   if(buffer)
-	  delete [] buffer;
+	// Free the RGB image
+	if(buffer)
+		delete [] buffer;
 
-   // Free the YUV frame
-   if(pFrame)
-	  av_free(pFrame);
+	// Free the YUV frame
+	if(pFrame)
+		av_free(pFrame);
 
-   // Free the RGB frame
-   if(pFrameRGB)
-	  av_free(pFrameRGB);
+	// Free the RGB frame
+	if(pFrameRGB)
+		av_free(pFrameRGB);
 
-   // Close the codec
-   if(pCodecCtx)
-	  avcodec_close(pCodecCtx);
+	// Close the codec
+	if(pCodecCtx)
+		avcodec_close(pCodecCtx);
 
-   // Close the video file
-   if(pFormatCtx)
-	   avformat_close_input(&pFormatCtx);
-
-   InitVars();
+	// Close the video file
+	if(pFormatCtx)
+		avformat_close_input(&pFormatCtx);
 }
 
 
-bool QVideoDecoder::initCodec()
+/*! \brief Open a file and setup all variables
+*
+*   Open a file and setup all variables
+*	@param filename path of the file to open
+*	@ret success or not
+*/
+bool QVideoDecoder::openFile(const QString filename)
 {
-   //ffmpeg::avcodec_init();  called automatically from av_register_all()
-   ffmpeg::avcodec_register_all();
-   ffmpeg::av_register_all();
+	// Close last video..
+	close();
 
-   qDebug() << "License: " << ffmpeg::avformat_license();
-   qDebug() << "AVCodec version: " << ffmpeg::avformat_version();
-   qDebug() << "AVFormat configuration: " << ffmpeg::avformat_configuration();
+	LastLastFrameTime = INT_MIN;       // Last last must be small to handle the seek well
+	LastFrameTime = 0;
+	LastLastFrameNumber = INT_MIN;
+	LastFrameNumber = 0;
+	LastIdealFrameNumber = 0;
+	LastFrameOk = false;
 
-   return true;
+	// Open video file
+	if(avformat_open_input(&pFormatCtx, filename.toStdString().c_str(), NULL, NULL)!=0)
+		return false; // Couldn't open file
+
+	// Retrieve stream information
+	if(avformat_find_stream_info(pFormatCtx, NULL)<0)
+		return false; // Couldn't find stream information
+
+	// Dump information about file onto standard error
+	av_dump_format(pFormatCtx, 0, filename.toStdString().c_str(), false);
+
+	// Find the first video stream
+	videoStream=-1;
+	for(unsigned i=0; i<pFormatCtx->nb_streams; i++)
+		if(pFormatCtx->streams[i]->codec->codec_type==ffmpeg::AVMEDIA_TYPE_VIDEO)
+		{
+			videoStream=i;
+			break;
+		}
+	if(videoStream==-1)
+		return false; // Didn't find a video stream
+
+	// Get a pointer to the codec context for the video stream
+	pCodecCtx=pFormatCtx->streams[videoStream]->codec;
+
+	// Find the decoder for the video stream
+	pCodec=avcodec_find_decoder(pCodecCtx->codec_id);
+	if(pCodec==NULL)
+		return false; // Codec not found
+
+	// Open codec
+	if(avcodec_open2(pCodecCtx, pCodec, NULL)<0)
+		return false; // Could not open codec
+
+	// Hack to correct wrong frame rates that seem to be generated by some
+	// codecs
+	if(pCodecCtx->time_base.num>1000 && pCodecCtx->time_base.den==1)
+		pCodecCtx->time_base.den=1000;
+
+	// Allocate video frame
+	pFrame=ffmpeg::avcodec_alloc_frame();
+
+	// Allocate an AVFrame structure
+	pFrameRGB=ffmpeg::avcodec_alloc_frame();
+	if(pFrameRGB==NULL)
+		return false;
+
+	// Determine required buffer size and allocate buffer
+	numBytes=ffmpeg::avpicture_get_size(ffmpeg::PIX_FMT_RGB24, pCodecCtx->width,pCodecCtx->height);
+	buffer=new uint8_t[numBytes];
+
+	// Assign appropriate parts of buffer to image planes in pFrameRGB
+	avpicture_fill((ffmpeg::AVPicture *)pFrameRGB, buffer, ffmpeg::PIX_FMT_RGB24,
+		pCodecCtx->width, pCodecCtx->height);
+
+	// Set variables
+	type = QString(pFormatCtx->iformat->name);
+	duration = pFormatCtx->duration;
+	baseFrameRate = av_q2d(pFormatCtx->streams[videoStream]->r_frame_rate);
+	frameMSec = 1000 / baseFrameRate;
+	timeBaseRat = pFormatCtx->streams[videoStream]->time_base;
+	timeBase = av_q2d(timeBaseRat);
+	w = pCodecCtx->width;
+	h = pCodecCtx->height;
+	
+	// if (type=="mpeg") {
+	firstDts = pFormatCtx->streams[videoStream]->first_dts;
+	if (firstDts == AV_NOPTS_VALUE) 
+		firstDts = 0;
+	startTs = pFormatCtx->streams[videoStream]->start_time;
+	if (startTs == AV_NOPTS_VALUE)
+		firstDts = 0;
+	//}
+	
+
+	ok=true;
+
+	dumpFormat(filename.toStdString().c_str(), 0);
+
+	return true;
 }
 
-bool QVideoDecoder::openFile(QString filename)
+
+/*! \brief Seek the given frame and decode it
+*
+*   Decodes the video stream until the first frame with number larger or equal 
+*	than 'idealFrameNumber' is found.
+*	TODO: if we already passed the wanted frame number?
+*	@param idealFrameNumber desired frame number
+*	@ret success or not
+*/
+bool QVideoDecoder::decodeSeekFrame (const qint64 idealFrameNumber)
 {
-   // Close last video..
-   close();
+	if (!ok)
+		return false;
 
-   LastLastFrameTime=INT_MIN;       // Last last must be small to handle the seek well
-   LastFrameTime=0;
-   LastLastFrameNumber=INT_MIN;
-   LastFrameNumber=0;
-   DesiredFrameTime=DesiredFrameNumber=0;
-   LastFrameOk=false;
+	qint64 f, t;
+	bool done = false;
 
+	// If the last decoded frame satisfies the time condition we return it
+	if (
+		idealFrameNumber != -1 &&
+		(LastFrameOk == true && idealFrameNumber >= LastLastFrameNumber && idealFrameNumber <= LastFrameNumber)
+	) {
+		return true;
+	}   
 
-   // Open video file
-   if(avformat_open_input(&pFormatCtx, filename.toStdString().c_str(), NULL, NULL)!=0)
-	   return false; // Couldn't open file
+	while (!done) {
 
-   // Retrieve stream information
-   if(avformat_find_stream_info(pFormatCtx, NULL)<0)
-	   return false; // Couldn't find stream information
+		// Read a frame
+		if (av_read_frame(pFormatCtx, &packet)<0)
+			return false;	// end of stream?            
 
-   // Dump information about file onto standard error
-   av_dump_format(pFormatCtx, 0, filename.toStdString().c_str(), false);
+		// Packet of the video stream?
+		if (packet.stream_index==videoStream) {
 
-   // Find the first video stream
-   videoStream=-1;
-   for(unsigned i=0; i<pFormatCtx->nb_streams; i++)
-	   if(pFormatCtx->streams[i]->codec->codec_type==ffmpeg::AVMEDIA_TYPE_VIDEO)
-	   {
-		   videoStream=i;
-		   break;
-	   }
-   if(videoStream==-1)
-	   return false; // Didn't find a video stream
+			int frameFinished;
+			avcodec_decode_video2(pCodecCtx,pFrame,&frameFinished,&packet);
 
-   // Get a pointer to the codec context for the video stream
-   pCodecCtx=pFormatCtx->streams[videoStream]->codec;
+			// Frame is completely decoded?
+			if (frameFinished) {
 
-   // Find the decoder for the video stream
-   pCodec=avcodec_find_decoder(pCodecCtx->codec_id);
-   if(pCodec==NULL)
-	   return false; // Codec not found
+				// Calculate real frame number and time based on the format
+				if (type == "mpeg" || type == "asf") {
+					f = (long)((packet.dts - startTs) * (baseFrameRate*timeBase) + 0.5);
+					t = ffmpeg::av_rescale_q(packet.dts - startTs, timeBaseRat, millisecondbase);
+				}
+				else if (type == "matroska,webm") {
+					t = av_frame_get_best_effort_timestamp(pFrame);
+					f = round(t / frameMSec);
+				}
+				else { // avi
+					f = packet.dts;
+					t = ffmpeg::av_rescale_q(packet.dts, timeBaseRat, millisecondbase);
+				}
 
-   // Open codec
-   if(avcodec_open2(pCodecCtx, pCodec, NULL)<0)
-	   return false; // Could not open codec
+				qDebug() << "f:" << f;
+				qDebug() << "t: " << t;
 
-   // Hack to correct wrong frame rates that seem to be generated by some
-   // codecs
-  if(pCodecCtx->time_base.num>1000 && pCodecCtx->time_base.den==1)
-	 pCodecCtx->time_base.den=1000;
+				if (LastFrameOk) {
+					// If we decoded 2 frames in a row, the last times are okay
+					LastLastFrameTime = LastFrameTime;
+					LastLastFrameNumber = LastFrameNumber;
+					LastFrameTime = t;
+					LastFrameNumber = f;
+				}
+				else {
+					LastFrameOk = true;
+					LastLastFrameTime = LastFrameTime = t;
+					LastLastFrameNumber = LastFrameNumber = f;
+				}
 
-   // Allocate video frame
-   pFrame=ffmpeg::avcodec_alloc_frame();
+				// Is this frame the desired frame?
+				if (idealFrameNumber == -1 || LastFrameNumber >= idealFrameNumber)
+				{
+					qDebug() << "FRAME NUM: " << idealFrameNumber;
+					qDebug() << "dpn: " << pFrame->display_picture_number;
+					qDebug() << "cpn: " << pFrame->coded_picture_number;
+					qDebug() << "dts: " << packet.dts;
+					qDebug() << "pts: " << packet.pts;
+					qDebug() << "dur: " << packet.duration;
+					qDebug() << "pos: " << packet.pos;
+					qDebug() << "best: " << av_frame_get_best_effort_timestamp(pFrame);
+					
+					// Convert and save the frame
+					img_convert_ctx = ffmpeg::sws_getCachedContext(
+						img_convert_ctx, w, h, 
+						pCodecCtx->pix_fmt, w, h, 
+						ffmpeg::PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL
+					);
 
-   // Allocate an AVFrame structure
-   pFrameRGB=ffmpeg::avcodec_alloc_frame();
-   if(pFrameRGB==NULL)
-	   return false;
+					if (img_convert_ctx == NULL) {
+						qDebug() << "Cannot initialize the conversion context!";
+						return false;
+					}
+					ffmpeg::sws_scale(img_convert_ctx, pFrame->data, pFrame->linesize, 0, pCodecCtx->height, pFrameRGB->data, pFrameRGB->linesize);
 
-   // Determine required buffer size and allocate buffer
-   numBytes=ffmpeg::avpicture_get_size(ffmpeg::PIX_FMT_RGB24, pCodecCtx->width,pCodecCtx->height);
-   buffer=new uint8_t[numBytes];
+					LastFrame = QImage(w, h, QImage::Format_RGB888);
 
-   // Assign appropriate parts of buffer to image planes in pFrameRGB
-   avpicture_fill((ffmpeg::AVPicture *)pFrameRGB, buffer, ffmpeg::PIX_FMT_RGB24,
-	   pCodecCtx->width, pCodecCtx->height);
+					for (int y=0; y < h; y++)
+						memcpy(LastFrame.scanLine(y), pFrameRGB->data[0] + y * pFrameRGB->linesize[0], w * 3);
 
-   ok=true;
+					LastFrameOk = true;
+					done = true;
+				} // frame of interest
+			}  // frameFinished
+		}  // stream_index==videoStream
 
-   dumpFormat(pFormatCtx,videoStream,"test video",0);
-
-   return true;
-}
-bool QVideoDecoder::isOk()
-{
-   return ok;
-}
-
-/**
-   Decodes the video stream until the first frame with number larger or equal than 'after' is found.
-
-   Returns:
-   - true if a frame is found, false otherwise.
-   - the image as a QImage if img is non-null
-   - time frame time, if frametime is non-null
-   - the frame number, if framenumber is non-null
-
-   All times are in milliseconds.
-**/
-bool QVideoDecoder::decodeSeekFrame(int after)
-{
-   if(!ok)
-	  return false;
-
-   //qDebug() << "decodeSeekFrame. after: %d. LLT: %d. LT: %d. LLF: %d. LF: %d. LastFrameOk: %d.\n",after,LastLastFrameTime,LastFrameTime,LastLastFrameNumber,LastFrameNumber,(int)LastFrameOk);
-
-
-
-   // If the last decoded frame satisfies the time condition we return it
-   //if( after!=-1 && ( LastDataInvalid==false && after>=LastLastFrameTime && after <= LastFrameTime))
-   if( after!=-1 && ( LastFrameOk==true && after>=LastLastFrameNumber && after <= LastFrameNumber))
-   {
-	  // This is the frame we want to return
-
-	  // Compute desired frame time
-	  ffmpeg::AVRational millisecondbase = {1, 1000};
-	  DesiredFrameTime = ffmpeg::av_rescale_q(after,getTimeBase(),millisecondbase);
-	  //DesiredFrameTime = ffmpeg::av_rescale_q(after,pFormatCtx->streams[videoStream]->time_base,millisecondbase);
-
-	  //qDebug() << "Returning already available frame %d @ %d. DesiredFrameTime: %d\n",LastFrameNumber,LastFrameTime,DesiredFrameTime);
-
-	  return true;
-   }   
-
-   // The last decoded frame wasn't ok; either we need any new frame (after=-1), or a specific new frame with time>after
-
-   bool done=false;
-   while(!done)
-   {
-	  // Read a frame
-	  if(av_read_frame(pFormatCtx, &packet)<0)
-		 return false;                             // Frame read failed (e.g. end of stream)
-
-	  //qDebug() << QString("Packet of stream %1, size %2\n").arg(packet.stream_index).arg(packet.size);
-
-	  if(packet.stream_index==videoStream)
-	  {
-		 // Is this a packet from the video stream -> decode video frame
-
-		 int frameFinished;
-		 avcodec_decode_video2(pCodecCtx,pFrame,&frameFinished,&packet);
-
-		 //qDebug() << QString("used %d out of %d bytes\n", len, packet.size);
-
-		 //qDebug() << "Frame type: ";
-		 /*
-		 if (pFrame->pict_type == AV_PICTURE_TYPE_B)
-			qDebug() << "B\n";
-		 else if (pFrame->pict_type == AV_PICTURE_TYPE_I)
-			qDebug() << "I\n";
-		 else
-			qDebug() << "P\n";
-		 */
-
-		 //qDebug() << QString("codecctx time base: num: %1 den: %2\n").arg(pCodecCtx->time_base.num).arg(pCodecCtx->time_base.den);
-		 //qDebug() << QString("formatctx time base: num: %1 den: %2\n").arg(pFormatCtx->streams[videoStream]->time_base.num).arg(pFormatCtx->streams[videoStream]->time_base.den);
-
-		 // Did we get a video frame?
-		 if(frameFinished)
-		 {
-			ffmpeg::AVRational millisecondbase = {1, 1000};
-			int f = after;
-			//int f = packet.dts;
-			ffmpeg::AVRational rat = getTimeBase();
-			//qDebug() << "rat: " << av_q2d(rat);
-			int t = ffmpeg::av_rescale_q(after, rat, millisecondbase);
-			//int t = ffmpeg::av_rescale_q(packet.dts, pFormatCtx->streams[videoStream]->time_base, millisecondbase);
-			if(LastFrameOk==false)
-			{
-			   LastFrameOk=true;
-			   LastLastFrameTime=LastFrameTime=t;
-			   LastLastFrameNumber=LastFrameNumber=f;
-			}
-			else
-			{
-			   // If we decoded 2 frames in a row, the last times are okay
-			   LastLastFrameTime = LastFrameTime;
-			   LastLastFrameNumber = LastFrameNumber;
-			   LastFrameTime=t;
-			   LastFrameNumber=f;
-			}
-
-			// Is this frame the desired frame?
-			if(after==-1 || LastFrameNumber>=after)
-			{
-				//qDebug() << QString("Frame %1 @ %2. LastLastT: %3. LastLastF: %4. LastFrameOk: %5").arg((int)LastFrameNumber).arg(LastFrameTime).arg(LastLastFrameTime).arg(LastLastFrameNumber).arg((int)LastFrameOk);
-			   // It's the desired frame
-
-			   // Convert the image format (init the context the first time)
-			   int w = pCodecCtx->width;
-			   int h = pCodecCtx->height;
-			   img_convert_ctx = ffmpeg::sws_getCachedContext(img_convert_ctx,w, h, pCodecCtx->pix_fmt, w, h, ffmpeg::PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL);
-
-			   if(img_convert_ctx == NULL)
-			   {
-				  qDebug() << "Cannot initialize the conversion context!";
-				  return false;
-			   }
-			   ffmpeg::sws_scale(img_convert_ctx, pFrame->data, pFrame->linesize, 0, pCodecCtx->height, pFrameRGB->data, pFrameRGB->linesize);
-
-			   // Convert the frame to QImage
-			   LastFrame=QImage(w,h,QImage::Format_RGB888);
-
-			   for(int y=0;y<h;y++)
-				  memcpy(LastFrame.scanLine(y),pFrameRGB->data[0]+y*pFrameRGB->linesize[0],w*3);
-
-			   // Set the time
-			   DesiredFrameTime = ffmpeg::av_rescale_q(after,getTimeBase(),millisecondbase);
-			   // DesiredFrameTime = ffmpeg::av_rescale_q(after,pFormatCtx->streams[videoStream]->time_base,millisecondbase);
-			   LastFrameOk=true;
-
-
-			   done = true;
-
-			} // frame of interest
-		 }  // frameFinished
-	  }  // stream_index==videoStream
-	  av_free_packet(&packet);      // Free the packet that was allocated by av_read_frame
-   }
-   //qDebug() << "Returning new frame %d @ %d. LastLastT: %d. LastLastF: %d. LastFrameOk: %d\n",LastFrameNumber,LastFrameTime,LastLastFrameTime,LastLastFrameNumber,(int)LastFrameOk);
-   //qDebug() << "\n");
-   return done;   // done indicates whether or not we found a frame
+		av_free_packet(&packet);
+	}
+	return done;
 }
 
-/**
-   \brief Decodes the next frame in the video stream
-**/
+/*! \brief Seek the next frame
+*
+*   Seek the next frame.
+*	@return success or not
+*   @see seekFrame()
+*   @see seekPrevFrame()
+*/
 bool QVideoDecoder::seekNextFrame()
 {
-   bool ret = decodeSeekFrame(DesiredFrameNumber+1);
+	bool ret = decodeSeekFrame(LastIdealFrameNumber + 1);
 
-   if(ret)
-	  DesiredFrameNumber++;   // Only updates the DesiredFrameNumber if we were successful in getting that frame
-   else
-	  LastFrameOk=false;      // We didn't find the next frame (e.g. seek out of range) - mark we don't know where we are.
-   return ret;
-}
-
-
-/**
-\brief Decodes the previous frame in the video stream
-**/
-bool QVideoDecoder::seekPrevFrame()
-{
-	bool ret = seekFrame(DesiredFrameNumber - 1);
-
-	if (!ret)
-		LastFrameOk = false;      // We didn't find the next frame (e.g. seek out of range) - mark we don't know where we are.
+	if (ret)
+		++LastIdealFrameNumber;
+	else
+		LastFrameOk=false;
 	return ret;
 }
 
-/**
-  \brief Seek to millisecond
-**/
-bool QVideoDecoder::seekMs(int tsms)
+/*! \brief Seek the previous frame
+*
+*   Seek the previous frame.
+*	@return success or not
+*   @see seekFrame()
+*   @see seekNextFrame()
+*/
+bool QVideoDecoder::seekPrevFrame()
+{
+	bool ret = seekFrame(LastIdealFrameNumber - 1);
+
+	if (!ret)
+		LastFrameOk = false;      
+	return ret;
+}
+
+/*! \brief Seek the closest frame to the given time
+*
+*   Seek the closest frame to the given time.
+*	@param tsms time in milliseconds
+*	@return success or not
+*   @see seekFrame()
+*/
+bool QVideoDecoder::seekMs(const qint64 tsms)
 {
    if(!ok)
 	  return false;
-
-   //qDebug() << "**** SEEK TO ms %d. LLT: %d. LT: %d. LLF: %d. LF: %d. LastFrameOk: %d\n",tsms,LastLastFrameTime,LastFrameTime,LastLastFrameNumber,LastFrameNumber,(int)LastFrameOk);
-
-   // Convert time into frame number
-   ffmpeg::AVRational rat = getTimeBase();
-   DesiredFrameNumber = ffmpeg::av_rescale(tsms, rat.den, rat.num);
-   DesiredFrameNumber /= 1000;
-
-   return seekFrame(DesiredFrameNumber);
+	return seekFrame((tsms <= 0 ? 0 : round(tsms / frameMSec)));
 }
-/**
-  \brief Seek to frame
-**/
-bool QVideoDecoder::seekFrame(int64_t frame)
+
+/*! \brief Seek the desired frame
+*
+	TODO: case when idelFrameNumber less than 0
+*   Seek and retrieve desired frame by number.
+*	@param idealFrameNumber number of the desired frame
+*	@return success or not
+*   @see seekToAndGetFrame()
+*   @see seekMs()
+*/
+bool QVideoDecoder::seekFrame(const qint64 idealFrameNumber)
 {
+	if (!ok)
+		return false;
 
-   if(!ok)
-	  return false;
+	// no seek needed, go to next frame
+	if (LastIdealFrameNumber + 1 == idealFrameNumber)
+		return seekNextFrame();
+	
+	// have to seek?
+	if ((LastFrameOk == false) || 
+		((LastFrameOk == true) && (idealFrameNumber <= LastLastFrameNumber || idealFrameNumber > LastFrameNumber)))
+	{
+		if (!correctSeekToKeyFrame(idealFrameNumber))
+			return false;
 
-   //qDebug() << "**** seekFrame to %d. LLT: %d. LT: %d. LLF: %d. LF: %d. LastFrameOk: %d\n",(int)frame,LastLastFrameTime,LastFrameTime,LastLastFrameNumber,LastFrameNumber,(int)LastFrameOk);
+		avcodec_flush_buffers(pCodecCtx);
+		LastIdealFrameNumber = idealFrameNumber;
+		LastFrameOk = false;
+	}
 
-   // Seek if:
-   // - we don't know where we are (Ok=false)
-   // - we know where we are but:
-   //    - the desired frame is after the last decoded frame (this could be optimized: 
-   //	   if the distance is small, calling decodeSeekFrame may be faster than seeking 
-   //	   from the last key frame)
-   //    - the desired frame is smaller or equal than the previous to the last decoded 
-   //	   frame. Equal because if frame==LastLastFrameNumber we don't want the LastFrame, 
-   //	   but the one before->we need to seek there
-   if( (LastFrameOk==false) || ((LastFrameOk==true) && (frame<=LastLastFrameNumber || frame>LastFrameNumber) ) )
-   {
-	  //qDebug() << "\t avformat_seek_file\n");
-	  if(ffmpeg::avformat_seek_file(pFormatCtx,videoStream,0,frame,frame,AVSEEK_FLAG_FRAME)<0)
-		 return false;
-
-	  avcodec_flush_buffers(pCodecCtx);
-
-	  DesiredFrameNumber = frame;
-	  LastFrameOk=false;
-   }
-   //qDebug() << "\t decodeSeekFrame\n");
-
-   return decodeSeekFrame(frame);
+	// decode
+	return decodeSeekFrame(idealFrameNumber);
 }
 
-
-
-bool QVideoDecoder::getFrame(QImage&img,int *effectiveframenumber,int *effectiveframetime,int *desiredframenumber,int *desiredframetime)
+/*! \brief Corrects the seeking operation
+*
+*   Corrects the seeking operation to a "key frame" because this varies from 
+*	format and format. This is based on a prediction so we have to add a margin
+*	of error that can allow us to ..TODO
+*	@param idealFrameNumber number of the desired frame
+*	@return success or not
+*   @see seekFrame()
+*/
+bool QVideoDecoder::correctSeekToKeyFrame(const qint64 idealFrameNumber)
 {
-   img = LastFrame;
+	qint64 desiredDts;
+	qint64 startDts = 0;
+	int flag;
 
-   if(effectiveframenumber)
-	  *effectiveframenumber = LastFrameNumber;
-   if(effectiveframetime)
-	  *effectiveframetime = LastFrameTime;
-   if(desiredframenumber)
-	  *desiredframenumber = DesiredFrameNumber;
-   if(desiredframetime)
-	  *desiredframetime = DesiredFrameTime;
+	if (type == "mpeg") { // .mpg
+		// ffmpeg bug?: with H.264 avformat_seek_file often seeks not in a keyframe, 
+		// thus the following avcodec_decode_video2 iterations may go past desiredDts
+		desiredDts = (idealFrameNumber - 0.5 - baseFrameRate) / (baseFrameRate*timeBase) + firstDts;
+		if (desiredDts < firstDts)	desiredDts = firstDts;
+		startDts = -0x7ffffffffffffff;
+		flag = AVSEEK_FLAG_BACKWARD;
+	}
+	else if (type == "asf" || type == "matroska,webm") { // .asf, .mkv
+		desiredDts = idealFrameNumber * frameMSec;
+		flag = AVSEEK_FLAG_BACKWARD;
+	}
+	else { // .avi, .wmv
+		desiredDts = idealFrameNumber;
+		flag = AVSEEK_FLAG_FRAME;
+	}
 
-   //qDebug() << "getFrame. Returning valid? %s. Desired %d @ %d. Effective %d @ %d\n",LastFrameOk?"yes":"no",DesiredFrameNumber,DesiredFrameTime,LastFrameNumber,LastFrameTime);
+	if (ffmpeg::avformat_seek_file(pFormatCtx, videoStream, startDts, desiredDts, desiredDts, flag) < 0)
+		return false;
+	return true;
+}
 
-   return LastFrameOk;
+/*! \brief Seek and retrieve desired frame
+*
+*   Seek and retrieve desired frame by number.
+*	@param idealFrameNumber number of the desired frame
+*	@param img where it stores the frame
+*	@param frameNum where it stores the frame number
+*	@param frameTime where it stores the frame time
+*	@return success or not
+*/
+bool QVideoDecoder::seekToAndGetFrame(const qint64 idealFrameNumber, QImage&img, qint64 *frameNum, qint64 *frameTime)
+{
+	if (!seekFrame(idealFrameNumber))
+		return false;
+	return getFrame(img, frameNum, frameTime);
 }
 
 
-/**
-  \brief Debug function: saves a frame as PPM
-**/
-void QVideoDecoder::saveFramePPM(ffmpeg::AVFrame *pFrame, int width, int height, int iFrame)
+
+/***************************************
+*********        GETTERS      *********
+***************************************/
+
+/*! \brief A file is loaded
+*
+*   A file is loaded
+*	@return video loaded successfully
+*/
+bool QVideoDecoder::isOk()
+{
+	return ok;
+}
+
+/*! \brief Get last loaded frame
+*
+*   Get last loaded frame
+*	@param img where it stores the frame
+*	@param frameNum where it stores the frame number
+*	@param frameTime where it stores the frame time
+*	@return last frame was valid or not
+*/
+bool QVideoDecoder::getFrame(QImage &img, qint64 *frameNum, qint64 *frameTime)
+{
+	img = LastFrame;
+
+	if (frameNum)
+		*frameNum = LastFrameNumber;
+	if (frameTime)
+		*frameTime = LastFrameTime;
+
+	return LastFrameOk;
+}
+
+/*! \brief Get last loaded frame "CODEC number"
+*
+*   Get last loaded frame "CODEC number", "CODEC number" because codecs and
+*	formats use a different type of "number", some uses timestamps and some
+*	normal integers.
+*	@return last loaded frame number
+*/
+qint64 QVideoDecoder::getActualFrameNumber()
+{
+	if (!isOk())
+		return -1;
+	return LastFrameNumber;
+}
+
+/*! \brief Get last loaded frame "IDEAL number"
+*
+*   Get last loaded frame "IDEAL number", "IDEAL number" because codecs and
+*	formats use a different type of "number", some uses timestamps and some
+*	normal integers.
+*	@return last loaded frame number
+*/
+qint64 QVideoDecoder::getIdealFrameNumber()
+{
+	if (!isOk())
+		return -1;
+	return LastIdealFrameNumber;
+}
+
+/*! \brief Get last loaded frame time milliseconds
+*
+*   Get last loaded frame time milliseconds.
+*	@return last loaded frame time
+*/
+qint64 QVideoDecoder::getFrameTime()
+{
+	if (!isOk())
+		return -1;
+	return LastFrameTime;
+}
+
+/*! \brief Get video duration in milliseconds
+*
+*   Get video duration in milliseconds.
+*	@return video length in ms
+*/
+qint64 QVideoDecoder::getVideoLengthMs()
+{
+   if(!isOk())
+	  return -1;
+
+   qint64 secs = pFormatCtx->duration / AV_TIME_BASE;
+   qint64 us = pFormatCtx->duration % AV_TIME_BASE;
+   return secs * 1000 + us / 1000;
+}
+
+/*! \brief Get video frame per second
+*
+*   Get video frame per second.
+*	@return video frame per second
+*/
+double QVideoDecoder::getFps()
+{
+	return baseFrameRate;
+}
+
+/*! \brief Get video time base as AVRational
+*
+*   Get video time base, it's the base time that the container uses
+*	@return video time base
+*/
+ffmpeg::AVRational QVideoDecoder::getTimeBaseRat()
+{
+	return timeBaseRat;
+}
+
+/*! \brief Get video time base as double
+*
+*   Get video time base, it's the base time that the container uses
+*	@return video time base
+*/
+double QVideoDecoder::getTimeBase()
+{
+	return timeBase;
+}
+
+/*! \brief Get number of frames (Not accurate with some formats)
+*
+*   Get number of frames based on video duration and frame rate. Some containers
+*	save a wrong value for duration and so the number of frames could be not so
+*	accurate.
+*	@return number of frams
+*/
+qint64 QVideoDecoder::getNumFrames()
+{
+	return round(getVideoLengthMs() * (baseFrameRate / 1000.0));
+}
+
+/*! \brief Get frame number by time
+*
+*   Get the number of the closest frame to the given time
+*	@return frame number
+*/
+qint64 QVideoDecoder::getNumFrameByTime(const qint64 tsms)
+{
+	if (!ok)
+		return false;
+	if (tsms <= 0)
+		return 0;
+	return round(tsms / frameMSec);
+}
+
+/***************************************
+*********        HELPERS      *********
+***************************************/
+
+/*! \brief Save a frame as PPM image
+*
+*   Save a frame as PPM image. Usefull for debugging.
+*	@param pFrame the frame
+*	@param width frame width
+*	@param height frame height
+*	@param iFrame frame number
+*/
+void QVideoDecoder::saveFramePPM(const ffmpeg::AVFrame *pFrame, const int width, const int height, const int iFrame)
 {
 	FILE *pFile;
 	char szFilename[32];
@@ -450,175 +636,74 @@ void QVideoDecoder::saveFramePPM(ffmpeg::AVFrame *pFrame, int width, int height,
 
 	// Open file
 	sprintf(szFilename, "frame%d.ppm", iFrame);
-	pFile=fopen(szFilename, "wb");
-	if(pFile==NULL)
+	pFile = fopen(szFilename, "wb");
+	if (pFile == NULL)
 		return;
 
 	// Write header
 	fprintf(pFile, "P6\n%d %d\n255\n", width, height);
 
 	// Write pixel data
-	for(y=0; y<height; y++)
-		fwrite(pFrame->data[0]+y*pFrame->linesize[0], 1, width*3, pFile);
+	for (y = 0; y<height; y++)
+		fwrite(pFrame->data[0] + y*pFrame->linesize[0], 1, width * 3, pFile);
 
 	// Close file
 	fclose(pFile);
 }
 
-
-
-void QVideoDecoder::dumpFormat(ffmpeg::AVFormatContext *ic,
-				 int index,
-				 const char *url,
-				 int is_output)
+/*! \brief Output video's informations
+*
+*   Write video's information in the stdout. Usefull for debugging.
+*	@param path file path
+*	@param is_output writing or reading the file?
+*/
+void QVideoDecoder::dumpFormat(const char *path,const int is_output) 
 {
-	//int i;
-	uint8_t *printed = (uint8_t*)ffmpeg::av_mallocz(ic->nb_streams);
-	if (ic->nb_streams && !printed)
-		return;
-
+	qDebug() << (is_output ? "Output" : "Input");
+	qDebug() << "File: " << path;
+	qDebug() << "Stream: " << videoStream;
+	qDebug() << "Type: " << (is_output ? pFormatCtx->oformat->name : type);
 	qDebug() << "AV_TIME_BASE: " << AV_TIME_BASE;
-	qDebug() << (is_output ? "Output" : "Input")
-			 << "#" << index
-			 << "" << (is_output ? ic->oformat->name : ic->iformat->name)
-			 << "\n" << (is_output ? "to" : "from")
-			 << url << ":";
-	if (!is_output) {
-		qDebug() << "FPS: " << getFps();
-		qDebug() << "Number of frames: " << getNumFrames();
-		qDebug() << "Duration: ";
-		//if (ic->duration != AV_NOPTS_VALUE)
-		{
-			int hours, mins, secs, us;
-			secs = ic->duration / AV_TIME_BASE;
-			us = ic->duration % AV_TIME_BASE;
-			mins = secs / 60;
-			secs %= 60;
-			hours = mins / 60;
-			mins %= 60;
-			qDebug() << "\t" << hours << ":" << mins << ":" << secs << "." << (100 * us) / AV_TIME_BASE;
-			qDebug() << "\t" << ic->duration << "us";
-		} //else {
-			//qDebug() << "N/A");
-		//}
-		//if (ic->start_time != AV_NOPTS_VALUE)
-		{
-			int secs, us;
-			qDebug() << "Start: ";
-			secs = ic->start_time / AV_TIME_BASE;
-			us = ic->start_time % AV_TIME_BASE;
-			qDebug() << "\t" << secs << "." << (int)ffmpeg::av_rescale(us, 1000000, AV_TIME_BASE);
-		}
-		qDebug() << "Bitrate: ";
-		if (ic->bit_rate) {
-			qDebug() << "\t" << ic->bit_rate / 1000 << "kb/s";
-		} else {
-			qDebug() << "\t" << "N/A";
-		}
-		qDebug() << "\n";
-	}
-	if(ic->nb_programs) {
-		unsigned int j, total=0;
-		for(j=0; j<ic->nb_programs; j++) {
-			ffmpeg::AVDictionaryEntry *name = av_dict_get(ic->programs[j]->metadata, "name", NULL, 0);
-			// ffmpeg::AVMetadataTag *name = av_metadata_get(ic->programs[j]->metadata, "name", NULL, 0); deprecated
-			qDebug() << "  Program " << ic->programs[j]->id << " " << (name ? name->value : "");
-			total += ic->programs[j]->nb_stream_indexes;
-		}
-		if (total < ic->nb_streams)
-			qDebug() <<  "  No Program";
-	}
-	/*for(i=0;i<ic->nb_streams;i++)
-		if (!printed[i])
-			ffmpeg::dump_stream_format(ic, i, index, is_output);*/
 
-	if (ic->metadata) {
-		ffmpeg::AVDictionaryEntry *tag=NULL;
+	// General infos
+	if (!is_output) {
+		qDebug() << "Time Base: " << timeBase;
+		qDebug() << "Start: " << startTs;
+		qDebug() << "First Dts: " << firstDts;
+		qDebug() << "FPS: " << baseFrameRate;
+		qDebug() << "Frame ms: " << frameMSec;
+		qDebug() << "Frame w: " << w;
+		qDebug() << "Frame h: " << h;
+		qDebug() << "Number of frames: " << getNumFrames();
+		qDebug() << "Duration: " << duration << " us";
+
+		int hours, mins, secs, us;
+		secs = duration / AV_TIME_BASE;
+		us = duration % AV_TIME_BASE;
+		mins = secs / 60;
+		secs %= 60;
+		hours = mins / 60;
+		mins %= 60;
+		qDebug() << "\t" << hours << "h " << mins << "m " << secs << "s " << (100 * us) / AV_TIME_BASE;
+		qDebug() << "Bitrate: " << (pFormatCtx->bit_rate ? QString::number((int) (pFormatCtx->bit_rate / 1000)).append(" kb/s") : "N / A");
+	}
+	// Programs
+	if (pFormatCtx->nb_programs) {
+		unsigned int j, total = 0;
+		for (j = 0; j<pFormatCtx->nb_programs; j++) {
+			ffmpeg::AVDictionaryEntry *name = av_dict_get(pFormatCtx->programs[j]->metadata, "name", NULL, 0);
+			qDebug() << "  Program " << pFormatCtx->programs[j]->id << " " << (name ? name->value : "");
+			total += pFormatCtx->programs[j]->nb_stream_indexes;
+		}
+		if (total < pFormatCtx->nb_streams)
+			qDebug() << "  No Program";
+	}
+	// Metadata
+	if (pFormatCtx->metadata) {
+		ffmpeg::AVDictionaryEntry *tag = NULL;
 		qDebug() << "  Metadata";
-		while((tag = av_dict_get(ic->metadata, "", tag, AV_DICT_IGNORE_SUFFIX))) {
+		while ((tag = av_dict_get(pFormatCtx->metadata, "", tag, AV_DICT_IGNORE_SUFFIX))) {
 			qDebug() << "    " << tag->key << ":" << tag->value; // %-16s
 		}
 	}
-	ffmpeg::av_free(printed);
-}
-
-int QVideoDecoder::getVideoLengthMs()
-{
-   if(!isOk())
-	  return -1;
-
-   int secs = pFormatCtx->duration / AV_TIME_BASE;
-   int us = pFormatCtx->duration % AV_TIME_BASE;
-   int l = secs*1000 + us/1000;
-
-   return l;
-}
-
-int QVideoDecoder::getFrameNumber()
-{
-   if(!isOk())
-	  return -1;
-   return LastFrameNumber;
-}
-
-int QVideoDecoder::getFrameTime()
-{
-	if(!isOk())
-	   return -1;
-	return DesiredFrameTime;
-}
-
-double QVideoDecoder::getFps()
-{
-	double fps = av_q2d(pFormatCtx->streams[videoStream]->r_frame_rate);
-	/*
-	#if LIBAVFORMAT_BUILD >= CALC_FFMPEG_VERSION(52, 111, 0)
-		if (fps < EPS_ZERO)
-		{
-			fps = av_q2d(pFormatCtx->streams[videoStream]->avg_frame_rate);
-		}
-	#endif
-	*/
-	if (fps < EPS_ZERO)
-	{
-		fps = 1.0 / av_q2d(pFormatCtx->streams[videoStream]->codec->time_base);
-	}
-
-	return fps;
-}
-
-ffmpeg::AVRational QVideoDecoder::getTimeBase()
-{
-	double frameSec = 1.0 / av_q2d(pFormatCtx->streams[videoStream]->r_frame_rate);
-	ffmpeg::AVRational tb = ffmpeg::av_d2q(frameSec, 1000);
-	return tb;
-}
-
-int QVideoDecoder::getNumFrames()
-{
-	return round(getVideoLengthMs() * (getFps() / 1000.0));
-}
-
-bool QVideoDecoder::seekToAndGetFrame(int64_t frame, QImage&img) 
-{
-	if (!seekFrame(frame))
-		return false;
-	getFrame(img);
-}
-
-
-/**
-\brief get frame number by time
-**/
-int QVideoDecoder::getNumFrameByTime(int tsms)
-{
-	if (!ok)
-		return false;
-
-	// Convert time into frame number
-	ffmpeg::AVRational rat = getTimeBase();
-	DesiredFrameNumber = ffmpeg::av_rescale(tsms, rat.den, rat.num);
-	DesiredFrameNumber /= 1000;
-
-	return DesiredFrameNumber;
 }

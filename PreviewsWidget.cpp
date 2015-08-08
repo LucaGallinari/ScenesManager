@@ -52,8 +52,6 @@ void PreviewsWidget::reloadLayout()
 	if (!_bmng->isVideoLoaded())
 		return;
 	calculateFrameNumber(); 
-	if (_frame_num == 7)
-		int a = 1;
 	reloadAndDrawPreviews();
 }
 

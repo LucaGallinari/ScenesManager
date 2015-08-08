@@ -127,6 +127,15 @@ void MainWindow::updateTime(qint64 time)
 	);
 }
 
+/*! \brief .
+*
+*	
+*/
+void MainWindow::endOfStream()
+{
+	_prevWidg->reloadAndDrawPreviews();
+}
+
 
 /******************
 ****** ACTIONS ****
@@ -206,6 +215,7 @@ void MainWindow::on_playPauseBtn_clicked()
 void MainWindow::on_stopBtn_clicked()
 {
 	_playerWidg->stopVideo(true);
+	_prevWidg->reloadAndDrawPreviews();
 }
 
 
