@@ -214,9 +214,8 @@ bool QVideoDecoder::openFile(const QString filename)
 	if (startTs == AV_NOPTS_VALUE)
 		firstDts = 0;
 	//}
-	
 
-	ok=true;
+	ok = true;
 
 	dumpFormat(filename.toStdString().c_str(), 0);
 
@@ -326,6 +325,16 @@ bool QVideoDecoder::decodeSeekFrame (const qint64 idealFrameNumber)
 					LastFrameOk = true;
 					done = true;
 				} // frame of interest
+				else {
+					/* It can happen that after the seeking operation (that should be called before running 
+					 * this function) we end up being after the desired frame. This happen because the 
+					 * seeking operation is based on the prediction of the frame's position. 
+					 * So we have to correct the seek if we went past it.
+					 * TODO
+					*/
+					//if (LastFrameNumber >= idealFrameNumber)
+
+				}
 			}  // frameFinished
 		}  // stream_index==videoStream
 
@@ -408,6 +417,7 @@ bool QVideoDecoder::seekFrame(const qint64 idealFrameNumber)
 			return false;
 
 		avcodec_flush_buffers(pCodecCtx);
+		avcodec_flush_buffers(pFormatCtx->streams[videoStream]->codec);
 		LastIdealFrameNumber = idealFrameNumber;
 		LastFrameOk = false;
 	}
@@ -442,13 +452,19 @@ bool QVideoDecoder::correctSeekToKeyFrame(const qint64 idealFrameNumber)
 	else if (type == "asf" || type == "matroska,webm") { // .asf, .mkv
 		desiredDts = idealFrameNumber * frameMSec;
 		flag = AVSEEK_FLAG_BACKWARD;
+		/*desiredDts = idealFrameNumber *
+			(pFormatCtx->streams[videoStream]->time_base.den /
+			pFormatCtx->streams[videoStream]->time_base.num) /
+			(pFormatCtx->streams[videoStream]->codec->time_base.den /
+			pFormatCtx->streams[videoStream]->codec->time_base.num)*
+			pCodecCtx->ticks_per_frame;*/
 	}
 	else { // .avi, .wmv
 		desiredDts = idealFrameNumber;
 		flag = AVSEEK_FLAG_FRAME;
 	}
 
-	if (ffmpeg::avformat_seek_file(pFormatCtx, videoStream, startDts, desiredDts, desiredDts, flag) < 0)
+	if (ffmpeg::avformat_seek_file(pFormatCtx, videoStream, INT64_MIN, desiredDts, INT64_MAX, flag) < 0)
 		return false;
 	return true;
 }

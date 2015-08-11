@@ -11,14 +11,18 @@ SOURCES +=  main.cpp \
             QVideoDecoder.cpp \
             PlayerWidget.cpp \
             ImagesBuffer.cpp \
-            PreviewsWidget.cpp
+            PreviewsWidget.cpp \
+            CompareMarkersDialog.cpp \
+            MarkersWidget.cpp
 
 HEADERS +=  mainwindow.h \
             QVideoDecoder.h \
             ffmpeg.h \
             PlayerWidget.h \
             ImagesBuffer.h \
-            PreviewsWidget.h
+            PreviewsWidget.h \
+            CompareMarkersDialog.h \
+            MarkersWidget.h
 
 FORMS += mainwindow.ui
 RESOURCES += resource.qrc \

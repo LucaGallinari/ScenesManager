@@ -11,6 +11,7 @@
 
 #include "PlayerWidget.h"
 #include "PreviewsWidget.h"
+#include "MarkersWidget.h"
 
 namespace Ui {
 	class MainWindow;
@@ -27,6 +28,7 @@ protected:
 	PlayerWidget *_playerWidg;
 	PreviewsWidget *_prevWidg;
 	ImagesBuffer *_bmng;
+	MarkersWidget *_markersWidg;
 
 	void changeEvent(QEvent *e);
 	void resizeEvent(QResizeEvent *e);
@@ -66,6 +68,13 @@ private slots:
 	//  Slider
 	void on_videoSlider_actionTriggered(int action);
 	void on_videoSlider_sliderReleased();
+
+	//	Markers
+	void on_startMarkerBtn_clicked();
+	void on_endMarkerBtn_clicked();
+	void on_markersSaveBtn_clicked();
+	void on_markersLoadBtn_clicked();
+	void on_markersNewBtn_clicked();
 
 };
 

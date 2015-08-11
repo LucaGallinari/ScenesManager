@@ -25,6 +25,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	_bmng = new ImagesBuffer(numPrev);
 	_prevWidg = new PreviewsWidget(0, _bmng);
 	_playerWidg = new PlayerWidget(0, this, _bmng);
+	_markersWidg = new MarkersWidget(ui->markersListWidget, ui->startMarkerBtn);
 
 	ui->previewsLayout->addWidget(_prevWidg);
 
@@ -90,6 +91,7 @@ void MainWindow::changePlayPause(bool playState)
 	}
 }
 
+
 /*! \brief Update the frame image.
 *
 *	Draw the new frame image in the proper label.
@@ -137,9 +139,9 @@ void MainWindow::endOfStream()
 }
 
 
-/******************
-****** ACTIONS ****
-*******************/
+/**********************************************
+******************** ACTIONS ******************
+***********************************************/
 void MainWindow::on_actionQuit_triggered()
 {
 	close();
@@ -158,10 +160,11 @@ void MainWindow::on_actionLoad_video_triggered()
 }
 
 
-/******************
-***** BUTTONS *****
-*******************/
+/**********************************************
+******************* BUTTONS *******************
+***********************************************/
 
+/***  PLAYER  ***/
 void MainWindow::on_nextFrameBtn_clicked()
 {
 	if (_playerWidg->isVideoPlaying())
@@ -219,10 +222,7 @@ void MainWindow::on_stopBtn_clicked()
 }
 
 
-/******************
-****** SLIDER *****
-*******************/
-
+/***  SLIDER  ***/
 void MainWindow::on_videoSlider_actionTriggered(int action)
 {
 	// if siongle step page actions
@@ -248,4 +248,37 @@ void MainWindow::on_videoSlider_sliderReleased()
 	}
 	_playerWidg->seekToTimePercentage(ui->videoSlider->value() / (double)sliderMaxVal);
 	_prevWidg->reloadAndDrawPreviews();
+}
+
+
+/***  MARKERS  ***/
+void MainWindow::on_startMarkerBtn_clicked()
+{
+	qint64 frameNum = _playerWidg->currentFrameNumber();
+	if (_markersWidg->_markerStarted) {// end + start
+		_markersWidg->endAndStartMarker(frameNum, frameNum + 1);
+	}
+	else {// start
+		_markersWidg->endAndStartMarker(-1, frameNum);
+	}
+}
+
+void MainWindow::on_endMarkerBtn_clicked()
+{
+	_markersWidg->endAndStartMarker(_playerWidg->currentFrameNumber(), -1);
+}
+
+void MainWindow::on_markersSaveBtn_clicked()
+{
+	_markersWidg->saveFile();
+}
+
+void MainWindow::on_markersLoadBtn_clicked()
+{
+	_markersWidg->loadFile();
+}
+
+void MainWindow::on_markersNewBtn_clicked()
+{
+	_markersWidg->newFile();
 }

@@ -99,6 +99,18 @@
     <ClCompile Include="PreviewsWidget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Debug\moc_CompareMarkersDialog.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="Release\moc_CompareMarkersDialog.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="MarkersWidget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CompareMarkersDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="PlayerWidget.h">
@@ -114,6 +126,9 @@
       <Filter>Header Files</Filter>
     </CustomBuild>
     <CustomBuild Include="PreviewsWidget.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="CompareMarkersDialog.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
   </ItemGroup>
@@ -174,6 +189,9 @@
       <Filter>Generated Files</Filter>
     </ClInclude>
     <ClInclude Include="ImagesBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MarkersWidget.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
