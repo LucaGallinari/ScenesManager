@@ -25,7 +25,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	_bmng = new ImagesBuffer(numPrev);
 	_prevWidg = new PreviewsWidget(0, _bmng);
 	_playerWidg = new PlayerWidget(0, this, _bmng);
-	_markersWidg = new MarkersWidget(ui->markersListWidget, ui->startMarkerBtn);
+	_markersWidg = new MarkersWidget(ui->markersTableWidget, ui->startMarkerBtn);
 
 	ui->previewsLayout->addWidget(_prevWidg);
 

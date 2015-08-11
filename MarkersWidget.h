@@ -3,7 +3,7 @@
 
 #include <QWidget>
 #include <QHBoxLayout>
-#include <QListWidget>
+#include <QTableWidget>
 #include <QPushButton>
 #include <ImagesBuffer.h>
 
@@ -14,7 +14,7 @@ public:
 
 	bool _markerStarted;
 
-	explicit MarkersWidget(QListWidget *markersList, QPushButton *startMarkBtn);
+	explicit MarkersWidget(QTableWidget *markersList, QPushButton *startMarkBtn);
 	~MarkersWidget();
 
 	bool loadFile();
@@ -25,12 +25,13 @@ public:
 
 private:
 	QString _inputFile;
-	QListWidget *_markersList;
+	QTableWidget *_markersList;
 	QPushButton *_startMarkerBtn;
 	int _currMarker;
 
 	void startMarker(const QString startVal);
 	void endMarker(const QString endVal);
+	void addMarker(const QString startVal, const QString endVal);
 	void changeStartEndBtn();
 
 

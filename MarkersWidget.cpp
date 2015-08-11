@@ -11,7 +11,7 @@
 *
 *   TODO
 */
-MarkersWidget::MarkersWidget(QListWidget *markersList, QPushButton *startMarkBtn) : _markersList(markersList), _startMarkerBtn(startMarkBtn)
+MarkersWidget::MarkersWidget(QTableWidget *markersList, QPushButton *startMarkBtn) : _markersList(markersList), _startMarkerBtn(startMarkBtn)
 {
 	_inputFile = "";
 	_markerStarted = false;
@@ -41,22 +41,31 @@ void MarkersWidget::endAndStartMarker(const qint64 endVal, const qint64 startVal
 
 void MarkersWidget::startMarker(const QString startVal)
 {
-	_markersList->addItem(startVal + ", ?");
-	_currMarker = _markersList->count() - 1;
+	_currMarker = _markersList->rowCount();
+	_markersList->insertRow(_currMarker);
+	QTableWidgetItem *start = new QTableWidgetItem(QObject::tr("%1").arg(startVal));
+	_markersList->setItem(_currMarker, 0, start);
 	_markerStarted = true;
 }
 
 void MarkersWidget::endMarker(const QString endVal)
 {
-	// remove "?"
-	QString m = _markersList->item(_currMarker)->text();
-	m = m.left(m.length() - 1);
-	// add val and the item
-	m.append(endVal);
-	_markersList->item(_currMarker)->setText(m);
+	QTableWidgetItem *end = new QTableWidgetItem(QObject::tr("%1").arg(endVal));
+	_markersList->setItem(_currMarker, 1, end);
 	_markerStarted = false;
 	// _currMarker = NULL;
 }
+
+void MarkersWidget::addMarker(const QString startVal, const QString endVal)
+{
+	int pos = _markersList->rowCount();
+	QTableWidgetItem *start = new QTableWidgetItem(QObject::tr("%1").arg(startVal));
+	_markersList->insertRow(pos);
+	_markersList->setItem(pos, 0, start);
+	QTableWidgetItem *end = new QTableWidgetItem(QObject::tr("%1").arg(endVal));
+	_markersList->setItem(pos, 1, end);
+}
+
 
 void MarkersWidget::changeStartEndBtn()
 {
@@ -84,14 +93,19 @@ bool MarkersWidget::loadFile()
 		return false;
 	}
 
-	_markersList->clear();
+	// clear
+	while (_markersList->rowCount() > 0) {
+		_markersList->removeRow(_markersList->rowCount() - 1);
+	}
 
 	// read line x line
 	while (!file.atEnd()) {
 		QString line = QString(file.readLine());
 		if (line != "") { // avoid last empty line of the stream
 			line.truncate(line.length() - 1); // remove '\n'
-			_markersList->addItem(line);
+			line.replace(",", "");
+			QStringList list = line.split(" ");
+			addMarker(list[0], list[1]);
 		}
 	}
 
@@ -118,9 +132,10 @@ bool MarkersWidget::saveFile()
 
 	// write line x line
 	//QTextStream out(&file);
-	for (int i = 0; i < _markersList->count(); ++i) {
-		QListWidgetItem* item = _markersList->item(i);
-		file.write(QString(item->text() + '\n').toLatin1());
+	for (int i = 0; i < _markersList->rowCount(); ++i) {
+		QString start = _markersList->item(i, 0)->text();
+		QString end = _markersList->item(i, 1)->text();
+		file.write(QString("%1, %2\n").arg(start).arg(end).toLatin1());
 	}
 
 	return true;
@@ -129,7 +144,10 @@ bool MarkersWidget::saveFile()
 bool MarkersWidget::newFile()
 {
 	_inputFile = "";
-	_markersList->clear();
+	// clear
+	while (_markersList->rowCount() > 0) {
+		_markersList->removeRow(_markersList->rowCount() - 1);
+	}
 
 	return true;
 }
