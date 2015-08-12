@@ -53,6 +53,9 @@ public slots:
 	void changePlayPause(bool playState);
 	void endOfStream();
 
+	void jumpToFrame(const qint64 num);
+	void changeStartEndBtn(const bool markerStarted);
+
 private slots:
 	//  Video
 	void on_nextFrameBtn_clicked();
@@ -76,6 +79,8 @@ private slots:
 	void on_markersLoadBtn_clicked();
 	void on_markersNewBtn_clicked();
 
+	void on_markersTableWidget_customContextMenuRequested(const QPoint &pos);
+	void on_markersTableWidget_cellChanged(int row, int column);
 };
 
 #endif // MAINWINDOW_H

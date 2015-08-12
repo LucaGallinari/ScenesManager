@@ -7,7 +7,8 @@
 #include <QTimer>
 #include <QPushButton>
 
-class PlayerWidget : public QWidget {
+class PlayerWidget : public QWidget 
+{
 	Q_OBJECT
 
 private:

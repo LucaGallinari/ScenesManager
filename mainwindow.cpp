@@ -12,7 +12,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
 	ui(new Ui::MainWindow)
@@ -25,7 +24,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	_bmng = new ImagesBuffer(numPrev);
 	_prevWidg = new PreviewsWidget(0, _bmng);
 	_playerWidg = new PlayerWidget(0, this, _bmng);
-	_markersWidg = new MarkersWidget(ui->markersTableWidget, ui->startMarkerBtn);
+	_markersWidg = new MarkersWidget(0, this, ui->markersTableWidget);
 
 	ui->previewsLayout->addWidget(_prevWidg);
 
@@ -64,11 +63,10 @@ void MainWindow::resizeEvent(QResizeEvent *e)
 *
 *	Initialize player icons.
 */
-void MainWindow::initializeIcons(){
+void MainWindow::initializeIcons() {
 	playIcon  = QPixmap(":/icons/playB.png");
 	pauseIcon = QPixmap(":/icons/pauseB.png");
 }
-
 
 
 /******************
@@ -138,6 +136,35 @@ void MainWindow::endOfStream()
 	_prevWidg->reloadAndDrawPreviews();
 }
 
+/*! \brief .
+*
+*
+*/
+void MainWindow::jumpToFrame(const qint64 num)
+{
+	if (!_playerWidg->isVideoLoaded() || _playerWidg->isVideoPlaying())
+		return;
+
+	_playerWidg->seekToFrame(num);
+	updateSlider();
+	_prevWidg->reloadAndDrawPreviews();
+}
+
+/*! \brief .
+*
+*
+*/
+void MainWindow::changeStartEndBtn(const bool markerStarted)
+{
+	if (markerStarted) {
+		ui->startMarkerBtn->setToolTip("End current marker and start a new one");
+		ui->startMarkerBtn->setText("} {");
+	}
+	else {
+		ui->startMarkerBtn->setToolTip("Insert a new marker");
+		ui->startMarkerBtn->setText("{");
+	}
+}
 
 /**********************************************
 ******************** ACTIONS ******************
@@ -281,4 +308,19 @@ void MainWindow::on_markersLoadBtn_clicked()
 void MainWindow::on_markersNewBtn_clicked()
 {
 	_markersWidg->newFile();
+}
+
+void MainWindow::on_markersTableWidget_customContextMenuRequested(const QPoint &pos)
+{
+	_markersWidg->showContextMenu(ui->markersTableWidget->mapToGlobal(pos));
+}
+
+void MainWindow::on_markersTableWidget_cellChanged(int row, int column)
+{
+	bool ok;
+	ui->markersTableWidget->item(row, column)->text().toUInt(&ok);
+	if (!ok) {
+		QMessageBox::critical(this,"Error","Expected a number");
+		ui->markersTableWidget->item(row, column)->setText("0");
+	}
 }

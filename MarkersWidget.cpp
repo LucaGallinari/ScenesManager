@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QMenu>
 
 #include "MarkersWidget.h"
 
@@ -11,10 +12,18 @@
 *
 *   TODO
 */
-MarkersWidget::MarkersWidget(QTableWidget *markersList, QPushButton *startMarkBtn) : _markersList(markersList), _startMarkerBtn(startMarkBtn)
+MarkersWidget::MarkersWidget(
+	QWidget *parent, 
+	QWidget *mainwin,
+	QTableWidget *markersList
+) : QWidget(parent), _markersList(markersList)
 {
 	_inputFile = "";
 	_markerStarted = false;
+
+	// S&S to mainwin
+	connect(this, SIGNAL(jumpToFrame(qint64)), mainwin, SLOT(jumpToFrame(qint64)));
+	connect(this, SIGNAL(startBtnToggle(bool)), mainwin, SLOT(changeStartEndBtn(bool)));
 }
 
 
@@ -35,7 +44,7 @@ void MarkersWidget::endAndStartMarker(const qint64 endVal, const qint64 startVal
 			startMarker(QString::number(startVal));
 		}
 	}
-	changeStartEndBtn();
+	emit startBtnToggle(_markerStarted);
 }
 
 
@@ -66,19 +75,17 @@ void MarkersWidget::addMarker(const QString startVal, const QString endVal)
 	_markersList->setItem(pos, 1, end);
 }
 
-
-void MarkersWidget::changeStartEndBtn()
+void MarkersWidget::removeMarker(const int row)
 {
-	if (_markerStarted) {
-		_startMarkerBtn->setToolTip("End current marker and start a new one");
-		_startMarkerBtn->setText("} {");
+	// if the curr marker is "new" we have to reset variables
+	if (_currMarker == row && _markerStarted) {
+		_markerStarted = false;
+		// _currMarker = NULL;
+		emit startBtnToggle(_markerStarted);
 	}
-	else {
-		_startMarkerBtn->setToolTip("Insert a new marker");
-		_startMarkerBtn->setText("{");
-	}
+		
+	_markersList->removeRow(row);
 }
-
 
 bool MarkersWidget::loadFile()
 {
@@ -150,4 +157,37 @@ bool MarkersWidget::newFile()
 	}
 
 	return true;
+}
+
+void MarkersWidget::showContextMenu(const QPoint& globalPos)
+{
+	QMenu myMenu;
+	myMenu.addAction("Remove");
+	myMenu.addAction("Jump to frame 'From'");
+	myMenu.addAction("Jump to frame 'To'");
+
+	QList<QTableWidgetItem*> sel = _markersList->selectedItems();
+
+	if (sel.length() == 0) {// no sel
+		qDebug() << "no sel";
+		return;
+	}
+
+	QAction* selectedAction = myMenu.exec(globalPos);
+
+	if (selectedAction->text() == "Remove") {
+		int row = sel[0]->row();
+		qDebug() << "sel0 - remove " << row;
+		removeMarker(row);
+	}
+	else if (selectedAction->text() == "Jump to frame 'From'") {
+		qint64 frameNum = sel[0]->text().toInt();
+		qDebug() << "sel1 - jump to " << frameNum;
+		emit jumpToFrame(frameNum);
+	}
+	else if (selectedAction->text() == "Jump to frame 'To'") {
+		qint64 frameNum = sel[1]->text().toInt();
+		qDebug() << "sel2 - jump to " << frameNum;
+		emit jumpToFrame(frameNum);
+	}
 }
