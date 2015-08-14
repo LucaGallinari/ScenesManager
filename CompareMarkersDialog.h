@@ -15,7 +15,7 @@ class CompareMarkersDialog : public QDialog
 	class VList : public QStringList
 	{
 	public:
-		explicit VList(QStringList *parent = 0){};
+		explicit VList(QStringList *parent = 0) {};
 		~VList(){};
 
 		//Define operator [] to get directly integer value

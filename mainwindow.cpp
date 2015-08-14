@@ -21,6 +21,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	//TODO: set this dynamically
 	int numPrev = 6;
+
+	autoSort = true;
+	_currMarkerRow = -1;
+	_currMarkerCol = -1;
+
 	_bmng = new ImagesBuffer(numPrev);
 	_prevWidg = new PreviewsWidget(0, _bmng);
 	_playerWidg = new PlayerWidget(0, this, _bmng);
@@ -302,11 +307,13 @@ void MainWindow::on_markersSaveBtn_clicked()
 
 void MainWindow::on_markersLoadBtn_clicked()
 {
+	_currMarkerRow = -1;
 	_markersWidg->loadFile();
 }
 
 void MainWindow::on_markersNewBtn_clicked()
 {
+	_currMarkerRow = -1;
 	_markersWidg->newFile();
 }
 
@@ -317,10 +324,24 @@ void MainWindow::on_markersTableWidget_customContextMenuRequested(const QPoint &
 
 void MainWindow::on_markersTableWidget_cellChanged(int row, int column)
 {
-	bool ok;
-	ui->markersTableWidget->item(row, column)->text().toUInt(&ok);
-	if (!ok) {
-		QMessageBox::critical(this,"Error","Expected a number");
-		ui->markersTableWidget->item(row, column)->setText("0");
+	/* Don't want to call this all the time that the value of a cell is changed
+	 * but only when it's changed by the user. We can do this by tracking the last
+	 * selected row and exe following actions only if that selected row was changed.
+	 * It's not perfect but it works ok.
+	*/
+	if (row == _currMarkerRow) {
+		bool ok;
+		int val = ui->markersTableWidget->item(row, column)->text().toUInt(&ok);
+		if (!ok) {
+			QMessageBox::critical(this,"Error","Expected a number");
+			ui->markersTableWidget->item(row, column)->setText("0");
+			return;
+		}
+		_markersWidg->markerChanged(row, column, val);
 	}
+}
+
+void MainWindow::on_markersTableWidget_itemSelectionChanged()
+{
+	_currMarkerRow = ui->markersTableWidget->currentRow();
 }

@@ -36,6 +36,10 @@ protected:
 private:
 	Ui::MainWindow *ui;
 
+	bool autoSort;//TODO: use a checkbox
+	int _currMarkerRow;
+	int _currMarkerCol;
+
 	QPixmap playIcon;
 	QPixmap pauseIcon;
 
@@ -80,7 +84,8 @@ private slots:
 	void on_markersNewBtn_clicked();
 
 	void on_markersTableWidget_customContextMenuRequested(const QPoint &pos);
-	void on_markersTableWidget_cellChanged(int row, int column);
+    void on_markersTableWidget_cellChanged(int row, int column);
+    void on_markersTableWidget_itemSelectionChanged();
 };
 
 #endif // MAINWINDOW_H
