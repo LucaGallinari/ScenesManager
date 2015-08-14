@@ -585,8 +585,15 @@
     </property>
     <addaction name="actionLoad_video"/>
    </widget>
+   <widget class="QMenu" name="menuMarkers">
+    <property name="title">
+     <string>Markers</string>
+    </property>
+    <addaction name="actionCompare"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuVideo"/>
+   <addaction name="menuMarkers"/>
   </widget>
   <action name="actionQuit">
    <property name="text">
@@ -602,6 +609,11 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+L</string>
+   </property>
+  </action>
+  <action name="actionCompare">
+   <property name="text">
+    <string>Compare</string>
    </property>
   </action>
  </widget>

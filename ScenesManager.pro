@@ -24,7 +24,8 @@ HEADERS +=  mainwindow.h \
             CompareMarkersDialog.h \
             MarkersWidget.h
 
-FORMS += mainwindow.ui
+FORMS +=    mainwindow.ui \
+            comparemarkersdialog.ui
 RESOURCES += resource.qrc \
     playericons.qrc
 DEFINES += DEVELMODE

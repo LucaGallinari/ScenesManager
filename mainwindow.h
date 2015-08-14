@@ -12,6 +12,7 @@
 #include "PlayerWidget.h"
 #include "PreviewsWidget.h"
 #include "MarkersWidget.h"
+#include "CompareMarkersDialog.h"
 
 namespace Ui {
 	class MainWindow;
@@ -29,6 +30,7 @@ protected:
 	PreviewsWidget *_prevWidg;
 	ImagesBuffer *_bmng;
 	MarkersWidget *_markersWidg;
+	CompareMarkersDialog *_dial;
 
 	void changeEvent(QEvent *e);
 	void resizeEvent(QResizeEvent *e);
@@ -71,6 +73,7 @@ private slots:
 	//  Menu
 	void on_actionLoad_video_triggered();
 	void on_actionQuit_triggered();
+	void on_actionCompare_triggered();
 
 	//  Slider
 	void on_videoSlider_actionTriggered(int action);
@@ -84,8 +87,8 @@ private slots:
 	void on_markersNewBtn_clicked();
 
 	void on_markersTableWidget_customContextMenuRequested(const QPoint &pos);
-    void on_markersTableWidget_cellChanged(int row, int column);
-    void on_markersTableWidget_itemSelectionChanged();
+	void on_markersTableWidget_cellChanged(int row, int column);
+	void on_markersTableWidget_itemSelectionChanged();
 };
 
 #endif // MAINWINDOW_H

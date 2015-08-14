@@ -191,6 +191,12 @@ void MainWindow::on_actionLoad_video_triggered()
 	}
 }
 
+void MainWindow::on_actionCompare_triggered()
+{
+	_dial = new CompareMarkersDialog(_markersWidg->getInputFile(), this);
+	_dial->show();
+}
+
 
 /**********************************************
 ******************* BUTTONS *******************

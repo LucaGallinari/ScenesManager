@@ -7,6 +7,9 @@
 #include <QFileDialog>
 #include <QLabel>
 
+namespace Ui {
+	class CompareMarkersDialog;
+}
 
 class CompareMarkersDialog : public QDialog
 {
@@ -15,7 +18,7 @@ class CompareMarkersDialog : public QDialog
 	class VList : public QStringList
 	{
 	public:
-		explicit VList(QStringList *parent = 0) {};
+		explicit VList() {};
 		~VList(){};
 
 		//Define operator [] to get directly integer value
@@ -27,8 +30,20 @@ class CompareMarkersDialog : public QDialog
 
 public:
 	//Constructor with two QString parameters
-	explicit CompareMarkersDialog(QString, QString, QWidget *parent = 0);
+	explicit CompareMarkersDialog(QString, QWidget *parent = 0);
 	~CompareMarkersDialog();
+
+private slots:
+	void on_smFileBtn_clicked();
+	void on_extFileBtn_clicked();
+	void on_compareBtn_clicked();
+
+private:
+
+	Ui::CompareMarkersDialog *ui;
+
+
+	QString fileName, fileName2;
 
 	//StringList to keep out text lin of markers files
 	QStringList *list1;
@@ -38,22 +53,19 @@ public:
 	QTextEdit *f1;
 	QTextEdit *f2;
 
-	//Labels for TextEdits
-	QLabel *my_result;
-	QLabel *choose_result;
-
-	void copyTxt(QString, bool);
-	void compare_differentF(QTextCursor, QTextCursor);
-
-
-private:
 
 	//List of colors for background text, text and bold format
 	QList<QColor> *ColList;
 	QTextCharFormat *textFormat;
 	QTextCharFormat *boldFormat;
 
+
+	void copyTxt(QString, bool);
+	void compare_differentF(QTextCursor, QTextCursor);
+
+
 	void setBckCol();
+
 	//List for splitting
 	QString splitList(QString, int);
 

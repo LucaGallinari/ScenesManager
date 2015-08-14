@@ -324,3 +324,12 @@ void MarkersWidget::clearUIList()
 	while (_markersList->rowCount() > 0)
 		_markersList->removeRow(_markersList->rowCount() - 1);
 }
+
+
+/***************************************
+************    GETTERS    *************
+***************************************/
+
+QString MarkersWidget::getInputFile() {
+	return _inputFile;
+}

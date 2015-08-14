@@ -140,6 +140,9 @@
     <CustomBuild Include="MarkersWidget.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
+    <CustomBuild Include="comparemarkersdialog.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="mainwindow.ui">
@@ -199,6 +202,9 @@
     </ClInclude>
     <ClInclude Include="ImagesBuffer.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_comparemarkersdialog.h">
+      <Filter>Generated Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

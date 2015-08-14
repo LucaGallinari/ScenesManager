@@ -29,6 +29,9 @@ public:
 	void showContextMenu(const QPoint& globalPos);
 	void markerChanged(const int row, const int col, const qint64 val);
 
+	//	Getters
+	QString getInputFile();
+
 private:
 
 	struct Marker {
