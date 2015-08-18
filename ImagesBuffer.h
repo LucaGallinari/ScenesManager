@@ -7,7 +7,7 @@
 
 struct Frame {
 	QPixmap img;
-	int num = -1;		// absolute frame number
+	qint64 num = -1;		// absolute frame number
 	qint64 time = -1;	// 
 	qint64 pts;			// decoder presentation timestamp
 };
@@ -17,15 +17,15 @@ class ImagesBuffer
 
 	QVideoDecoder decoder;
 
-	std::vector<Frame> _buffer;	// Frame array
-	unsigned _maxsize;
-	unsigned _mid;					// mid element index
+	std::vector<Frame>	_buffer;	// Frame array
+	unsigned			_maxsize;
+	unsigned			_mid;		// mid element index
 
 	//	Help variables
-	double	fps;				// frame per second
-	int		frameMs;			// ms of a single frame
+	double	fps;					// frame per second
+	int		frameMs;				// ms of a single frame
 	qint64	numFrames;
-	qint64	videoLength;		// ms
+	qint64	videoLength;			// ms
 
 	//  Helpers
 	void image2Pixmap(QImage &img, QPixmap &pixmap);
@@ -35,6 +35,12 @@ class ImagesBuffer
 		const int numElements,
 		const bool addBack
 	);
+	const int isFrameLoaded(const qint64 num);
+
+
+	bool seekToFrame(const qint64 num);
+	bool seekNextFrame();
+	bool seekPrevFrame();
 
 public:	
 
@@ -42,20 +48,16 @@ public:
 	~ImagesBuffer();
 
 	//  Frame actions
-	bool getFrame(QPixmap &p, const qint64 num);
-	bool seekToFrame(const qint64 num);
-	bool seekNextFrame();
-	bool seekPrevFrame();
-	bool seekToTime(const qint64 ms);
-	bool seekToTimePercentage(const double perc);
+	bool getFrame(Frame &f, const qint64 num);
+	bool getFrameByTime(Frame &f, const qint64 ms);
+	bool getFrameByTimePercentage(Frame &f, const double perc);
 
 	//  Video actions
 	bool loadVideo(const QString fileName);
 
 	//  Getters
-	void getImagesBuffer(std::vector<Frame> &v, const int num = 0);
+	void getImagesBuffer(std::vector<Frame> &v, const int mid, const int num = 0);
 	bool   isVideoLoaded();
-	const int isFrameLoaded(const qint64 num);
 
 	double getFps();
 	int	   getFrameMs();
@@ -63,9 +65,7 @@ public:
 	qint64 getVideoLengthMs();
 	bool   getDimensions(double &ratio, int *w=0, int *h=0);
 
-	bool   getMidFrame(QPixmap &p);
-	qint64 getMidFrameNumber();
-	qint64 getMidFrameTime();
+	bool   getMidFrame(Frame &f);
 
 };
 

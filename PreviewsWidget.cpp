@@ -20,6 +20,7 @@ PreviewsWidget::PreviewsWidget(
 	_base->addWidget(temp);
 
 	_frame_margin_w = _frame_margin_h = 5;
+	_mid = 0;
 }
 
 PreviewsWidget::~PreviewsWidget()
@@ -39,7 +40,7 @@ bool PreviewsWidget::setupPreviews()
 	}
 	_bmng->getDimensions(_frame_ratio);
 	calculateFrameNumber(); 
-	reloadAndDrawPreviews();
+	reloadAndDrawPreviews(0);
 	return true;
 }
 
@@ -52,17 +53,18 @@ void PreviewsWidget::reloadLayout()
 	if (!_bmng->isVideoLoaded())
 		return;
 	calculateFrameNumber(); 
-	reloadAndDrawPreviews();
+	reloadAndDrawPreviews(_mid);
 }
 
 /*! \brief reload images and draw
 *
 *	Reload the images from the buffer and draw them
 */
-void PreviewsWidget::reloadAndDrawPreviews()
+void PreviewsWidget::reloadAndDrawPreviews(const qint64 mid)
 {
 	_frames.clear();
-	_bmng->getImagesBuffer(_frames, _frame_num);
+	_bmng->getImagesBuffer(_frames, mid, _frame_num);
+	_mid = mid;
 	drawPreviews();
 }
 

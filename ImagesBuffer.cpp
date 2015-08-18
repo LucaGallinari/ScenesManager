@@ -29,25 +29,34 @@ ImagesBuffer::~ImagesBuffer()
 *	@param num number of the frame
 *	@return success or not
 */
-bool ImagesBuffer::getFrame(QPixmap &p, const qint64 num) 
+bool ImagesBuffer::getFrame(Frame &f, const qint64 num) 
 {
 	if (!isVideoLoaded())
+		return false;
+
+	if (num < 0)
 		return false;
 
 	// already in the buffer?
 	int index = isFrameLoaded(num);
 	if (index != -1) {
-		p = _buffer[index].img;
+		f = _buffer[index];
 		return true;
 	}
 
+	if (!seekToFrame(num)) {
+		QMessageBox::critical(NULL, "Error", "Error seeking and decoding the frame");
+		return false;
+	}
+	/*
 	QImage img; 
 	if (!decoder.seekToAndGetFrame(num, img)) {
 		QMessageBox::critical(NULL, "Error", "Error seeking and decoding the frame");
 		return false;
 	}
+	*/
 
-	image2Pixmap(img, p);
+	f = _buffer[_mid];
 	return true;
 }
 
@@ -240,48 +249,51 @@ bool ImagesBuffer::seekPrevFrame()
 	// emit 
 }
 
-/*! \brief seek to given time
+/*! \brief get the frame located at given time
 *
-*	Seek the buffer to the frame close to the given time
+*	Get the frame located at the given time.
+*	@param p where the image will be stored
+*	@param num related frame number
 *   @param ms time in milliseconds
 *	@return success or not
 *   @see seekToFrame()
 */
-bool ImagesBuffer::seekToTime(const qint64 ms)
+bool ImagesBuffer::getFrameByTime(Frame &f, const qint64 ms)
 {
 	if (!isVideoLoaded())
 		return false;
 
-	// Seek to the desired ms
-	if (!seekToFrame(decoder.getNumFrameByTime(ms))) {
+	qint64 num = decoder.getNumFrameByTime(ms);
+	if (!getFrame(f, num)) {
 		QMessageBox::critical(NULL,"Error","Seek failed, invalid time");
 		return false;
 	}
 	return true;
 }
 
-/*! \brief seek to given time percentage
+/*! \brief get the frame located at given time percentage
 *
-*	Seek the buffer to the frame close to the given percentage of the entire 
-*	video length
+*	Get the frame located at the given percentage of the entire video length.
+*	@param p where the image will be stored
+*	@param num related frame number
 *   @param perc double value from 0 to 1
 *	@return success or not
 *   @see seekToTime()
 */
-bool ImagesBuffer::seekToTimePercentage(const double perc)
+bool ImagesBuffer::getFrameByTimePercentage(Frame &f, const double perc)
 {
 	if (!isVideoLoaded())
 		return false;
 
-	int ms = videoLength * perc;
-
-	// Seek to the desired ms
-	if (!seekToFrame(decoder.getNumFrameByTime(ms))) {
-		QMessageBox::critical(NULL, "Error", "Seek failed, invalid time");
-		return false;
-	}
-	return true;
+	qint64 ms = videoLength * perc;
+	bool ok = getFrameByTime(f, ms);
+	return ok;
 }
+
+
+/**************************************
+************    HELPERS    ************
+***************************************/
 
 /*! \brief the frame is in the buffer?
 *
@@ -289,20 +301,17 @@ bool ImagesBuffer::seekToTimePercentage(const double perc)
 *	@param num number of the frame
 *	@return the index of the element or -1
 */
-const int ImagesBuffer::isFrameLoaded(const qint64 num) 
+const int ImagesBuffer::isFrameLoaded(const qint64 num)
 {
-	for (int i = 0; i < _buffer.size(); ++i) {
-		if (_buffer[i].num == num) {
-			return i;
+	if (num >= 0) {
+		for (int i = 0; i < _buffer.size(); ++i) {
+			if (_buffer[i].num == num) {
+				return i;
+			}
 		}
 	}
 	return -1;
 }
-
-
-/**************************************
-************    HELPERS    ************
-***************************************/
 
 /*! \brief from QImage to QPixmap.
 *
@@ -367,22 +376,37 @@ bool ImagesBuffer::loadVideo(const QString fileName)
 *********        GETTERS      *********
 ***************************************/
 
-/*! \brief get the buffer
+/*! \brief get num images centered on mid
 *
-*   Retrieve images buffer
+*   Retrieve "num" images centered on "mid"
 *	@param v where Frames will be stored
+*	@param mid number of the middle elements
 *	@param num number of elements to retrieve
 */
-void ImagesBuffer::getImagesBuffer(std::vector<Frame> &v, const int num)
+void ImagesBuffer::getImagesBuffer(std::vector<Frame> &v, const int mid, const int num)
 {
-	// num not specified or _buffer not enough big
-	if (num == 0 || num >= _buffer.size())  { // copy the whole buffer
-		v = _buffer;
-	}
-	else { // copy just some elements
-		int _startIndex = _mid - ((num - 1) / 2);
-		for (int i = 0; i < num; ++i) {
-			v.push_back(_buffer[_startIndex + i]);
+	bool endofstream = false;
+	qint64 startFrameNumber = mid - ((num - 1) / 2);
+	Frame f;
+
+	for (int i = 0; i < num; ++i) {
+
+		int actualFrameNumber = startFrameNumber + i;
+		//	if out of bound retrieve and fill the image
+		if (actualFrameNumber >= 0 && actualFrameNumber < numFrames && !endofstream) {
+
+			int index = isFrameLoaded(actualFrameNumber);
+			if (index != -1) {// already in the buffer?
+				v.push_back(_buffer[index]);
+			}
+			else { // not in the buffer? must update the buffer
+				if (endofstream = !seekToFrame(actualFrameNumber)) {
+					v.push_back(_buffer[_mid]);
+				}
+			}
+		}
+		else { // fake frame
+			v.push_back(f);
 		}
 	}
 }
@@ -434,38 +458,10 @@ qint64 ImagesBuffer::getVideoLengthMs() {
 *	@param p where the image will be stored
 *	@return success or not
 */
-bool ImagesBuffer::getMidFrame(QPixmap &p) {
-	p = _buffer[_mid].img;
+bool ImagesBuffer::getMidFrame(Frame &f) {
+	f = _buffer[_mid];
 	return true;
 }
-
-/*! \brief Get mid frame number.
-*
-*	This functions is used to get the current frame number.
-*	@return current frame number.
-*   @see currentFrameTime()
-*   @see previousFrameNumber()
-*   @see nextFrameNumber()
-*/
-qint64 ImagesBuffer::getMidFrameNumber() {
-	if (_buffer.size() != 0)
-		return _buffer[_mid].num;
-	return -1;
-	// return decoder.getFrameNumber();
-}
-
-/*! \brief Get mid frame time.
-*
-*	This functions is used to get the time of the current frame.
-*	@return current frame time.
-*   @see currentFrameNumber()
-*/
-qint64 ImagesBuffer::getMidFrameTime() {
-	if (_buffer.size() != 0)
-		return _buffer[_mid].time;
-	return -1;
-}
-
 
 /*! \brief Get frame's dimensions
 *

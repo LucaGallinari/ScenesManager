@@ -1,7 +1,10 @@
 /*
 
 	ISSUE TODO:
-		- (HARD)  mkv not working properly
+		- (HARD)  mkv seek problem PTS <> FRAME NUM
+		- (EASY)  on realod of the buffer previews are wrong
+		- (EASY)  buffer not big enough
+		- (EASY)  resizeEvent
 
 */
 
@@ -20,7 +23,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	qDebug() << "Starting up";
 
 	//TODO: set this dynamically
-	int numPrev = 6;
+	int numPrev = 10;
 
 	autoSort = true;
 	_currMarkerRow = -1;
@@ -138,7 +141,7 @@ void MainWindow::updateTime(qint64 time)
 */
 void MainWindow::endOfStream()
 {
-	_prevWidg->reloadAndDrawPreviews();
+	_prevWidg->reloadAndDrawPreviews(_playerWidg->currentFrameNumber());
 }
 
 /*! \brief .
@@ -152,7 +155,7 @@ void MainWindow::jumpToFrame(const qint64 num)
 
 	_playerWidg->seekToFrame(num);
 	updateSlider();
-	_prevWidg->reloadAndDrawPreviews();
+	_prevWidg->reloadAndDrawPreviews(num);
 }
 
 /*! \brief .
@@ -209,7 +212,7 @@ void MainWindow::on_nextFrameBtn_clicked()
 		return;
 	_playerWidg->nextFrame();
 	updateSlider();
-	_prevWidg->reloadAndDrawPreviews();
+	_prevWidg->reloadAndDrawPreviews(_playerWidg->currentFrameNumber());
 }
 
 void MainWindow::on_prevFrameBtn_clicked()
@@ -218,7 +221,7 @@ void MainWindow::on_prevFrameBtn_clicked()
 		return;
 	_playerWidg->prevFrame();
 	updateSlider();
-	_prevWidg->reloadAndDrawPreviews();
+	_prevWidg->reloadAndDrawPreviews(_playerWidg->currentFrameNumber());
 }
 
 void MainWindow::on_seekFrameBtn_clicked()
@@ -242,21 +245,21 @@ void MainWindow::on_seekFrameBtn_clicked()
 
 	_playerWidg->seekToFrame(frameNum);
 	updateSlider();
-	_prevWidg->reloadAndDrawPreviews();
+	_prevWidg->reloadAndDrawPreviews(frameNum);
 }
 
 void MainWindow::on_playPauseBtn_clicked()
 {
 	_playerWidg->playPause();
 	if (!_playerWidg->isVideoPlaying()) {
-		_prevWidg->reloadAndDrawPreviews();
+		_prevWidg->reloadAndDrawPreviews(_playerWidg->currentFrameNumber());
 	}
 }
 
 void MainWindow::on_stopBtn_clicked()
 {
 	_playerWidg->stopVideo(true);
-	_prevWidg->reloadAndDrawPreviews();
+	_prevWidg->reloadAndDrawPreviews(_playerWidg->currentFrameNumber());
 }
 
 
@@ -274,7 +277,7 @@ void MainWindow::on_videoSlider_actionTriggered(int action)
 		if (val >= sliderMaxVal)
 			val = sliderMaxVal - 1;
 		_playerWidg->seekToTimePercentage(val / (double)sliderMaxVal);
-		_prevWidg->reloadAndDrawPreviews();
+		_prevWidg->reloadAndDrawPreviews(_playerWidg->currentFrameNumber());
 	}
 }
 
@@ -285,7 +288,7 @@ void MainWindow::on_videoSlider_sliderReleased()
 		return;
 	}
 	_playerWidg->seekToTimePercentage(ui->videoSlider->value() / (double)sliderMaxVal);
-	_prevWidg->reloadAndDrawPreviews();
+	_prevWidg->reloadAndDrawPreviews(_playerWidg->currentFrameNumber());
 }
 
 

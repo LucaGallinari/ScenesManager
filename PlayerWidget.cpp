@@ -42,16 +42,16 @@ void PlayerWidget::displayFrame()
 {
 	if (!_bmng->isVideoLoaded())
 		return;
-
+	/*
 	// Decode a frame
 	QPixmap img;
 	if (!_bmng->getMidFrame(img)) {
 		QMessageBox::critical(NULL,"Error","Error retrieving the frame");
 		return;
 	}
-
-	emit newFrame(img);
-	emit timeChanged(currentFrameTime());
+	*/
+	emit newFrame(_actualFrame.img);
+	emit timeChanged(_actualFrame.time);
 }
 
 /*! \brief load and display the next frame
@@ -94,7 +94,7 @@ void PlayerWidget::reloadFrame()
 */
 bool PlayerWidget::nextFrame(){
 	bool ok;
-	if (!(ok = _bmng->seekNextFrame())) {
+	if (!(ok = _bmng->getFrame(_actualFrame, _actualFrame.num + 1))) {
 		// end of stream?
 		QMessageBox::critical(NULL, "Error", "End of stream");
 	}
@@ -109,7 +109,7 @@ bool PlayerWidget::nextFrame(){
 *	@see nextFrame()
 */
 bool PlayerWidget::prevFrame(){
-	if (!_bmng->seekPrevFrame()) {
+	if (!_bmng->getFrame(_actualFrame, _actualFrame.num - 1)) {
 		QMessageBox::critical(NULL, "Error", "seekPrevFrame failed");
 		return false;
 	}
@@ -124,7 +124,7 @@ bool PlayerWidget::prevFrame(){
 *   @see seekToTime()
 */
 void PlayerWidget::seekToFrame(const qint64 num){
-	if (!_bmng->seekToFrame(num)) {
+	if (!_bmng->getFrame(_actualFrame, num)) {
 		QMessageBox::critical(NULL, "Error", "seekToFrame failed");
 		return;
 	}
@@ -139,7 +139,7 @@ void PlayerWidget::seekToFrame(const qint64 num){
 *   @see seekToFrame()
 */
 void PlayerWidget::seekToTime(const qint64 ms){
-	if (!_bmng->seekToTime(ms)) {
+	if (!_bmng->getFrameByTime(_actualFrame, ms)) {
 		QMessageBox::critical(NULL, "Error", "seekToFrame failed");
 		return;
 	}
@@ -153,7 +153,7 @@ void PlayerWidget::seekToTime(const qint64 ms){
 *   @param perc double value from 0 to 1
 */
 void PlayerWidget::seekToTimePercentage(const double perc){
-	if (!_bmng->seekToTimePercentage(perc)) {
+	if (!_bmng->getFrameByTimePercentage(_actualFrame, perc)) {
 		QMessageBox::critical(NULL, "Error", "seekToFrame failed");
 		return;
 	}
@@ -183,6 +183,8 @@ void PlayerWidget::loadVideo(const QString fileName)
 	frameMs = _bmng->getFrameMs();
 	numFrames = _bmng->getNumFrames();
 	videoLength = _bmng->getVideoLengthMs();
+
+	_bmng->getMidFrame(_actualFrame);
 
 	displayFrame();
 }
@@ -289,7 +291,7 @@ bool PlayerWidget::isVideoLoaded()
 *   @see currentFrameTime()
 */
 qint64 PlayerWidget::currentFrameNumber() {
-	return _bmng->getMidFrameNumber();
+	return _actualFrame.num;
 }
 
 /*! \brief Get current frame time.
@@ -299,7 +301,7 @@ qint64 PlayerWidget::currentFrameNumber() {
 *   @see currentFrameNumber()
 */
 qint64 PlayerWidget::currentFrameTime() {
-	return _bmng->getMidFrameTime();
+	return _actualFrame.time;
 }
 
 /*! \brief Get number of frames
@@ -318,5 +320,5 @@ qint64 PlayerWidget::getNumFrames() {
 *   @see currentFrameTime()
 */
 double PlayerWidget::currentTimePercentage() {
-	return _bmng->getMidFrameTime() / (double) videoLength;
+	return _actualFrame.time / (double)videoLength;
 }

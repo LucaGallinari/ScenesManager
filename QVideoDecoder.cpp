@@ -278,6 +278,13 @@ bool QVideoDecoder::decodeSeekFrame (const qint64 idealFrameNumber)
 
 				qDebug() << "f:" << f;
 				qDebug() << "t: " << t;
+				qDebug() << "type: " << pFrame->pict_type;
+				qDebug() << "DTS: " <<  idealFrameNumber *
+					(pFormatCtx->streams[videoStream]->time_base.den /
+					pFormatCtx->streams[videoStream]->time_base.num) /
+					(pFormatCtx->streams[videoStream]->codec->time_base.den /
+					pFormatCtx->streams[videoStream]->codec->time_base.num)*
+					pCodecCtx->ticks_per_frame;
 
 				if (LastFrameOk) {
 					// If we decoded 2 frames in a row, the last times are okay
@@ -417,7 +424,6 @@ bool QVideoDecoder::seekFrame(const qint64 idealFrameNumber)
 			return false;
 
 		avcodec_flush_buffers(pCodecCtx);
-		avcodec_flush_buffers(pFormatCtx->streams[videoStream]->codec);
 		LastIdealFrameNumber = idealFrameNumber;
 		LastFrameOk = false;
 	}
@@ -438,7 +444,7 @@ bool QVideoDecoder::seekFrame(const qint64 idealFrameNumber)
 bool QVideoDecoder::correctSeekToKeyFrame(const qint64 idealFrameNumber)
 {
 	qint64 desiredDts;
-	qint64 startDts = 0;
+	qint64 startDts = INT64_MIN;
 	int flag;
 
 	if (type == "mpeg") { // .mpg
@@ -449,23 +455,73 @@ bool QVideoDecoder::correctSeekToKeyFrame(const qint64 idealFrameNumber)
 		startDts = -0x7ffffffffffffff;
 		flag = AVSEEK_FLAG_BACKWARD;
 	}
-	else if (type == "asf" || type == "matroska,webm") { // .asf, .mkv
+	else if (type == "asf"){ // .asf (wmv)
+
 		desiredDts = idealFrameNumber * frameMSec;
 		flag = AVSEEK_FLAG_BACKWARD;
-		/*desiredDts = idealFrameNumber *
+	}
+	else if (type == "matroska,webm") { // .mkv
+		desiredDts = idealFrameNumber *
 			(pFormatCtx->streams[videoStream]->time_base.den /
 			pFormatCtx->streams[videoStream]->time_base.num) /
 			(pFormatCtx->streams[videoStream]->codec->time_base.den /
 			pFormatCtx->streams[videoStream]->codec->time_base.num)*
-			pCodecCtx->ticks_per_frame;*/
+			pCodecCtx->ticks_per_frame;
+		/*if (desiredDts > 0) {
+			flag |= AVSEEK_FLAG_ANY;
+		}*/
+		bool a = av_seek_frame(pFormatCtx, videoStream, desiredDts, AVSEEK_FLAG_FRAME);
+		avcodec_flush_buffers(pCodecCtx);
+		
+		bool done = false;
+		int round = 0;
+		qint64 targetDts = desiredDts;
+		qint64 t;
+
+		while (!done) {
+
+			// Read a frame
+			if (av_read_frame(pFormatCtx, &packet) < 0)
+				break;	// end of stream?            
+
+			if (packet.stream_index == videoStream) {
+
+				int frameFinished;
+				avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished, &packet);
+
+				if (frameFinished) {
+					t = av_frame_get_best_effort_timestamp(pFrame);
+
+					if (t > desiredDts) { // i am after the desired frame
+						++round;
+						targetDts -= 3000 * round;
+						if (targetDts < 0)
+							targetDts = 0;
+						av_seek_frame(pFormatCtx, videoStream, targetDts, AVSEEK_FLAG_BACKWARD);
+						avcodec_flush_buffers(pCodecCtx);
+					}
+					else {
+						done = true;
+						av_seek_frame(pFormatCtx, videoStream, targetDts, AVSEEK_FLAG_FRAME);
+						avcodec_flush_buffers(pCodecCtx);
+					}
+				}
+			}
+
+			av_free_packet(&packet);
+		}
+		return true;
 	}
 	else { // .avi, .wmv
 		desiredDts = idealFrameNumber;
 		flag = AVSEEK_FLAG_FRAME;
+		
 	}
-
-	if (ffmpeg::avformat_seek_file(pFormatCtx, videoStream, INT64_MIN, desiredDts, INT64_MAX, flag) < 0)
+	
+	if (ffmpeg::avformat_seek_file(pFormatCtx, videoStream, startDts, desiredDts, INT64_MAX, flag) < 0) {
 		return false;
+		qDebug() << "!!!SEEK ERROR!!!";
+	}
 	return true;
 }
 

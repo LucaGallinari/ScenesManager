@@ -13,8 +13,9 @@ class PlayerWidget : public QWidget
 
 private:
 
-	QTimer *playbackTimer;
-	ImagesBuffer *_bmng;
+	QTimer			*playbackTimer;
+	ImagesBuffer	*_bmng;
+	Frame			_actualFrame;
 
 	//	Help variables
 	bool playState;
