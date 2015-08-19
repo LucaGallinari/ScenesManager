@@ -1,10 +1,14 @@
 /*
 
 	ISSUE TODO:
-		- (HARD)  mkv seek problem PTS <> FRAME NUM
+		- (EASY)  disable buffering while in playback
+		- (EASY)  end of file seek errors
 		- (EASY)  on realod of the buffer previews are wrong
-		- (EASY)  buffer not big enough
+		- (EASY)  buffer not big enough error
 		- (EASY)  resizeEvent
+	TODO:
+		- progress bar while processing
+		- UI restyle
 
 */
 

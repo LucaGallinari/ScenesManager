@@ -276,15 +276,8 @@ bool QVideoDecoder::decodeSeekFrame (const qint64 idealFrameNumber)
 					t = ffmpeg::av_rescale_q(packet.dts, timeBaseRat, millisecondbase);
 				}
 
-				qDebug() << "f:" << f;
-				qDebug() << "t: " << t;
-				qDebug() << "type: " << pFrame->pict_type;
-				qDebug() << "DTS: " <<  idealFrameNumber *
-					(pFormatCtx->streams[videoStream]->time_base.den /
-					pFormatCtx->streams[videoStream]->time_base.num) /
-					(pFormatCtx->streams[videoStream]->codec->time_base.den /
-					pFormatCtx->streams[videoStream]->codec->time_base.num)*
-					pCodecCtx->ticks_per_frame;
+				qDebug() << "real num: " << f;
+				qDebug() << "real time: " << t;
 
 				if (LastFrameOk) {
 					// If we decoded 2 frames in a row, the last times are okay
@@ -299,17 +292,11 @@ bool QVideoDecoder::decodeSeekFrame (const qint64 idealFrameNumber)
 					LastLastFrameNumber = LastFrameNumber = f;
 				}
 
-				// Is this frame the desired frame?
+				// this is the desired frame or at least one just after it
 				if (idealFrameNumber == -1 || LastFrameNumber >= idealFrameNumber)
 				{
-					qDebug() << "FRAME NUM: " << idealFrameNumber;
-					qDebug() << "dpn: " << pFrame->display_picture_number;
-					qDebug() << "cpn: " << pFrame->coded_picture_number;
-					qDebug() << "dts: " << packet.dts;
-					qDebug() << "pts: " << packet.pts;
-					qDebug() << "dur: " << packet.duration;
-					qDebug() << "pos: " << packet.pos;
-					qDebug() << "best: " << av_frame_get_best_effort_timestamp(pFrame);
+					qDebug() << "fake num: " << idealFrameNumber;
+					qDebug() << "dts: " << packet.dts << endl;
 					
 					// Convert and save the frame
 					img_convert_ctx = ffmpeg::sws_getCachedContext(
@@ -331,17 +318,7 @@ bool QVideoDecoder::decodeSeekFrame (const qint64 idealFrameNumber)
 
 					LastFrameOk = true;
 					done = true;
-				} // frame of interest
-				else {
-					/* It can happen that after the seeking operation (that should be called before running 
-					 * this function) we end up being after the desired frame. This happen because the 
-					 * seeking operation is based on the prediction of the frame's position. 
-					 * So we have to correct the seek if we went past it.
-					 * TODO
-					*/
-					//if (LastFrameNumber >= idealFrameNumber)
-
-				}
+				} // frame of interes
 			}  // frameFinished
 		}  // stream_index==videoStream
 
@@ -461,21 +438,21 @@ bool QVideoDecoder::correctSeekToKeyFrame(const qint64 idealFrameNumber)
 		flag = AVSEEK_FLAG_BACKWARD;
 	}
 	else if (type == "matroska,webm") { // .mkv
-		desiredDts = idealFrameNumber *
+		// this prediction is not perfect but it gives a good start point close 
+		// to the desired frame number
+		qint64 targetDts = idealFrameNumber *
 			(pFormatCtx->streams[videoStream]->time_base.den /
 			pFormatCtx->streams[videoStream]->time_base.num) /
 			(pFormatCtx->streams[videoStream]->codec->time_base.den /
 			pFormatCtx->streams[videoStream]->codec->time_base.num)*
 			pCodecCtx->ticks_per_frame;
-		/*if (desiredDts > 0) {
-			flag |= AVSEEK_FLAG_ANY;
-		}*/
-		bool a = av_seek_frame(pFormatCtx, videoStream, desiredDts, AVSEEK_FLAG_FRAME);
+
+		desiredDts = round(idealFrameNumber * frameMSec);
+
+		av_seek_frame(pFormatCtx, videoStream, targetDts, AVSEEK_FLAG_FRAME);
 		avcodec_flush_buffers(pCodecCtx);
 		
 		bool done = false;
-		int round = 0;
-		qint64 targetDts = desiredDts;
 		qint64 t;
 
 		while (!done) {
@@ -492,17 +469,20 @@ bool QVideoDecoder::correctSeekToKeyFrame(const qint64 idealFrameNumber)
 				if (frameFinished) {
 					t = av_frame_get_best_effort_timestamp(pFrame);
 
-					if (t > desiredDts) { // i am after the desired frame
-						++round;
-						targetDts -= 3000 * round;
+					// if i am after the desired frame, have to reseek
+					if (t > desiredDts) {
+						qDebug() << "Sono oltre, vorrei " << targetDts << " ma sono a " << t;
+						qDebug() << "Vado indietro di 3s da: " << targetDts;
+						targetDts -= 3000; // TODO: a better value?
 						if (targetDts < 0)
 							targetDts = 0;
 						av_seek_frame(pFormatCtx, videoStream, targetDts, AVSEEK_FLAG_BACKWARD);
 						avcodec_flush_buffers(pCodecCtx);
 					}
-					else {
+					else { // i am before, seek done
 						done = true;
-						av_seek_frame(pFormatCtx, videoStream, targetDts, AVSEEK_FLAG_FRAME);
+						qDebug() << "Ho trovato il seek giusto: " << targetDts;
+						av_seek_frame(pFormatCtx, videoStream, targetDts, AVSEEK_FLAG_BACKWARD);
 						avcodec_flush_buffers(pCodecCtx);
 					}
 				}
