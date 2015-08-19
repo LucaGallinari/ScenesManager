@@ -1,12 +1,12 @@
 /*
 
 	ISSUE TODO:
-		- (EASY)  disable buffering while in playback
 		- (EASY)  end of file seek errors
 		- (EASY)  on realod of the buffer previews are wrong
 		- (EASY)  buffer not big enough error
 		- (EASY)  resizeEvent
 	TODO:
+		- popup while filling the buffer
 		- progress bar while processing
 		- UI restyle
 

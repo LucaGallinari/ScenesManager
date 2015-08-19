@@ -60,7 +60,7 @@ void PlayerWidget::displayFrame()
 */
 void PlayerWidget::updateFrame()
 {
-	if (!nextFrame()) {
+	if (!nextSingleFrame()) {
 		stopVideo(false);
 		emit endOfStream();
 	}
@@ -89,7 +89,28 @@ void PlayerWidget::reloadFrame()
 /*! \brief displays next frame.
 *
 *	Displays the next frame from the current player position.
-*	The frame number is calculated and may not be correct.
+*	This won't update the buffer. This function must be called only for
+*	the playback of the video.
+*
+*	@return success or not
+*/
+bool PlayerWidget::nextSingleFrame()
+{
+	bool ok;
+	if (!(ok = _bmng->getSingleFrame(_actualFrame, _actualFrame.num + 1))) {
+		// end of stream?
+		QMessageBox::critical(NULL, "Error", "End of stream");
+	}
+	displayFrame();
+	return ok;
+}
+
+/*! \brief displays next frame.
+*
+*	Displays the next frame from the current player position. This will update
+*	the buffer. 
+*
+*	@return success or not
 *	@see prevFrame()
 */
 bool PlayerWidget::nextFrame(){
@@ -104,8 +125,10 @@ bool PlayerWidget::nextFrame(){
 
 /*! \brief displays previous frame.
 *
-*	Displays the previous frame from the current player position.
-*	The frame number is calculated and may not be correct.
+*	Displays the previous frame from the current player position. This will update
+*	the buffer.
+*
+*	@return success or not
 *	@see nextFrame()
 */
 bool PlayerWidget::prevFrame(){
@@ -120,6 +143,7 @@ bool PlayerWidget::prevFrame(){
 /*! \brief seek to frame number
 *
 *	Displays the given frame number
+*
 *   @param num frame number
 *   @see seekToTime()
 */
@@ -135,6 +159,7 @@ void PlayerWidget::seekToFrame(const qint64 num){
 /*! \brief seek to given time
 *
 *	Displays the frame near the given time
+*
 *   @param ms time in milliseconds
 *   @see seekToFrame()
 */
@@ -150,6 +175,7 @@ void PlayerWidget::seekToTime(const qint64 ms){
 /*! \brief seek to given time percentage
 *
 *	Displays the frame near the given percentage of the entire video length
+*
 *   @param perc double value from 0 to 1
 */
 void PlayerWidget::seekToTimePercentage(const double perc){
@@ -169,6 +195,7 @@ void PlayerWidget::seekToTimePercentage(const double perc){
 /*! \brief load a video.
 *
 *   Open and load a video by using ffmpeg's decoder.
+*
 *	@param fileName path to the video
 */
 void PlayerWidget::loadVideo(const QString fileName)
@@ -227,7 +254,8 @@ bool PlayerWidget::playVideo()
 
 /*! \brief pause the video.
 *
-*	Pause the video by stopping the timer.
+*	Pause the video by stopping the timer. 
+*
 *   @see playVideo()
 *   @see stopVideo()
 */
@@ -235,13 +263,23 @@ bool PlayerWidget::pauseVideo()
 {
 	if (!_bmng->isVideoLoaded())
 		return false;
+
 	playbackTimer->stop();
+
+	// do "another" getFrame because while in playback the buffer isn't updated
+	// (for performance and visualization reason).
+	if (!_bmng->getFrame(_actualFrame, _actualFrame.num)) {
+		QMessageBox::critical(NULL, "Error", "seekToFrame failed");
+		return false;
+	}
+
 	return true; //TODO: check if stop() went ok
 }
 
 /*! \brief stop the video.
 *
 *	Stop the video playback and seek to its start point.
+*
 *	@param reset seek to frame 0 or not
 *   @see playVideo()
 *   @see pauseVideo()
@@ -287,6 +325,7 @@ bool PlayerWidget::isVideoLoaded()
 /*! \brief Get current frame number.
 *
 *	This functions is used to get the current frame number.
+*
 *	@return current frame number.
 *   @see currentFrameTime()
 */
@@ -297,6 +336,7 @@ qint64 PlayerWidget::currentFrameNumber() {
 /*! \brief Get current frame time.
 *
 *	This functions is used to get the time of the current frame.
+*
 *	@return current frame time.
 *   @see currentFrameNumber()
 */
@@ -316,6 +356,7 @@ qint64 PlayerWidget::getNumFrames() {
 *
 *	Calculated the ratio (0 to 1) of the current frame time compared to the
 *   total video length.
+*
 *	@return ratio percentage decimal (0 to 1)
 *   @see currentFrameTime()
 */

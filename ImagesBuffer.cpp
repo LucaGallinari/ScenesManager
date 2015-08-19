@@ -22,9 +22,8 @@ ImagesBuffer::~ImagesBuffer()
 
 /*! \brief retrieve the frame with the given frame number.
 *
-*   Checks if the frame has already in the buffer, if not, retrieve
-*	the frame BUT DO NOT UPDATE THE BUFFER.
-*	The buffer will be updated only when calling seekToFrame().
+*   Checks if the frame is already in the buffer, if not, reseek and refill the buffer
+*
 *	@param p where the image will be stored
 *	@param num number of the frame
 *	@return success or not
@@ -48,15 +47,46 @@ bool ImagesBuffer::getFrame(Frame &f, const qint64 num)
 		QMessageBox::critical(NULL, "Error", "Error seeking and decoding the frame");
 		return false;
 	}
-	/*
-	QImage img; 
-	if (!decoder.seekToAndGetFrame(num, img)) {
+
+	f = _buffer[_mid];
+	return true;
+}
+
+/*! \brief retrieve the frame with the given frame number.
+*
+*   Checks if the frame is already in the buffer, if not, retrieve
+*	the frame BUT DO NOT UPDATE THE BUFFER.
+*	The buffer will be updated only when calling seekToFrame().
+*	This is usefull when we the video is in playback and we want just one image.
+*
+*	@param p where the image will be stored
+*	@param num number of the frame
+*	@return success or not
+*/
+bool ImagesBuffer::getSingleFrame(Frame &f, const qint64 num)
+{
+	if (!isVideoLoaded())
+		return false;
+
+	if (num < 0)
+		return false;
+
+	// already in the buffer?
+	int index = isFrameLoaded(num);
+	if (index != -1) {
+		f = _buffer[index];
+		return true;
+	}
+
+	// go and get that
+	QImage img;
+	if (!decoder.seekToAndGetFrame(num, img, &f.pts, &f.time)) {
 		QMessageBox::critical(NULL, "Error", "Error seeking and decoding the frame");
 		return false;
 	}
-	*/
+	image2Pixmap(img, f.img);
+	f.num = num;
 
-	f = _buffer[_mid];
 	return true;
 }
 
@@ -165,88 +195,6 @@ bool ImagesBuffer::fillBuffer(
 	if (_buffer[_mid].num == -1)
 		return false;
 	return true;
-}
-
-/*! \brief seek next frame number
-*
-*	Seek the buffer to the next frame number
-*	@return succes or not
-*/
-bool ImagesBuffer::seekNextFrame()
-{
-	Frame f;
-
-	if (!isVideoLoaded())
-		return false;
-
-	// no more frame after
-	if (_buffer[_mid + 1].num == -1)
-		return false;
-
-	// we are not near the end of the video
-	// int targetEffectiveNum = _buffer.back().pts + 1;
-	int targetIdealNum = _buffer.back().num + 1;
-	if (targetIdealNum > 0 && targetIdealNum < numFrames) { // if .num=-1, tagertNum=0
-
-		QImage img;
-		if (decoder.seekToAndGetFrame(targetIdealNum, img, &f.pts, &f.time)) {
-			// Update the buffer with this Frame
-			image2Pixmap(img, f.img);
-			f.num = targetIdealNum;
-		}
-		//else {
-			// possible early end of stream
-			//QMessageBox::critical(NULL, "Error", "Error seeking and decoding the frame");
-			//return false;
-		//}
-	}
-
-	_buffer.erase(_buffer.begin());		// remove first
-	_buffer.push_back(f);				// add last
-
-	dumpBuffer();
-	return true;
-	// emit 
-}
-
-/*! \brief seek previous frame number
-*
-*	Seek the buffer to the previous frame number
-*	@return success or not
-*/
-bool ImagesBuffer::seekPrevFrame()
-{
-	Frame f;
-
-	if (!isVideoLoaded())
-		return false;
-
-	// no more frame before
-	if (_buffer[_mid].num == 0)
-		return false;
-
-	// int targetEffectiveNum = _buffer.front().pts - 3600;
-	int targetIdealNum = _buffer.front().num - 1;
-	// int targetNum = _buffer.front().num - 1;
-	if (targetIdealNum >= 0) {
-
-		QImage img;
-		if (!decoder.seekToAndGetFrame(targetIdealNum, img, &f.pts, &f.time)) {
-			QMessageBox::critical(NULL, "Error", "Error seeking and decoding the frame");
-			return false;
-		}
-
-		// Update the buffer with this Frame
-		image2Pixmap(img, f.img);
-		f.num = targetIdealNum;
-	}
-
-	_buffer.erase(_buffer.end() - 1);		// remove last
-	_buffer.emplace(_buffer.begin(), f);	// add first
-
-	dumpBuffer();
-	return true;
-	// emit 
 }
 
 /*! \brief get the frame located at given time

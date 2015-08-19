@@ -37,8 +37,9 @@ public:
 	
 	//  Frame actions
 	void reloadFrame();
-	bool prevFrame();
+	bool nextSingleFrame();
 	bool nextFrame();
+	bool prevFrame();
 	void seekToFrame(const qint64 num);
 	void seekToTime(const qint64 ms);
 	void seekToTimePercentage(const double perc);

@@ -8,8 +8,8 @@
 struct Frame {
 	QPixmap img;
 	qint64 num = -1;		// absolute frame number
-	qint64 time = -1;	// 
-	qint64 pts;			// decoder presentation timestamp
+	qint64 time = -1;		// 
+	qint64 pts;				// decoder presentation timestamp TODO: useless?
 };
 
 class ImagesBuffer
@@ -39,8 +39,6 @@ class ImagesBuffer
 
 
 	bool seekToFrame(const qint64 num);
-	bool seekNextFrame();
-	bool seekPrevFrame();
 
 public:	
 
@@ -51,13 +49,14 @@ public:
 	bool getFrame(Frame &f, const qint64 num);
 	bool getFrameByTime(Frame &f, const qint64 ms);
 	bool getFrameByTimePercentage(Frame &f, const double perc);
+	bool getSingleFrame(Frame &f, const qint64 num);
 
 	//  Video actions
 	bool loadVideo(const QString fileName);
 
 	//  Getters
-	void getImagesBuffer(std::vector<Frame> &v, const int mid, const int num = 0);
-	bool   isVideoLoaded();
+	void	getImagesBuffer(std::vector<Frame> &v, const int mid, const int num = 0);
+	bool	isVideoLoaded();
 
 	double getFps();
 	int	   getFrameMs();
