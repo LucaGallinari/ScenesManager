@@ -36,20 +36,13 @@ PlayerWidget::~PlayerWidget()
 
 /*! \brief display last loaded frame.
 *
-*   Retrieve and display last loaded frame.
+*   Display last loaded frame.
 */
 void PlayerWidget::displayFrame()
 {
 	if (!_bmng->isVideoLoaded())
 		return;
-	/*
-	// Decode a frame
-	QPixmap img;
-	if (!_bmng->getMidFrame(img)) {
-		QMessageBox::critical(NULL,"Error","Error retrieving the frame");
-		return;
-	}
-	*/
+
 	emit newFrame(_actualFrame.img);
 	emit timeChanged(_actualFrame.time);
 }
@@ -133,7 +126,7 @@ bool PlayerWidget::nextFrame(){
 */
 bool PlayerWidget::prevFrame(){
 	if (!_bmng->getFrame(_actualFrame, _actualFrame.num - 1)) {
-		QMessageBox::critical(NULL, "Error", "seekPrevFrame failed");
+		// QMessageBox::critical(NULL, "Error", "seekPrevFrame failed");
 		return false;
 	}
 	displayFrame();

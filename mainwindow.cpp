@@ -1,10 +1,7 @@
 /*
 
 	ISSUE TODO:
-		- (EASY)  end of file seek errors
-		- (EASY)  on realod of the buffer previews are wrong
-		- (EASY)  buffer not big enough error
-		- (EASY)  resizeEvent
+		- ...
 	TODO:
 		- popup while filling the buffer
 		- progress bar while processing
@@ -296,6 +293,21 @@ void MainWindow::on_videoSlider_sliderReleased()
 }
 
 
+
+/***  SPLITTERS  ***/
+void MainWindow::on_splitter_splitterMoved(int pos, int index)
+{
+	_playerWidg->reloadFrame();
+	_prevWidg->reloadLayout();
+}
+
+void MainWindow::on_splitter_2_splitterMoved(int pos, int index)
+{
+	_playerWidg->reloadFrame();
+}
+
+
+
 /***  MARKERS  ***/
 void MainWindow::on_startMarkerBtn_clicked()
 {
@@ -339,8 +351,8 @@ void MainWindow::on_markersTableWidget_cellChanged(int row, int column)
 {
 	/* Don't want to call this all the time that the value of a cell is changed
 	 * but only when it's changed by the user. We can do this by tracking the last
-	 * selected row and exe following actions only if that selected row was changed.
-	 * It's not perfect but it works ok.
+	 * selected row and exec following actions only if the selected row changed.
+	 * It's not perfect but it works well.
 	*/
 	if (row == _currMarkerRow) {
 		bool ok;

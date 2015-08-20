@@ -79,6 +79,10 @@ private slots:
 	void on_videoSlider_actionTriggered(int action);
 	void on_videoSlider_sliderReleased();
 
+	//	Splitters
+	void on_splitter_splitterMoved(int pos, int index);
+	void on_splitter_2_splitterMoved(int pos, int index);
+
 	//	Markers
 	void on_startMarkerBtn_clicked();
 	void on_endMarkerBtn_clicked();
@@ -89,6 +93,7 @@ private slots:
 	void on_markersTableWidget_customContextMenuRequested(const QPoint &pos);
 	void on_markersTableWidget_cellChanged(int row, int column);
 	void on_markersTableWidget_itemSelectionChanged();
+
 };
 
 #endif // MAINWINDOW_H

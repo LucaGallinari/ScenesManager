@@ -44,7 +44,7 @@ bool ImagesBuffer::getFrame(Frame &f, const qint64 num)
 	}
 
 	if (!seekToFrame(num)) {
-		QMessageBox::critical(NULL, "Error", "Error seeking and decoding the frame");
+		// QMessageBox::critical(NULL, "Error", "Error seeking and decoding the frame");
 		return false;
 	}
 
@@ -93,6 +93,7 @@ bool ImagesBuffer::getSingleFrame(Frame &f, const qint64 num)
 /*! \brief seek to frame number
 *
 *	Seek the buffer to the given frame number.
+*
 *   @param num frame number
 *	@return succes or not
 */
@@ -135,7 +136,7 @@ bool ImagesBuffer::seekToFrame(const qint64 num)
 
 	// fill the buffer from startNumber with numElements elements
 	if (!fillBuffer(startFrameNumber, numElements, addBack)) {
-		QMessageBox::critical(NULL, "Error", "Seek failed");
+		// QMessageBox::critical(NULL, "Error", "Seek failed");
 		// TODO: buffer inconsistent, what to do?
 		return false;
 	}
@@ -344,19 +345,24 @@ void ImagesBuffer::getImagesBuffer(std::vector<Frame> &v, const int mid, const i
 		if (actualFrameNumber >= 0 && actualFrameNumber < numFrames && !endofstream) {
 
 			int index = isFrameLoaded(actualFrameNumber);
-			if (index != -1) {// already in the buffer?
-				v.push_back(_buffer[index]);
-			}
-			else { // not in the buffer? must update the buffer
-				if (endofstream = !seekToFrame(actualFrameNumber)) {
-					v.push_back(_buffer[_mid]);
+			if (index <= -1) {// not in the buffer? must update the buffer
+
+				if (endofstream = !seekToFrame(actualFrameNumber)) { // fake frame
+					v.push_back(f);
 				}
+				else {
+					index = _mid;
+					v.push_back(_buffer[index]);
+				}
+			}
+			else { // already in the buffer
+				v.push_back(_buffer[index]);
 			}
 		}
 		else { // fake frame
 			v.push_back(f);
 		}
-	}
+	}//for
 }
 
 /*! \brief a video was loaded?
