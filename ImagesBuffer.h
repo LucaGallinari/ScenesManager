@@ -15,14 +15,13 @@ struct Frame {
 class ImagesBuffer
 {
 
-	QVideoDecoder decoder;
+	QVideoDecoder		_decoder;	// ffmpeg decoder
 
 	std::vector<Frame>	_buffer;	// Frame array
 	unsigned			_maxsize;
 	unsigned			_mid;		// mid element index
 
 	//	Help variables
-	double	fps;					// frame per second
 	int		frameMs;				// ms of a single frame
 	qint64	numFrames;
 	qint64	videoLength;			// ms
@@ -58,11 +57,21 @@ public:
 	void	getImagesBuffer(std::vector<Frame> &v, const int mid, const int num = 0);
 	bool	isVideoLoaded();
 
-	double getFps();
-	int	   getFrameMs();
-	qint64 getNumFrames();
-	qint64 getVideoLengthMs();
-	bool   getDimensions(double &ratio, int *w=0, int *h=0);
+	qint64	getNumFrames();
+	qint64	getVideoLengthMs();
+	bool	getDimensions(double &ratio, int *w=0, int *h=0);
+	QString getPath();
+	QString getType();
+	QString getDuration();
+	double	getTimeBase();
+	double	getFrameRate();
+	double	getFrameMsec();
+	double	getFrameMsecReal();
+	int		getFrameWidth();
+	int		getFrameHeight();
+	QString	getBitrate();
+	QString getProgramsString();
+	QString getMetadataString();
 
 	bool   getMidFrame(Frame &f);
 

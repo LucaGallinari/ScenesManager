@@ -189,13 +189,13 @@ void MarkersWidget::removeMarker(const int row)
 **********    I/O METHODS    ***********
 ***************************************/
 
-bool MarkersWidget::loadFile()
+QString MarkersWidget::loadFile()
 {
 	QString temp = _inputFile;
 	_inputFile = QFileDialog::getOpenFileName(NULL, QObject::tr("Open a markers file"), "", QObject::tr("Text files (*.txt)"));
 	if (_inputFile=="") {
 		_inputFile = temp;
-		return false;
+		return "";
 	}
 
 	// open file
@@ -204,7 +204,7 @@ bool MarkersWidget::loadFile()
 	if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
 		QMessageBox::critical(NULL, "Error", "Cannot read from the file!");
 		_inputFile = temp;
-		return false;
+		return "";
 	}
 
 	_markerStarted = false;
@@ -228,10 +228,10 @@ bool MarkersWidget::loadFile()
 	checkMarkersOverlaps();
 
 	printListToUI();
-	return true;
+	return _inputFile;
 }
 
-bool MarkersWidget::saveFile()
+QString MarkersWidget::saveFile()
 {
 	_markerStarted = false;
 	//TODO: check if markers are ok
@@ -254,7 +254,7 @@ bool MarkersWidget::saveFile()
 		file.write(QString("%1, %2\n").arg(m._start).arg(m._end).toLatin1());
 	}
 
-	return true;
+	return _inputFile;
 }
 
 bool MarkersWidget::newFile()

@@ -31,7 +31,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	_currMarkerCol = -1;
 
 	_bmng = new ImagesBuffer(numPrev);
-	_prevWidg = new PreviewsWidget(0, _bmng);
+	_prevWidg = new PreviewsWidget(0, this, _bmng);
 	_playerWidg = new PlayerWidget(0, this, _bmng);
 	_markersWidg = new MarkersWidget(0, this, ui->markersTableWidget);
 
@@ -41,6 +41,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	sliderMaxVal = ui->videoSlider->maximum() + 1;
 	ui->labelVideoFrame->setMinimumSize(1,1);
 
+	ui->progressLbl->setText("Started");
+
 	initializeIcons();
 }
 
@@ -48,6 +50,68 @@ MainWindow::~MainWindow()
 {
 	delete ui;
 }
+
+
+/*! \brief Open a dialog with video infos
+*
+*	Open a dialog with video infos
+*/
+void MainWindow::showInfo() 
+{
+	QDialog *infoDialog = new QDialog(this);
+
+	QGridLayout *base = new QGridLayout();
+
+	base->addWidget(new QLabel("Video path:"), 0, 0);
+	base->addWidget(new QLabel(_bmng->getPath()), 0, 1);
+
+	base->addWidget(new QLabel("Type:"), 1, 0);
+	base->addWidget(new QLabel(_bmng->getType()), 1, 1);
+
+	base->addWidget(new QLabel("Duration:"), 2, 0);
+	base->addWidget(new QLabel(_bmng->getDuration()), 2, 1);
+
+	base->addWidget(new QLabel("Number of frames:"), 3, 0);
+	base->addWidget(new QLabel(QString::number(_bmng->getNumFrames())), 3, 1);
+
+	base->addWidget(new QLabel("Time base:"), 4, 0);
+	base->addWidget(new QLabel(QString::number(_bmng->getTimeBase())), 4, 1);
+
+	base->addWidget(new QLabel("Frame rate:"), 5, 0);
+	base->addWidget(new QLabel(QString::number(_bmng->getFrameRate())), 5, 1);
+
+	base->addWidget(new QLabel("Frame ms (theorycal):"), 6, 0);
+	base->addWidget(new QLabel(QString::number(_bmng->getFrameMsec())), 6, 1);
+
+	base->addWidget(new QLabel("Frame ms (real):"), 7, 0);
+	base->addWidget(new QLabel(QString::number(_bmng->getFrameMsecReal())), 7, 1);
+
+	base->addWidget(new QLabel("Frame width:"), 8, 0);
+	base->addWidget(new QLabel(QString::number(_bmng->getFrameWidth())), 8, 1);
+
+	base->addWidget(new QLabel("Frame height:"), 9, 0);
+	base->addWidget(new QLabel(QString::number(_bmng->getFrameHeight())), 9, 1);
+
+	base->addWidget(new QLabel("Bitrate:"), 10, 0);
+	base->addWidget(new QLabel(_bmng->getBitrate()), 10, 1);
+
+	base->addWidget(new QLabel("Programs:"), 11, 0);
+	base->addWidget(new QLabel(_bmng->getProgramsString()), 11, 1);
+
+	base->addWidget(new QLabel("Metadata:"), 12, 0);
+	base->addWidget(new QLabel(_bmng->getMetadataString()), 12, 1);
+
+	infoDialog->setLayout(base);
+
+	infoDialog->show();
+
+}
+
+
+
+/**********************************************
+******************** EVENTS ******************
+***********************************************/
 
 void MainWindow::changeEvent(QEvent *e)
 {
@@ -102,6 +166,7 @@ void MainWindow::changePlayPause(bool playState)
 /*! \brief Update the frame image.
 *
 *	Draw the new frame image in the proper label.
+*	
 *	@param p qpixmap image
 */
 void MainWindow::updateFrame(QPixmap p)
@@ -120,6 +185,7 @@ void MainWindow::updateFrame(QPixmap p)
 /*! \brief Update the time box.
 *
 *	This functions updates the timebox with the proper actual time of the video.
+*	
 *	@param time actual msec of the video
 */
 void MainWindow::updateTime(qint64 time)
@@ -134,6 +200,20 @@ void MainWindow::updateTime(qint64 time)
 		QString("%1").arg(s, 2, 10, QChar('0'))+" "+
 		QString("%1").arg(ms, 3, 10, QChar('0'))
 	);
+}
+
+
+
+/*! \brief Update progress bar text.
+*
+*	This functions updates the progress bar text.
+*	
+*	@param m message to set
+*/
+void MainWindow::updateProgressText(QString m)
+{
+	ui->progressLbl->setText(m);
+	ui->progressLbl->repaint();
 }
 
 /*! \brief .
@@ -244,9 +324,11 @@ void MainWindow::on_seekFrameBtn_clicked()
 		return;
 	}
 
+	updateProgressText("Seeking to desired frame number..");
 	_playerWidg->seekToFrame(frameNum);
 	updateSlider();
 	_prevWidg->reloadAndDrawPreviews(frameNum);
+	updateProgressText("");
 }
 
 void MainWindow::on_playPauseBtn_clicked()
@@ -267,7 +349,7 @@ void MainWindow::on_stopBtn_clicked()
 /***  SLIDER  ***/
 void MainWindow::on_videoSlider_actionTriggered(int action)
 {
-	// if siongle step page actions
+	// if single step page actions
 	if (action==3 || action==4) {
 		if (!_playerWidg->isVideoLoaded()) {
 			ui->videoSlider->setValue(0);
@@ -277,8 +359,10 @@ void MainWindow::on_videoSlider_actionTriggered(int action)
 		int val = ui->videoSlider->value() + (action==3 ? 1 : -1) * sliderPageStep;
 		if (val >= sliderMaxVal)
 			val = sliderMaxVal - 1;
+		updateProgressText("Seeking to desired position..");
 		_playerWidg->seekToTimePercentage(val / (double)sliderMaxVal);
 		_prevWidg->reloadAndDrawPreviews(_playerWidg->currentFrameNumber());
+		updateProgressText("");
 	}
 }
 
@@ -288,8 +372,10 @@ void MainWindow::on_videoSlider_sliderReleased()
 		ui->videoSlider->setValue(0);
 		return;
 	}
+	updateProgressText("Seeking to desired position..");
 	_playerWidg->seekToTimePercentage(ui->videoSlider->value() / (double)sliderMaxVal);
 	_prevWidg->reloadAndDrawPreviews(_playerWidg->currentFrameNumber());
+	updateProgressText("");
 }
 
 
@@ -297,12 +383,20 @@ void MainWindow::on_videoSlider_sliderReleased()
 /***  SPLITTERS  ***/
 void MainWindow::on_splitter_splitterMoved(int pos, int index)
 {
+	if (!_playerWidg->isVideoLoaded()) {
+		ui->videoSlider->setValue(0);
+		return;
+	}
 	_playerWidg->reloadFrame();
 	_prevWidg->reloadLayout();
 }
 
 void MainWindow::on_splitter_2_splitterMoved(int pos, int index)
 {
+	if (!_playerWidg->isVideoLoaded()) {
+		ui->videoSlider->setValue(0);
+		return;
+	}
 	_playerWidg->reloadFrame();
 }
 
@@ -325,21 +419,42 @@ void MainWindow::on_endMarkerBtn_clicked()
 	_markersWidg->endAndStartMarker(_playerWidg->currentFrameNumber(), -1);
 }
 
+
 void MainWindow::on_markersSaveBtn_clicked()
 {
-	_markersWidg->saveFile();
+	QString path = _markersWidg->saveFile();
+	if (path != "") {
+		ui->markersFileText->setText(path);
+	}
+	else {
+		QMessageBox::critical(this, "Error", "Error while saving! Check folders and files permissions..");
+		return;
+	}
 }
 
 void MainWindow::on_markersLoadBtn_clicked()
 {
 	_currMarkerRow = -1;
-	_markersWidg->loadFile();
+	QString path = _markersWidg->loadFile();
+	if (path != "") {
+		ui->markersFileText->setText(path);
+	}
+	else {
+		QMessageBox::critical(this, "Error", "Error while loading! Check folders and files permissions..");
+		return;
+	}
 }
 
 void MainWindow::on_markersNewBtn_clicked()
 {
 	_currMarkerRow = -1;
-	_markersWidg->newFile();
+	if (_markersWidg->newFile()) {
+		ui->markersFileText->setText("");
+	}
+	else {
+		QMessageBox::critical(this, "Error", "Error while clearing the list! Try reloading..");
+		return;
+	}
 }
 
 void MainWindow::on_markersTableWidget_customContextMenuRequested(const QPoint &pos)
@@ -369,4 +484,9 @@ void MainWindow::on_markersTableWidget_cellChanged(int row, int column)
 void MainWindow::on_markersTableWidget_itemSelectionChanged()
 {
 	_currMarkerRow = ui->markersTableWidget->currentRow();
+}
+
+void MainWindow::on_infoBtn_clicked()
+{
+	showInfo();
 }

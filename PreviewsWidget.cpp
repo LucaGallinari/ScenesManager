@@ -10,17 +10,24 @@
 */
 PreviewsWidget::PreviewsWidget(
 	QWidget *parent,
+	QWidget *mainwin,
 	ImagesBuffer *buff
 ) : QWidget(parent), _bmng(buff)
 {
+	// setup the layout
 	_base = new QHBoxLayout();
 	setLayout(_base);
 	QLabel *temp = new QLabel("Previews will be displayed here..");
 	temp->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
 	_base->addWidget(temp);
 
+	// init vars
 	_frame_margin_w = _frame_margin_h = 5;
 	_mid = 0;
+
+	// s&s
+	connect(this, SIGNAL(updateProgressText(QString)), mainwin, SLOT(updateProgressText(QString)));
+
 }
 
 PreviewsWidget::~PreviewsWidget()
@@ -30,6 +37,7 @@ PreviewsWidget::~PreviewsWidget()
 *
 *	Setup of the entire widget, must be called only after a video has been 
 *	loaded by the buffer manager.
+*	
 *	@return success or not
 */
 bool PreviewsWidget::setupPreviews()
@@ -46,7 +54,7 @@ bool PreviewsWidget::setupPreviews()
 
 /*! \brief reload the layout
 *
-*	Recalculate the previews dimensions and draw them
+*	Recalculate previews dimensions and draw them
 */
 void PreviewsWidget::reloadLayout()
 {
@@ -63,9 +71,11 @@ void PreviewsWidget::reloadLayout()
 void PreviewsWidget::reloadAndDrawPreviews(const qint64 mid)
 {
 	_frames.clear();
+	emit updateProgressText("Updating previews..");
 	_bmng->getImagesBuffer(_frames, mid, _frame_num);
 	_mid = mid;
 	drawPreviews();
+	emit updateProgressText("");
 }
 
 /*! \brief draw all previews

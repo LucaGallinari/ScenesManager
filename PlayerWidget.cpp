@@ -199,9 +199,8 @@ void PlayerWidget::loadVideo(const QString fileName)
 	}
 
 	// Retrieve datas
-	fps = _bmng->getFps();
-	frameMs = _bmng->getFrameMs();
-	numFrames = _bmng->getNumFrames();
+	frameMs		= _bmng->getFrameMsec();
+	numFrames	= _bmng->getNumFrames();
 	videoLength = _bmng->getVideoLengthMs();
 
 	_bmng->getMidFrame(_actualFrame);

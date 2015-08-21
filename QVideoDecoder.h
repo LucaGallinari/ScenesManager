@@ -50,6 +50,7 @@ class QVideoDecoder
 		int						numBytes;
 
 		// Video informations
+		QString					path; // file path
 		QString					type; // format type
 		int						w; // frame width
 		int						h; // framw height
@@ -57,8 +58,10 @@ class QVideoDecoder
 		qint64					startTs; // first real frame ts
 		qint64					firstDts; // dts of first packet, can differ from startTs
 
-		double					baseFrameRate; // fps
-		double					frameMSec; // ms of each frame
+		double					baseFrameRate; // fps (theorycal)
+		double					baseFRateReal; // fps (real)
+		double					frameMSec; // ms of each frame (theorycal)
+		double					frameMSecReal; // ms of each frame (real)
 		double					timeBase; // base time reference
 		ffmpeg::AVRational		timeBaseRat;
 		ffmpeg::AVRational		millisecondbase; // wanted base time reference
@@ -79,7 +82,7 @@ class QVideoDecoder
 		virtual bool correctSeekToKeyFrame(const qint64 idealFrameNumber);
 
 		// Helpers
-		virtual void dumpFormat(const char *url, const int is_output);
+		virtual void dumpFormat(const int is_output);
 		virtual void saveFramePPM(const ffmpeg::AVFrame *pFrame, const int width, const int height, const int iFrame);
 
 	public:
@@ -107,15 +110,25 @@ class QVideoDecoder
 		virtual qint64 getActualFrameNumber();
 		virtual qint64 getIdealFrameNumber();
 		virtual qint64 getFrameTime();
+		virtual qint64 getNumFrameByTime(const qint64 tsms);
 
 		virtual bool isOk();
-		virtual qint64 getVideoLengthMs();
-		virtual double getFps();
-		virtual qint64 getNumFrames();
-		virtual double getTimeBase();
-		virtual ffmpeg::AVRational getTimeBaseRat();
 
-		virtual qint64 getNumFrameByTime(const qint64 tsms);
+		qint64				getVideoLengthMs();
+		qint64				getNumFrames();
+		QString				getPath();
+		QString				getType();
+		ffmpeg::AVRational	getTimeBaseRat();
+		double				getTimeBase();
+		double				getFrameRate();
+		double				getFrameMsec();
+		double				getFrameMsecReal();
+		int					getFrameWidth();
+		int					getFrameHeight();
+		QString				getBitrate();
+		QString				getProgramsString();
+		QString				getMetadataString();
+
 
 };
 

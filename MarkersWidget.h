@@ -20,8 +20,8 @@ public:
 	~MarkersWidget();
 
 	//	I/O
-	bool loadFile();
-	bool saveFile();
+	QString loadFile();
+	QString saveFile();
 	bool newFile();
 
 	//	External

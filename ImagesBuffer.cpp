@@ -12,7 +12,6 @@ ImagesBuffer::ImagesBuffer(const unsigned maxsize = 1) : _maxsize(maxsize)
 
 	_mid = (_maxsize - 1) / 2;
 	qDebug() << "Init buffer of " << _maxsize << " frames and mid is " << _mid;
-	// dumpBuffer();
 }
 
 ImagesBuffer::~ImagesBuffer()
@@ -80,7 +79,7 @@ bool ImagesBuffer::getSingleFrame(Frame &f, const qint64 num)
 
 	// go and get that
 	QImage img;
-	if (!decoder.seekToAndGetFrame(num, img, &f.pts, &f.time)) {
+	if (!_decoder.seekToAndGetFrame(num, img, &f.pts, &f.time)) {
 		QMessageBox::critical(NULL, "Error", "Error seeking and decoding the frame");
 		return false;
 	}
@@ -163,7 +162,7 @@ bool ImagesBuffer::fillBuffer(
 {
 	bool endofstream = false;
 	// Seek to the first frame
-	if (!decoder.seekFrame((startFrameNumber >= 0) ? startFrameNumber : 0)) {
+	if (!_decoder.seekFrame((startFrameNumber >= 0) ? startFrameNumber : 0)) {
 		return false;
 	}
 
@@ -175,7 +174,7 @@ bool ImagesBuffer::fillBuffer(
 
 			// Decode the frame
 			QImage img;
-			if (!decoder.getFrame(img, &f.pts, &f.time)) {
+			if (!_decoder.getFrame(img, &f.pts, &f.time)) {
 				QMessageBox::critical(NULL, "Error", "Error decoding the frame");
 				// TODO: buffer inconsistent, what to do?
 				return false;
@@ -186,7 +185,7 @@ bool ImagesBuffer::fillBuffer(
 			f.num = actualFrameNumber;
 
 			// Seek next
-			endofstream = !decoder.seekNextFrame();
+			endofstream = !_decoder.seekNextFrame();
 		}
 		if (addBack)
 			_buffer.push_back(f);
@@ -212,7 +211,7 @@ bool ImagesBuffer::getFrameByTime(Frame &f, const qint64 ms)
 	if (!isVideoLoaded())
 		return false;
 
-	qint64 num = decoder.getNumFrameByTime(ms);
+	qint64 num = _decoder.getNumFrameByTime(ms);
 	if (!getFrame(f, num)) {
 		QMessageBox::critical(NULL,"Error","Seek failed, invalid time");
 		return false;
@@ -301,13 +300,14 @@ void ImagesBuffer::dumpBuffer()
 */
 bool ImagesBuffer::loadVideo(const QString fileName)
 {
-	decoder.openFile(fileName);
-	numFrames = decoder.getNumFrames();
-	videoLength = decoder.getVideoLengthMs();
-	fps = decoder.getFps();
-	frameMs = round(1000 / fps);
+	_buffer.clear();
+	_decoder.openFile(fileName);
 
-	if (!decoder.isOk()) {
+	numFrames	= _decoder.getNumFrames();
+	videoLength = _decoder.getVideoLengthMs();
+	frameMs		= _decoder.getFrameMsec();
+
+	if (!_decoder.isOk()) {
 		return false;
 	}
 
@@ -365,30 +365,28 @@ void ImagesBuffer::getImagesBuffer(std::vector<Frame> &v, const int mid, const i
 	}//for
 }
 
+/*! \brief retrieve the middle (current) frame
+*
+*   Retrieve the middle frame image
+*	@param p where the image will be stored
+*	@return success or not
+*/
+bool ImagesBuffer::getMidFrame(Frame &f) {
+	f = _buffer[_mid];
+	return true;
+}
+
+
+
 /*! \brief a video was loaded?
 *
 *   Checks if a video has been previously loaded.
 */
 bool ImagesBuffer::isVideoLoaded()
 {
-	return decoder.isOk();
+	return _decoder.isOk();
 }
 
-/*! \brief Get fps
-*
-*	Retrieve the number ot frame per second
-*/
-double ImagesBuffer::getFps() {
-	return numFrames;
-}
-
-/*! \brief Get ms of a frame
-*
-*	Retrieve the ms of a single frame
-*/
-int ImagesBuffer::getFrameMs() {
-	return frameMs;
-}
 
 /*! \brief Get number of frames
 *
@@ -404,17 +402,6 @@ qint64 ImagesBuffer::getNumFrames() {
 */
 qint64 ImagesBuffer::getVideoLengthMs() {
 	return videoLength;
-}
-
-/*! \brief retrieve the middle (current) frame
-*
-*   Retrieve the middle frame image
-*	@param p where the image will be stored
-*	@return success or not
-*/
-bool ImagesBuffer::getMidFrame(Frame &f) {
-	f = _buffer[_mid];
-	return true;
 }
 
 /*! \brief Get frame's dimensions
@@ -438,4 +425,110 @@ bool ImagesBuffer::getDimensions(double &ratio, int *w, int *h)
 	if (h)
 		*h = he;
 	return true;
+}
+
+/*! \brief Get video path
+*
+*	Retrieve video path
+*/
+QString ImagesBuffer::getPath() {
+	return _decoder.getPath();
+}
+
+/*! \brief Get video path
+*
+*	Retrieve video path
+*/
+QString ImagesBuffer::getType() {
+	return _decoder.getType();
+}
+
+/*! \brief Get video duration
+*
+*	Retrieve video duration
+*/
+QString ImagesBuffer::getDuration() {
+	int hours, mins, secs, us;
+	secs = videoLength / 1000;
+	us = videoLength % 1000;
+	mins = secs / 60;
+	secs %= 60;
+	hours = mins / 60;
+	mins %= 60;
+	QString s = QString("%1h %2m %3s %4").arg(hours).arg(mins).arg(secs).arg((100 * us) / 1000);
+	return s;
+}
+
+/*! \brief Get video time base
+*
+*	Retrieve video time base
+*/
+double ImagesBuffer::getTimeBase() {
+	return _decoder.getTimeBase();
+}
+
+/*! \brief Get video frame rate
+*
+*	Retrieve video frame rate
+*/
+double ImagesBuffer::getFrameRate() {
+	return _decoder.getFrameRate();
+}
+
+/*! \brief Get video frame ms (theorycal)
+*
+*	Retrieve video frame ms (theorycal)
+*/
+double ImagesBuffer::getFrameMsec() {
+	return _decoder.getFrameMsec();
+}
+
+/*! \brief Get video frame ms (real)
+*
+*	Retrieve video frame ms (real)
+*/
+double ImagesBuffer::getFrameMsecReal() {
+	return _decoder.getFrameMsecReal();
+}
+
+/*! \brief Get frame width
+*
+*	Get frame width
+*/
+int ImagesBuffer::getFrameWidth() {
+	return _decoder.getFrameWidth();
+}
+
+/*! \brief Get frame height
+*
+*	Get frame height
+*/
+int ImagesBuffer::getFrameHeight() {
+	return _decoder.getFrameHeight();
+}
+
+/*! \brief Get video bitrate
+*
+*	Get video bitrate
+*/
+QString ImagesBuffer::getBitrate() {
+	return _decoder.getBitrate();
+}
+
+/*! \brief Get string of programs used to make the video
+*
+*	Get string of programs used to make the video
+*/
+QString ImagesBuffer::getProgramsString()
+{
+	return _decoder.getProgramsString();
+}
+
+/*! \brief Get string of metadata
+*
+*	Get string of metadata
+*/
+QString ImagesBuffer::getMetadataString()
+{
+	return _decoder.getMetadataString();
 }

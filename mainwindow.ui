@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>892</width>
-    <height>620</height>
+    <height>642</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -24,7 +24,7 @@
     <normaloff>:/logo3.png</normaloff>:/logo3.png</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QVBoxLayout" name="verticalLayout_3" stretch="2">
+   <layout class="QVBoxLayout" name="verticalLayout_3" stretch="2,0">
     <item>
      <widget class="QSplitter" name="splitter">
       <property name="sizePolicy">
@@ -439,6 +439,48 @@
              </widget>
             </item>
             <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_4">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QLineEdit" name="markersFileText">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>22</height>
+                 </size>
+                </property>
+                <property name="readOnly">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="markersLoadBtn">
+                <property name="maximumSize">
+                 <size>
+                  <width>70</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>Choose..</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
              <layout class="QHBoxLayout" name="horizontalLayout">
               <item>
                <spacer name="horizontalSpacer_2">
@@ -482,19 +524,6 @@
                 </property>
                 <property name="text">
                  <string>Save</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="markersLoadBtn">
-                <property name="maximumSize">
-                 <size>
-                  <width>50</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>Load</string>
                 </property>
                </widget>
               </item>
@@ -565,6 +594,46 @@
       </widget>
      </widget>
     </item>
+    <item>
+     <widget class="QWidget" name="progressWidget" native="true">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>25</height>
+       </size>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="leftMargin">
+        <number>10</number>
+       </property>
+       <property name="topMargin">
+        <number>3</number>
+       </property>
+       <property name="rightMargin">
+        <number>3</number>
+       </property>
+       <property name="bottomMargin">
+        <number>3</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="progressLbl">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>25</height>
+          </size>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menuBar">
@@ -587,12 +656,28 @@
      <string>Video</string>
     </property>
     <addaction name="actionLoad_video"/>
+    <addaction name="separator"/>
+    <addaction name="actionPlay_Pause"/>
+    <addaction name="actionStop"/>
+    <addaction name="separator"/>
+    <addaction name="actionNext_Frame"/>
+    <addaction name="actionPrevious_Frame"/>
+    <addaction name="actionGo_To_Frame"/>
+    <addaction name="separator"/>
+    <addaction name="actionVideo_Info"/>
    </widget>
    <widget class="QMenu" name="menuMarkers">
     <property name="title">
      <string>Markers</string>
     </property>
     <addaction name="actionCompare"/>
+    <addaction name="separator"/>
+    <addaction name="actionNew_File"/>
+    <addaction name="actionSave_File"/>
+    <addaction name="actionLoad_File"/>
+    <addaction name="separator"/>
+    <addaction name="actionStart_StartEnd_Marker"/>
+    <addaction name="actionEnd_Marker"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuVideo"/>
@@ -608,7 +693,7 @@
   </action>
   <action name="actionLoad_video">
    <property name="text">
-    <string>Load video</string>
+    <string>Load Video...</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+L</string>
@@ -616,7 +701,62 @@
   </action>
   <action name="actionCompare">
    <property name="text">
-    <string>Compare</string>
+    <string>Compare...</string>
+   </property>
+  </action>
+  <action name="actionPlay_Pause">
+   <property name="text">
+    <string>Play/Pause</string>
+   </property>
+  </action>
+  <action name="actionStop">
+   <property name="text">
+    <string>Stop</string>
+   </property>
+  </action>
+  <action name="actionNext_Frame">
+   <property name="text">
+    <string>Next Frame</string>
+   </property>
+  </action>
+  <action name="actionPrevious_Frame">
+   <property name="text">
+    <string>Previous Frame</string>
+   </property>
+  </action>
+  <action name="actionVideo_Info">
+   <property name="text">
+    <string>Video Info</string>
+   </property>
+  </action>
+  <action name="actionNew_File">
+   <property name="text">
+    <string>New File</string>
+   </property>
+  </action>
+  <action name="actionSave_File">
+   <property name="text">
+    <string>Save File</string>
+   </property>
+  </action>
+  <action name="actionLoad_File">
+   <property name="text">
+    <string>Load File...</string>
+   </property>
+  </action>
+  <action name="actionStart_StartEnd_Marker">
+   <property name="text">
+    <string>Start/StartEnd Marker</string>
+   </property>
+  </action>
+  <action name="actionEnd_Marker">
+   <property name="text">
+    <string>End Marker</string>
+   </property>
+  </action>
+  <action name="actionGo_To_Frame">
+   <property name="text">
+    <string>Go To Frame...</string>
    </property>
   </action>
  </widget>

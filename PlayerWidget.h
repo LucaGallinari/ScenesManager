@@ -18,13 +18,12 @@ private:
 	Frame			_actualFrame;
 
 	//	Help variables
-	bool playState;
-	double fps; // frame per second
-	int frameMs; // ms of a single frame
-	qint64 numFrames;
-	qint64 videoLength; // ms
+	bool	playState;
+	int		frameMs; // ms of a single frame
+	qint64	numFrames;
+	qint64	videoLength; // ms
 
-	void displayFrame();
+	void	displayFrame();
 
 
 public:

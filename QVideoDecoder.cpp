@@ -197,14 +197,27 @@ bool QVideoDecoder::openFile(const QString filename)
 		pCodecCtx->width, pCodecCtx->height);
 
 	// Set variables
-	type = QString(pFormatCtx->iformat->name);
-	duration = pFormatCtx->duration;
-	baseFrameRate = av_q2d(pFormatCtx->streams[videoStream]->r_frame_rate);
-	frameMSec = 1000 / baseFrameRate;
-	timeBaseRat = pFormatCtx->streams[videoStream]->time_base;
-	timeBase = av_q2d(timeBaseRat);
-	w = pCodecCtx->width;
-	h = pCodecCtx->height;
+	path			= filename;
+	type			= QString(pFormatCtx->iformat->name);
+	duration		= pFormatCtx->duration;
+	baseFrameRate	= av_q2d(pFormatCtx->streams[videoStream]->r_frame_rate);
+	frameMSec		= 1000 / baseFrameRate;
+	if (type == "matroska,webm") {
+		frameMSecReal =
+			(double)(pFormatCtx->streams[videoStream]->time_base.den /
+			pFormatCtx->streams[videoStream]->time_base.num) /
+			(double)(pFormatCtx->streams[videoStream]->codec->time_base.den /
+			(double)pFormatCtx->streams[videoStream]->codec->time_base.num)*
+			pCodecCtx->ticks_per_frame;
+	}
+	else {
+		frameMSecReal = frameMSec;
+	}
+	baseFRateReal	= 1000 / (double) frameMSecReal;
+	timeBaseRat		= pFormatCtx->streams[videoStream]->time_base;
+	timeBase		= av_q2d(timeBaseRat);
+	w				= pCodecCtx->width;
+	h				= pCodecCtx->height;
 	
 	// if (type=="mpeg") {
 	firstDts = pFormatCtx->streams[videoStream]->first_dts;
@@ -217,7 +230,7 @@ bool QVideoDecoder::openFile(const QString filename)
 
 	ok = true;
 
-	dumpFormat(filename.toStdString().c_str(), 0);
+	dumpFormat(0);
 
 	return true;
 }
@@ -614,6 +627,20 @@ qint64 QVideoDecoder::getFrameTime()
 	return LastFrameTime;
 }
 
+/*! \brief Get frame number by time
+*
+*   Get the number of the closest frame to the given time
+*	@return frame number
+*/
+qint64 QVideoDecoder::getNumFrameByTime(const qint64 tsms)
+{
+	if (!ok)
+		return false;
+	if (tsms <= 0)
+		return 0;
+	return round(tsms / frameMSec);
+}
+
 /*! \brief Get video duration in milliseconds
 *
 *   Get video duration in milliseconds.
@@ -621,22 +648,40 @@ qint64 QVideoDecoder::getFrameTime()
 */
 qint64 QVideoDecoder::getVideoLengthMs()
 {
-   if(!isOk())
-	  return -1;
+	if (!isOk())
+		return -1;
 
-   qint64 secs = pFormatCtx->duration / AV_TIME_BASE;
-   qint64 us = pFormatCtx->duration % AV_TIME_BASE;
-   return secs * 1000 + us / 1000;
+	qint64 secs = pFormatCtx->duration / AV_TIME_BASE;
+	qint64 us = pFormatCtx->duration % AV_TIME_BASE;
+	return secs * 1000 + us / 1000;
 }
 
-/*! \brief Get video frame per second
+/*! \brief Get number of frames (Not accurate with some formats)
 *
-*   Get video frame per second.
-*	@return video frame per second
+*   Get number of frames based on video duration and frame rate. Some containers
+*	save a wrong value for duration and so the number of frames could be not so
+*	accurate.
+*	@return number of frams
 */
-double QVideoDecoder::getFps()
+qint64 QVideoDecoder::getNumFrames()
 {
-	return baseFrameRate;
+	return round(getVideoLengthMs() * (baseFrameRate / 1000.0));
+}
+
+/*! \brief Get video path
+*
+*	Retrieve video path
+*/
+QString QVideoDecoder::getPath() {
+	return path;
+}
+
+/*! \brief Get video type
+*
+*	Retrieve video type
+*/
+QString QVideoDecoder::getType() {
+	return type;
 }
 
 /*! \brief Get video time base as AVRational
@@ -659,30 +704,97 @@ double QVideoDecoder::getTimeBase()
 	return timeBase;
 }
 
-/*! \brief Get number of frames (Not accurate with some formats)
+/*! \brief Get video frame rate
 *
-*   Get number of frames based on video duration and frame rate. Some containers
-*	save a wrong value for duration and so the number of frames could be not so
-*	accurate.
-*	@return number of frams
+*	Retrieve video frame rate
 */
-qint64 QVideoDecoder::getNumFrames()
-{
-	return round(getVideoLengthMs() * (baseFrameRate / 1000.0));
+double QVideoDecoder::getFrameRate() {
+	return baseFrameRate;
 }
 
-/*! \brief Get frame number by time
+/*! \brief Get video frame ms (theorycal)
 *
-*   Get the number of the closest frame to the given time
-*	@return frame number
+*	Retrieve video frame ms (theorycal)
 */
-qint64 QVideoDecoder::getNumFrameByTime(const qint64 tsms)
+double QVideoDecoder::getFrameMsec() {
+	return frameMSec;
+}
+
+/*! \brief Get video frame ms (real)
+*
+*	Retrieve video frame ms (real). Actually only "matroska"'s files have a
+*	different theorycal and real frame msec.
+*/
+double QVideoDecoder::getFrameMsecReal() {
+	return frameMSecReal;
+}
+
+/*! \brief Get frame width
+*
+*	Get frame width
+*/
+int QVideoDecoder::getFrameWidth() {
+	return w;
+}
+
+/*! \brief Get frame height
+*
+*	Get frame height
+*/
+int QVideoDecoder::getFrameHeight() {
+	return h;
+}
+
+/*! \brief Get video bitrate
+*
+*	Get video bitrate
+*/
+QString QVideoDecoder::getBitrate() {
+	return (pFormatCtx->bit_rate ? QString::number((int)(pFormatCtx->bit_rate / 1000)).append(" kb/s") : "N / A");
+}
+
+/*! \brief Get string of programs used to make the video
+*
+*	Get string of programs used to make the video
+*/
+QString QVideoDecoder::getProgramsString()
 {
-	if (!ok)
-		return false;
-	if (tsms <= 0)
-		return 0;
-	return round(tsms / frameMSec);
+	QString s;
+	// Programs
+	if (pFormatCtx->nb_programs) {
+		unsigned int j, total = 0;
+		for (j = 0; j<pFormatCtx->nb_programs; j++) {
+			ffmpeg::AVDictionaryEntry *name = av_dict_get(pFormatCtx->programs[j]->metadata, "name", NULL, 0);
+			s.push_back(QString("%1 %2 \n").arg(pFormatCtx->programs[j]->id).arg(" ").arg(name ? name->value : ""));
+			total += pFormatCtx->programs[j]->nb_stream_indexes;
+		}
+		if (total < pFormatCtx->nb_streams)
+			s.push_back("None");
+	}
+	else{
+		s.push_back("None");
+	}
+	return s;
+}
+
+/*! \brief Get string of metadatas presents in the video
+*
+*	Get string of metadatas presents in the video
+*/
+QString QVideoDecoder::getMetadataString()
+{
+	QString s;
+	// Programs
+	if (pFormatCtx->metadata) {
+		ffmpeg::AVDictionaryEntry *tag = NULL;
+		while ((tag = av_dict_get(pFormatCtx->metadata, "", tag, AV_DICT_IGNORE_SUFFIX))) {
+			s.push_back(QString("%1: %2 \n").arg(tag->key).arg(tag->value));
+		}
+	}
+	else{
+		s.push_back("None");
+	}
+	return s;
 }
 
 /***************************************
@@ -726,7 +838,7 @@ void QVideoDecoder::saveFramePPM(const ffmpeg::AVFrame *pFrame, const int width,
 *	@param path file path
 *	@param is_output writing or reading the file?
 */
-void QVideoDecoder::dumpFormat(const char *path,const int is_output) 
+void QVideoDecoder::dumpFormat(const int is_output) 
 {
 	qDebug() << (is_output ? "Output" : "Input");
 	qDebug() << "File: " << path;
@@ -741,11 +853,7 @@ void QVideoDecoder::dumpFormat(const char *path,const int is_output)
 		qDebug() << "First Dts: " << firstDts;
 		qDebug() << "FPS: " << baseFrameRate;
 		qDebug() << "Frame ms: " << frameMSec;
-		qDebug() << "special ms: " << (double) (pFormatCtx->streams[videoStream]->time_base.den /
-			pFormatCtx->streams[videoStream]->time_base.num) /
-			(double) (pFormatCtx->streams[videoStream]->codec->time_base.den /
-			(double) pFormatCtx->streams[videoStream]->codec->time_base.num)*
-			pCodecCtx->ticks_per_frame;
+		qDebug() << "special ms: " << frameMSecReal;
 		qDebug() << "Frame w: " << w;
 		qDebug() << "Frame h: " << h;
 		qDebug() << "Number of frames: " << getNumFrames();
@@ -762,22 +870,8 @@ void QVideoDecoder::dumpFormat(const char *path,const int is_output)
 		qDebug() << "Bitrate: " << (pFormatCtx->bit_rate ? QString::number((int) (pFormatCtx->bit_rate / 1000)).append(" kb/s") : "N / A");
 	}
 	// Programs
-	if (pFormatCtx->nb_programs) {
-		unsigned int j, total = 0;
-		for (j = 0; j<pFormatCtx->nb_programs; j++) {
-			ffmpeg::AVDictionaryEntry *name = av_dict_get(pFormatCtx->programs[j]->metadata, "name", NULL, 0);
-			qDebug() << "  Program " << pFormatCtx->programs[j]->id << " " << (name ? name->value : "");
-			total += pFormatCtx->programs[j]->nb_stream_indexes;
-		}
-		if (total < pFormatCtx->nb_streams)
-			qDebug() << "  No Program";
-	}
+	qDebug() << "Program: \n" << getProgramsString();
 	// Metadata
-	if (pFormatCtx->metadata) {
-		ffmpeg::AVDictionaryEntry *tag = NULL;
-		qDebug() << "  Metadata";
-		while ((tag = av_dict_get(pFormatCtx->metadata, "", tag, AV_DICT_IGNORE_SUFFIX))) {
-			qDebug() << "    " << tag->key << ":" << tag->value; // %-16s
-		}
-	}
+	qDebug() << "Metadata: \n" << getMetadataString();
 }
+

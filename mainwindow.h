@@ -45,17 +45,21 @@ private:
 	QPixmap playIcon;
 	QPixmap pauseIcon;
 
-	//	Button's icons objects
-	void initializeIcons();
-
 	//  Slider constant
 	int sliderPageStep;
 	int sliderMaxVal;
+
+	//	Button's icons objects
+	void initializeIcons();
+
+	//	Actions related
+	void showInfo();
 
 public slots:
 	void updateSlider();
 	void updateFrame(QPixmap p);
 	void updateTime(qint64 time); //ms
+	void updateProgressText(QString m);
 	void changePlayPause(bool playState);
 	void endOfStream();
 
@@ -94,6 +98,7 @@ private slots:
 	void on_markersTableWidget_cellChanged(int row, int column);
 	void on_markersTableWidget_itemSelectionChanged();
 
+	void on_infoBtn_clicked();
 };
 
 #endif // MAINWINDOW_H

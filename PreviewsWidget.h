@@ -14,9 +14,9 @@ private:
 	int		_frame_w;
 	int		_frame_h;
 	double	_frame_ratio;
-	int		_frame_margin_w; // margin between previews
+	int		_frame_margin_w;	// margin between previews
 	int		_frame_margin_h;
-	qint64  _mid; // mid frame number
+	qint64  _mid;				// mid frame number
 
 	ImagesBuffer *_bmng;
 	std::vector<Frame> _frames;
@@ -27,7 +27,7 @@ private:
 	void drawPreviews();
 
 public:
-	explicit PreviewsWidget(QWidget *parent = 0, ImagesBuffer *buff = 0);
+	explicit PreviewsWidget(QWidget *parent = 0, QWidget *mainwin = 0, ImagesBuffer *buff = 0);
 	~PreviewsWidget();
 
 	void reloadAndDrawPreviews(const qint64 mid);
@@ -35,6 +35,8 @@ public:
 	bool setupPreviews();
 	void clearPreviews();
 
+signals:
+	void updateProgressText(QString);
 };
 
 
