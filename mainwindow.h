@@ -5,6 +5,8 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#define WINDOW_MARGIN 5
+
 #include <QMainWindow>
 #include <QDebug>
 #include <QWidget>
@@ -22,8 +24,14 @@ class MainWindow : public QMainWindow {
 	Q_OBJECT
 
 public:
-	MainWindow(QWidget *parent = 0);
+	explicit MainWindow(QWidget *parent = 0);
 	~MainWindow();
+
+
+	//	Mouse Events
+	void mousePressEvent(QMouseEvent *e);
+	void mouseReleaseEvent(QMouseEvent *e);
+	void mouseMove(QPoint newPos, QPoint oldPos);
 
 protected:
 	PlayerWidget *_playerWidg;
@@ -38,12 +46,21 @@ protected:
 private:
 	Ui::MainWindow *ui;
 
+	bool mMaxNormal;
+
 	bool autoSort;//TODO: use a checkbox
 	int _currMarkerRow;
 	int _currMarkerCol;
 
 	QPixmap playIcon;
 	QPixmap pauseIcon;
+
+	//	Title bar
+	QPoint	mClickedPos;
+	bool	mMousePressed;
+	bool	left;
+	bool	right;
+	bool	bottom;
 
 	//  Slider constant
 	int sliderPageStep;
@@ -56,6 +73,7 @@ private:
 	void showInfo();
 
 public slots:
+
 	void updateSlider();
 	void updateFrame(QPixmap p);
 	void updateTime(qint64 time); //ms

@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/winicons">
+        <file alias="restNorm.png">images/icons/restore_normal.png</file>
+        <file alias="minNorm.png">images/icons/minimize_normal.png</file>
+        <file alias="maxNorm.png">images/icons/maximize_normal.png</file>
+        <file alias="closeNorm.png">images/icons/close_normal.png</file>
+    </qresource>
+</RCC>

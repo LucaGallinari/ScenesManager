@@ -13,7 +13,11 @@ SOURCES +=  main.cpp \
             ImagesBuffer.cpp \
             PreviewsWidget.cpp \
             CompareMarkersDialog.cpp \
-            MarkersWidget.cpp
+            MarkersWidget.cpp \
+            MenuBar.cpp \
+            TitleBar.cpp \
+            WindowTitleFilter.cpp \
+            HoverMoveFilter.cpp
 
 HEADERS +=  mainwindow.h \
             QVideoDecoder.h \
@@ -22,12 +26,17 @@ HEADERS +=  mainwindow.h \
             ImagesBuffer.h \
             PreviewsWidget.h \
             CompareMarkersDialog.h \
-            MarkersWidget.h
+            MarkersWidget.h \
+            MenuBar.h \
+            TitleBar.h \
+            WindowTitleFilter.h \
+            HoverMoveFilter.h
 
 FORMS +=    mainwindow.ui \
             comparemarkersdialog.ui
 RESOURCES += resource.qrc \
-    playericons.qrc
+    playericons.qrc \
+    windowicons.qrc
 DEFINES += DEVELMODE
 
 # ##############################################################################

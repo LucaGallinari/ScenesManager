@@ -23,8 +23,179 @@
    <iconset resource="resource.qrc">
     <normaloff>:/logo3.png</normaloff>:/logo3.png</iconset>
   </property>
+  <property name="styleSheet">
+   <string notr="true">
+#centralWidget {
+	background-color:#1d1d1d;
+	color: #f0f0f0;
+	border:1px solid #626262;
+}
+QSplitter::handle {
+	background: transparent;
+}
+QLabel {
+	color: #f0f0f0;
+}
+
+/*TOP BAR*/
+QWidget#aTopWidget {
+	background-color: #303030;
+}
+
+/*MENU BAR*/
+.QMenuBar {
+	background-color: #303030;
+}
+.QMenuBar::item {
+	color: #f0f0f0;
+	background: transparent;
+	padding: 5px;
+}
+.QMenuBar::item::selected {
+	color: #f0f0f0;
+	background-color: #0073ff;
+}
+
+/*TITLE BAR*/
+QWidget#titlebar {
+}
+QWidget#titlebar .QToolButton {
+	width:25px;
+	border:0px;
+	padding: 1px 2px;
+	height: 20px;
+}
+QWidget#titlebar QToolButton:hover {
+	background-color: #0073ff;
+}
+
+QWidget#titlebar QToolButton#closeWindowBtn {
+	background-color: #e5191c;
+}
+QWidget#titlebar QToolButton#closeWindowBtn:hover {
+	background-color: #ff1b1e;
+}
+
+/*PLAYER*/
+QWidget#playerWidget .QPushButton {
+	color: #f0f0f0;
+	background: transparent;
+	border-radius:0;
+	padding: 3px 4px;
+}
+QWidget#playerWidget .QPushButton:hover {
+	color: #f0f0f0;
+	background-color: #0073ff;
+}
+
+/*SLIDER*/
+QSlider::groove:horizontal {
+/*border: 1px solid #bbb;*/
+height: 6px;
+border-radius: 4px;
+}
+
+QSlider::sub-page:horizontal {
+background: qlineargradient(x1: 0, y1: 0,    x2: 0, y2: 1,
+    stop: 0 #66e, stop: 1 #bbf);
+background: qlineargradient(x1: 0, y1: 0.2, x2: 1, y2: 1,
+    stop: 0 #bbf, stop: 1 #55f);
+border: 1px solid #777;
+height: 6px;
+border-radius: 4px;
+}
+
+QSlider::add-page:horizontal {
+background-color:#303030;
+border: 1px solid #777;
+height: 6px;
+border-radius: 4px;
+}
+
+QSlider::handle:horizontal {
+background-color:#f0f0f0;
+/*background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+    stop:0 #eee, stop:1 #ccc);*/
+border: 1px solid #777;
+width: 6px;
+margin-top: -2px;
+margin-bottom: -2px;
+border-radius: 2px;
+}
+
+QSlider::handle:horizontal:hover {
+background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+    stop:0 #fff, stop:1 #ddd);
+border: 1px solid #444;
+}
+
+QSlider::sub-page:horizontal:disabled {
+background: #bbb;
+border-color: #999;
+}
+
+QSlider::add-page:horizontal:disabled {
+background: #eee;
+border-color: #999;
+}
+
+QSlider::handle:horizontal:disabled {
+background: #eee;
+border: 1px solid #aaa;
+border-radius: 4px;
+}</string>
+  </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QVBoxLayout" name="verticalLayout_3" stretch="2,0">
+   <layout class="QVBoxLayout" name="verticalLayout_3" stretch="0,2,0">
+    <property name="leftMargin">
+     <number>1</number>
+    </property>
+    <property name="topMargin">
+     <number>1</number>
+    </property>
+    <property name="rightMargin">
+     <number>1</number>
+    </property>
+    <property name="bottomMargin">
+     <number>1</number>
+    </property>
+    <item>
+     <widget class="QWidget" name="aTopWidget" native="true">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>50</height>
+       </size>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_6">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="leftMargin">
+        <number>5</number>
+       </property>
+       <property name="topMargin">
+        <number>5</number>
+       </property>
+       <property name="rightMargin">
+        <number>5</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <layout class="QVBoxLayout" name="aTopLayout">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </item>
     <item>
      <widget class="QSplitter" name="splitter">
       <property name="sizePolicy">
@@ -221,7 +392,7 @@
                    </property>
                    <property name="icon">
                     <iconset resource="playericons.qrc">
-                     <normaloff>:/icons/playB.png</normaloff>:/icons/playB.png</iconset>
+                     <normaloff>:/icons/playW.png</normaloff>:/icons/playW.png</iconset>
                    </property>
                   </widget>
                  </item>
@@ -235,7 +406,7 @@
                    </property>
                    <property name="icon">
                     <iconset resource="playericons.qrc">
-                     <normaloff>:/icons/stopB.png</normaloff>:/icons/stopB.png</iconset>
+                     <normaloff>:/icons/stopW.png</normaloff>:/icons/stopW.png</iconset>
                    </property>
                   </widget>
                  </item>
@@ -249,7 +420,7 @@
                    </property>
                    <property name="icon">
                     <iconset resource="playericons.qrc">
-                     <normaloff>:/icons/prevFB.png</normaloff>:/icons/prevFB.png</iconset>
+                     <normaloff>:/icons/prevFW.png</normaloff>:/icons/prevFW.png</iconset>
                    </property>
                   </widget>
                  </item>
@@ -263,7 +434,7 @@
                    </property>
                    <property name="icon">
                     <iconset resource="playericons.qrc">
-                     <normaloff>:/icons/nextFB.png</normaloff>:/icons/nextFB.png</iconset>
+                     <normaloff>:/icons/nextFW.png</normaloff>:/icons/nextFW.png</iconset>
                    </property>
                   </widget>
                  </item>
@@ -287,7 +458,7 @@
                    </property>
                    <property name="icon">
                     <iconset resource="playericons.qrc">
-                     <normaloff>:/icons/infoB.png</normaloff>:/icons/infoB.png</iconset>
+                     <normaloff>:/icons/infoW.png</normaloff>:/icons/infoW.png</iconset>
                    </property>
                   </widget>
                  </item>
@@ -373,6 +544,12 @@
             <size>
              <width>200</width>
              <height>300</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>250</width>
+             <height>16777215</height>
             </size>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -636,53 +813,6 @@
     </item>
    </layout>
   </widget>
-  <widget class="QMenuBar" name="menuBar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>892</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <widget class="QMenu" name="menuFile">
-    <property name="title">
-     <string>File</string>
-    </property>
-    <addaction name="actionQuit"/>
-   </widget>
-   <widget class="QMenu" name="menuVideo">
-    <property name="title">
-     <string>Video</string>
-    </property>
-    <addaction name="actionLoad_video"/>
-    <addaction name="separator"/>
-    <addaction name="actionPlay_Pause"/>
-    <addaction name="actionStop"/>
-    <addaction name="separator"/>
-    <addaction name="actionNext_Frame"/>
-    <addaction name="actionPrevious_Frame"/>
-    <addaction name="actionGo_To_Frame"/>
-    <addaction name="separator"/>
-    <addaction name="actionVideo_Info"/>
-   </widget>
-   <widget class="QMenu" name="menuMarkers">
-    <property name="title">
-     <string>Markers</string>
-    </property>
-    <addaction name="actionCompare"/>
-    <addaction name="separator"/>
-    <addaction name="actionNew_File"/>
-    <addaction name="actionSave_File"/>
-    <addaction name="actionLoad_File"/>
-    <addaction name="separator"/>
-    <addaction name="actionStart_StartEnd_Marker"/>
-    <addaction name="actionEnd_Marker"/>
-   </widget>
-   <addaction name="menuFile"/>
-   <addaction name="menuVideo"/>
-   <addaction name="menuMarkers"/>
-  </widget>
   <action name="actionQuit">
    <property name="text">
     <string>Quit</string>
@@ -762,8 +892,8 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="playericons.qrc"/>
   <include location="resource.qrc"/>
+  <include location="playericons.qrc"/>
  </resources>
  <connections/>
 </ui>

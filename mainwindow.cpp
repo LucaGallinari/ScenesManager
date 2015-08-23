@@ -16,11 +16,62 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include "HoverMoveFilter.h"
+#include "WindowTitleFilter.h"
+#include "TitleBar.h"
+#include "MenuBar.h"
+
+#include <QtWidgets/QMenuBar>
+#include <QtWidgets/QSizeGrip>
+#include <QMouseEvent>
+
+
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
 	ui(new Ui::MainWindow)
 {
 	ui->setupUi(this);
+	
+	mMousePressed = false;
+	mMaxNormal = false;
+
+	// Event tricks
+	setMouseTracking(true);
+	setAttribute(Qt::WA_Hover);
+	installEventFilter(new HoverMoveFilter(this));
+
+	// Get title changes
+	installEventFilter(new WindowTitleFilter(this));
+
+	// create title
+	TitleBar *titlebar = new TitleBar(ui->aTopWidget, this);
+	ui->aTopLayout->addWidget(titlebar);
+
+	// create menu
+	MenuBar* menubar = new MenuBar(ui->aTopWidget);
+	ui->aTopLayout->addWidget(menubar);
+
+	// File
+	connect(menubar->actionQuit, SIGNAL(triggered()), this, SLOT(on_actionQuit_triggered()));
+	// Video
+	connect(menubar->actionLoad_video, SIGNAL(triggered()), this, SLOT(on_actionLoad_video_triggered()));
+	connect(menubar->actionPlay_Pause, SIGNAL(triggered()), this, SLOT(on_playPauseBtn_clicked()));
+	connect(menubar->actionStop, SIGNAL(triggered()), this, SLOT(on_stopBtn_clicked()));
+	connect(menubar->actionNext_Frame, SIGNAL(triggered()), this, SLOT(on_nextFrameBtn_clicked()));
+	connect(menubar->actionPrevious_Frame, SIGNAL(triggered()), this, SLOT(on_prevFrameBtn_clicked()));
+	connect(menubar->actionGo_To_Frame, SIGNAL(triggered()), this, SLOT(on_seekFrameBtn_clicked()));
+	connect(menubar->actionVideo_Info, SIGNAL(triggered()), this, SLOT(on_infoBtn_clicked()));
+	// Markers
+	connect(menubar->actionCompare, SIGNAL(triggered()), this, SLOT(on_actionCompare_triggered()));
+	connect(menubar->actionNew_File, SIGNAL(triggered()), this, SLOT(on_markersNewBtn_clicked()));
+	connect(menubar->actionSave_File, SIGNAL(triggered()), this, SLOT(on_markersSaveBtn_clicked()));
+	connect(menubar->actionLoad_File, SIGNAL(triggered()), this, SLOT(on_markersLoadBtn_clicked()));
+	connect(menubar->actionStart_StartEnd_Marker, SIGNAL(triggered()), this, SLOT(on_startMarkerBtn_clicked()));
+	connect(menubar->actionEnd_Marker, SIGNAL(triggered()), this, SLOT(on_endMarkerBtn_clicked()));
+	// Help
+	//connect(menubar->actionManual, SIGNAL(triggered()), this, SLOT(on_actionLoad_video_triggered()));
+	//connect(menubar->actionAbout, SIGNAL(triggered()), this, SLOT(on_playPauseBtn_clicked()));
+
 	qDebug() << "Starting up";
 
 	//TODO: set this dynamically
@@ -137,8 +188,8 @@ void MainWindow::resizeEvent(QResizeEvent *e)
 *	Initialize player icons.
 */
 void MainWindow::initializeIcons() {
-	playIcon  = QPixmap(":/icons/playB.png");
-	pauseIcon = QPixmap(":/icons/pauseB.png");
+	playIcon  = QPixmap(":/icons/playW.png");
+	pauseIcon = QPixmap(":/icons/pauseW.png");
 }
 
 
@@ -161,7 +212,6 @@ void MainWindow::changePlayPause(bool playState)
 		ui->playPauseBtn->setIcon(QIcon(playIcon));
 	}
 }
-
 
 /*! \brief Update the frame image.
 *
@@ -489,4 +539,113 @@ void MainWindow::on_markersTableWidget_itemSelectionChanged()
 void MainWindow::on_infoBtn_clicked()
 {
 	showInfo();
+}
+
+/**********************************************
+************  MOUSE MOVE EVENTS  **************
+***********************************************/
+
+void MainWindow::mousePressEvent(QMouseEvent *e)
+{
+	// mOldPos = e->pos();
+
+	mMousePressed = e->button() == Qt::LeftButton;
+	if (mMousePressed) {
+		if (left) {
+			mClickedPos.setX(e->pos().x());
+		}
+		if (right) {
+			mClickedPos.setX(width() - e->pos().x());
+		}
+		if (bottom) {
+			mClickedPos.setY(height() - e->pos().y());
+		}
+	}
+	//setWindowTitle("Resizing");
+}
+
+void MainWindow::mouseReleaseEvent(QMouseEvent *e)
+{
+	if (e->button() == Qt::LeftButton) {
+		mMousePressed = false;
+	}
+	//setWindowTitle("Borderless window");
+}
+
+void MainWindow::mouseMove(QPoint newPos, QPoint oldPos)
+{
+	if (mMousePressed) {
+		int dx = newPos.x() - oldPos.x();
+		int dy = newPos.y() - oldPos.y();
+
+		QRect g = geometry();
+		QSize minSize = minimumSize();
+
+		// We don't resize if the windows has the minimum size
+		if (left) {
+			// Fix a bug when you try to resize to less than minimum size and
+			// then the mouse goes right again.
+			if (dx < 0 && oldPos.x() > mClickedPos.x()) {
+				dx += oldPos.x() - mClickedPos.x();
+				if (dx > 0) {
+					dx = 0;
+				}
+			}
+			else if (dx > 0 && g.width() - dx < minSize.width()) {
+				dx = g.width() - minSize.width();
+			}
+			g.setLeft(g.left() + dx);
+		}
+
+		if (right) {
+			// Fix a bug when you try to resize to less than minimum size and
+			// then the mouse goes right again.
+			if (dx > 0 && (width() - newPos.x() > mClickedPos.x())) {
+				dx -= width() - newPos.x() - mClickedPos.x();
+				if (dx < 0) {
+					dx = 0;
+				}
+			}
+			g.setRight(g.right() + dx);
+		}
+		if (bottom) {
+			// Fix a bug when you try to resize to less than minimum size and
+			// then the mouse goes down again.
+			if (dy > 0 && (height() - newPos.y() > mClickedPos.y())) {
+				dy -= height() - newPos.y() - mClickedPos.y();
+				if (dy < 0) {
+					dy = 0;
+				}
+			}
+			g.setBottom(g.bottom() + dy);
+		}
+
+		setGeometry(g);
+
+	}
+	else {
+		QRect r = rect();
+		left = qAbs(newPos.x() - r.left()) <= WINDOW_MARGIN &&
+			newPos.y() > 0;//mTitleBar->height();
+		right = qAbs(newPos.x() - r.right()) <= WINDOW_MARGIN &&
+			newPos.y() > 0;//mTitleBar->height();
+		bottom = qAbs(newPos.y() - r.bottom()) <= WINDOW_MARGIN;
+		bool hor = left | right;
+
+		if (hor && bottom) {
+			if (left)
+				setCursor(Qt::SizeBDiagCursor);
+			else
+				setCursor(Qt::SizeFDiagCursor);
+		}
+		else if (hor) {
+			setCursor(Qt::SizeHorCursor);
+		}
+		else if (bottom) {
+			setCursor(Qt::SizeVerCursor);
+		}
+		else {
+			setCursor(Qt::ArrowCursor);
+		}
+	}
 }
