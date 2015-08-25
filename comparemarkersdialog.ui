@@ -19,6 +19,40 @@
   <property name="windowTitle">
    <string>Compare markers files</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">* {
+	font-family: Verdana,Geneva,sans-serif; 
+}
+
+#CompareMarkersDialog {
+	background-color:#e8e8e8;
+	color: #1f1f1f;
+	border:1px solid #626262;
+}
+
+QLabel {
+	color: #222;
+	font-size:10pt;
+}
+
+QPushButton {
+	color: #eee;	
+	border-radius: 4px;
+	text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+	background-color:#0078e7;
+	padding:4px 6px;
+}
+
+QLineEdit {
+	color: #222;	
+	border:1px solid #55aaff;
+	border-radius: 2px;
+	background-color:#f8f8f8;
+	padding:4px;
+}
+
+</string>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout_3">
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -63,8 +97,14 @@
          </item>
          <item>
           <widget class="QPushButton" name="smFileBtn">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>25</height>
+            </size>
+           </property>
            <property name="text">
-            <string>Choose</string>
+            <string>Choose..</string>
            </property>
           </widget>
          </item>
@@ -114,8 +154,14 @@
          </item>
          <item>
           <widget class="QPushButton" name="extFileBtn">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>25</height>
+            </size>
+           </property>
            <property name="text">
-            <string>Choose</string>
+            <string>Choose..</string>
            </property>
           </widget>
          </item>
@@ -149,8 +195,18 @@
      </item>
      <item>
       <widget class="QPushButton" name="compareBtn">
+       <property name="minimumSize">
+        <size>
+         <width>90</width>
+         <height>25</height>
+        </size>
+       </property>
        <property name="text">
         <string>Compare</string>
+       </property>
+       <property name="icon">
+        <iconset resource="resource.qrc">
+         <normaloff>:/flipW.png</normaloff>:/flipW.png</iconset>
        </property>
       </widget>
      </item>
@@ -174,8 +230,8 @@
       <widget class="QPushButton" name="closeBtn">
        <property name="minimumSize">
         <size>
-         <width>50</width>
-         <height>0</height>
+         <width>60</width>
+         <height>25</height>
         </size>
        </property>
        <property name="maximumSize">
@@ -186,6 +242,10 @@
        </property>
        <property name="text">
         <string>Exit</string>
+       </property>
+       <property name="icon">
+        <iconset resource="resource.qrc">
+         <normaloff>:/clearW.png</normaloff>:/clearW.png</iconset>
        </property>
       </widget>
      </item>
@@ -206,6 +266,8 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="resource.qrc"/>
+ </resources>
  <connections/>
 </ui>

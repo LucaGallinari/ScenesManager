@@ -2,20 +2,16 @@
     <qresource prefix="/icons">
         <file alias="nextFB.png">images/icons/nextFrame_black.png</file>
         <file alias="nextFW.png">images/icons/nextFrame_white.png</file>
-
         <file alias="pauseB.png">images/icons/pause_black.png</file>
         <file alias="pauseW.png">images/icons/pause_white.png</file>
-
         <file alias="playB.png">images/icons/play_black.png</file>
         <file alias="playW.png">images/icons/play_white.png</file>
-
         <file alias="prevFB.png">images/icons/previousFrame_black.png</file>
         <file alias="prevFW.png">images/icons/previousFrame_white.png</file>
-
         <file alias="stopB.png">images/icons/stop_black.png</file>
         <file alias="stopW.png">images/icons/stop_white.png</file>
-
         <file alias="infoB.png">images/icons/info_black.png</file>
         <file alias="infoW.png">images/icons/info_white.png</file>
+        <file alias="playG.png">images/icons/play_grey.png</file>
     </qresource>
 </RCC>

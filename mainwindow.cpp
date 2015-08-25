@@ -322,12 +322,14 @@ void MainWindow::on_actionLoad_video_triggered()
 		ui->videoSlider->setValue(0);
 		_playerWidg->loadVideo(fileName);
 		_prevWidg->setupPreviews();
+		updateProgressText("Video loaded");
 	}
 }
 
 void MainWindow::on_actionCompare_triggered()
 {
 	_dial = new CompareMarkersDialog(_markersWidg->getInputFile(), this);
+	//_dial->setWindowFlags(Qt::FramelessWindowHint | Qt::X11BypassWindowManagerHint);
 	_dial->show();
 }
 
@@ -344,6 +346,7 @@ void MainWindow::on_nextFrameBtn_clicked()
 	_playerWidg->nextFrame();
 	updateSlider();
 	_prevWidg->reloadAndDrawPreviews(_playerWidg->currentFrameNumber());
+
 }
 
 void MainWindow::on_prevFrameBtn_clicked()
@@ -386,6 +389,10 @@ void MainWindow::on_playPauseBtn_clicked()
 	_playerWidg->playPause();
 	if (!_playerWidg->isVideoPlaying()) {
 		_prevWidg->reloadAndDrawPreviews(_playerWidg->currentFrameNumber());
+		updateProgressText("Paused");
+	}
+	else {
+		updateProgressText("Playing..");
 	}
 }
 
@@ -393,6 +400,7 @@ void MainWindow::on_stopBtn_clicked()
 {
 	_playerWidg->stopVideo(true);
 	_prevWidg->reloadAndDrawPreviews(_playerWidg->currentFrameNumber());
+	updateProgressText("Stopped");
 }
 
 
