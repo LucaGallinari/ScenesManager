@@ -69,53 +69,17 @@
     <ClCompile Include="mainwindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Debug\moc_PlayerWidget.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="Release\moc_PlayerWidget.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
-    <ClCompile Include="Debug\moc_mainwindow.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="Release\moc_mainwindow.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\qrc_playericons.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\qrc_resource.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
     <ClCompile Include="ImagesBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Debug\moc_PreviewsWidget.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="Release\moc_PreviewsWidget.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
     <ClCompile Include="PreviewsWidget.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Debug\moc_CompareMarkersDialog.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="Release\moc_CompareMarkersDialog.cpp">
-      <Filter>Generated Files\Release</Filter>
     </ClCompile>
     <ClCompile Include="MarkersWidget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CompareMarkersDialog.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Debug\moc_MarkersWidget.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="Release\moc_MarkersWidget.cpp">
-      <Filter>Generated Files\Release</Filter>
     </ClCompile>
     <ClCompile Include="MenuBar.cpp">
       <Filter>Source Files</Filter>
@@ -135,14 +99,50 @@
     <ClCompile Include="Release\moc_HoverMoveFilter.cpp">
       <Filter>Generated Files\Release</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\qrc_windowicons.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
     <ClCompile Include="Debug\moc_TitleBar.cpp">
       <Filter>Generated Files\Debug</Filter>
     </ClCompile>
     <ClCompile Include="Release\moc_TitleBar.cpp">
       <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="Debug\moc_PlayerWidget.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="Release\moc_PlayerWidget.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="Debug\moc_CompareMarkersDialog.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="Release\moc_CompareMarkersDialog.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="Debug\moc_PreviewsWidget.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="Release\moc_PreviewsWidget.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="Debug\moc_MarkersWidget.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="Release\moc_MarkersWidget.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="Debug\moc_mainwindow.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="Release\moc_mainwindow.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\qrc_playericons.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\qrc_resource.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\qrc_windowicons.cpp">
+      <Filter>Generated Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -233,14 +233,8 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GeneratedFiles\ui_mainwindow.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
     <ClInclude Include="ImagesBuffer.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="GeneratedFiles\ui_comparemarkersdialog.h">
-      <Filter>Generated Files</Filter>
     </ClInclude>
     <ClInclude Include="MenuBar.h">
       <Filter>Header Files</Filter>
@@ -248,12 +242,12 @@
     <ClInclude Include="WindowTitleFilter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h">
+    <ClInclude Include="GeneratedFiles\ui_mainwindow.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="ScenesManager.rc" />
+    <ClInclude Include="GeneratedFiles\ui_comparemarkersdialog.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="images\icons\restore_normal.png">
@@ -266,6 +260,24 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="images\icons\close_normal.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="images\icons\play_grey.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="images\icons\ic_search_white_24dp_1x.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="images\icons\ic_insert_drive_file_white_24dp_1x.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="images\icons\ic_get_app_white_24dp_1x.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="images\icons\ic_clear_white_24dp_1x.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="images\icons\ic_flip_white_24dp_1x.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

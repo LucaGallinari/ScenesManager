@@ -31,6 +31,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui(new Ui::MainWindow)
 {
 	ui->setupUi(this);
+	ui->subplayerWidget->hide();
 	
 	mMousePressed = false;
 	mMaxNormal = false;
@@ -69,8 +70,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(menubar->actionStart_StartEnd_Marker, SIGNAL(triggered()), this, SLOT(on_startMarkerBtn_clicked()));
 	connect(menubar->actionEnd_Marker, SIGNAL(triggered()), this, SLOT(on_endMarkerBtn_clicked()));
 	// Help
-	//connect(menubar->actionManual, SIGNAL(triggered()), this, SLOT(on_actionLoad_video_triggered()));
-	//connect(menubar->actionAbout, SIGNAL(triggered()), this, SLOT(on_playPauseBtn_clicked()));
+	connect(menubar->actionManual, SIGNAL(triggered()), this, SLOT(showManual()));
+	connect(menubar->actionAbout, SIGNAL(triggered()), this, SLOT(showAbout()));
 
 	qDebug() << "Starting up";
 
@@ -110,11 +111,15 @@ MainWindow::~MainWindow()
 void MainWindow::showInfo() 
 {
 	QDialog *infoDialog = new QDialog(this);
+	infoDialog->setStyleSheet("color:#222;");
+	infoDialog->setFixedSize(QSize(400, 200));
 
 	QGridLayout *base = new QGridLayout();
 
 	base->addWidget(new QLabel("Video path:"), 0, 0);
-	base->addWidget(new QLabel(_bmng->getPath()), 0, 1);
+	QLabel *lbl = new QLabel(_bmng->getPath());
+	lbl->setWordWrap(true);
+	base->addWidget(lbl, 0, 1);
 
 	base->addWidget(new QLabel("Type:"), 1, 0);
 	base->addWidget(new QLabel(_bmng->getType()), 1, 1);
@@ -147,14 +152,92 @@ void MainWindow::showInfo()
 	base->addWidget(new QLabel(_bmng->getBitrate()), 10, 1);
 
 	base->addWidget(new QLabel("Programs:"), 11, 0);
-	base->addWidget(new QLabel(_bmng->getProgramsString()), 11, 1);
+	lbl = new QLabel(_bmng->getProgramsString());
+	lbl->setWordWrap(true);
+	base->addWidget(lbl, 11, 1);
 
 	base->addWidget(new QLabel("Metadata:"), 12, 0);
-	base->addWidget(new QLabel(_bmng->getMetadataString()), 12, 1);
+	lbl = new QLabel(_bmng->getMetadataString());
+	lbl->setWordWrap(true);
+	base->addWidget(lbl, 12, 1);
+
 
 	infoDialog->setLayout(base);
-
 	infoDialog->show();
+}
+
+/*! \brief Open a dialog with video infos
+*
+*	Open a dialog with video infos
+*/
+void MainWindow::showManual()
+{
+	QDialog *manualDialog = new QDialog(this);
+	manualDialog->setStyleSheet("color:#222;");
+	manualDialog->setFixedSize(QSize(300, 150));
+
+	QVBoxLayout *base = new QVBoxLayout();
+	QHBoxLayout *firstLine = new QHBoxLayout();
+	firstLine->setAlignment(Qt::AlignHCenter);
+	QHBoxLayout *secondLine = new QHBoxLayout();
+	secondLine->setAlignment(Qt::AlignHCenter);
+
+	QLabel *lbl = new QLabel("You can find the documentation in the GitHub repository at this link: ");
+	lbl->setWordWrap(true);
+	firstLine->addWidget(lbl);
+
+	lbl = new QLabel("<a href=\"https://github.com/LucaGallinari/ScenesManager\">Scenes Manager</a>");	
+	lbl->setTextFormat(Qt::RichText);
+	lbl->setTextInteractionFlags(Qt::TextBrowserInteraction);
+	lbl->setOpenExternalLinks(true);
+	secondLine->addWidget(lbl);
+
+	base->addLayout(firstLine);
+	base->addLayout(secondLine);
+	manualDialog->setLayout(base);
+
+	manualDialog->show();
+
+}
+
+
+/*! \brief Open a dialog with our info
+*
+*	Open a dialog with our info
+*/
+void MainWindow::showAbout()
+{
+	QDialog *aboutDialog = new QDialog(this);
+	aboutDialog->setStyleSheet("color:#222;");
+	aboutDialog->setFixedSize(QSize(300, 200));
+
+	QVBoxLayout *base = new QVBoxLayout();
+
+	QHBoxLayout *firstLine = new QHBoxLayout();
+	firstLine->setAlignment(Qt::AlignHCenter);
+	QHBoxLayout *secondLine = new QHBoxLayout();
+	secondLine->setAlignment(Qt::AlignHCenter);
+
+	QLabel *lbl = new QLabel();
+	QPixmap p = QIcon("://logo3.png").pixmap(QSize(50,50));
+
+	lbl->setPixmap(p.scaled(50,50,Qt::KeepAspectRatio,Qt::SmoothTransformation));
+	firstLine->addWidget(lbl),
+	firstLine->addWidget(new QLabel("Scenes Manager"));
+
+	lbl = new QLabel(
+		"This application allow users to manually mark separation between scenes in video files."
+		"\nRealized by:\n\t - Gallinari Luca\n\t - Stabili Dario\n\t - Ravazzini Marco"
+		"\n\n\t\t2015"
+		);
+	lbl->setWordWrap(true);
+	secondLine->addWidget(lbl);
+
+	base->addLayout(firstLine);
+	base->addLayout(secondLine);
+	aboutDialog->setLayout(base);
+
+	aboutDialog->show();
 
 }
 
@@ -322,6 +405,7 @@ void MainWindow::on_actionLoad_video_triggered()
 		ui->videoSlider->setValue(0);
 		_playerWidg->loadVideo(fileName);
 		_prevWidg->setupPreviews();
+		ui->subplayerWidget->show();
 		updateProgressText("Video loaded");
 	}
 }

@@ -2,6 +2,7 @@
 # Project created by QtCreator 2015-07-27T11:32:17
 # -------------------------------------------------
 QT       += core gui widgets
+#CONFIG   += static
 
 TARGET = ScenesManager
 TEMPLATE = app

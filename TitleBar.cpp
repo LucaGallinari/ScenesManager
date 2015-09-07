@@ -16,11 +16,6 @@ TitleBar::TitleBar(QWidget *parent, QWidget *mainw) : QWidget(parent)
 	maxicon = QIcon(":/winicons/maxNorm.png");
 	resticon = QIcon(":/winicons/restNorm.png");
 
-	/*
-	QIcon closeIcon = style->standardIcon(QStyle::SP_TitleBarCloseButton);
-	QIcon maxIcon = style->standardIcon(QStyle::SP_TitleBarMaxButton);
-	QIcon minIcon = style->standardIcon(QStyle::SP_TitleBarMinButton);
-	*/
 	mCloseButton->setIcon(closeicon);
 	mCloseButton->setObjectName("closeWindowBtn");
 	mMinimizeButton->setIcon(minicon);
@@ -28,7 +23,7 @@ TitleBar::TitleBar(QWidget *parent, QWidget *mainw) : QWidget(parent)
 
 	mLabel = new QLabel(this);
 	mLabel->setText(mainwin->windowTitle());
-	mLabel->setAlignment(Qt::AlignHCenter);
+	mLabel->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
 
 	QHBoxLayout *hbox = new QHBoxLayout(this); 
 	hbox->setSpacing(0);

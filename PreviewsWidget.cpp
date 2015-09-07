@@ -22,8 +22,9 @@ PreviewsWidget::PreviewsWidget(
 	_base->addWidget(temp);
 
 	// init vars
-	_frame_margin_w = _frame_margin_h = 5;
+	_frame_margin_w = _frame_margin_h = 10;
 	_mid = 0;
+	_mid_index = 0;
 
 	// s&s
 	connect(this, SIGNAL(updateProgressText(QString)), mainwin, SLOT(updateProgressText(QString)));
@@ -91,15 +92,21 @@ void PreviewsWidget::drawPreviews()
 		// init layout and widgets
 		QWidget *prew = new QWidget();
 		QVBoxLayout *l = new QVBoxLayout();
+		l->setSpacing(0);
+		l->setMargin(0);
+		l->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+
 		QLabel *img = new QLabel();
 		l->addWidget(img);
-		img->setMinimumSize(1, 1);
+		if (i == _mid_index)
+			prew->setStyleSheet("border-bottom:5px solid #005fb3;");
+		img->setStyleSheet("border:none;");
+			// prew->setStyleSheet("background-color:#005fb3;");
+		// img->setMinimumSize(1, 1);
 
 		// if it's a valid frame
 		if (i < _frames.size()) {
 			if (_frames[i].num != -1) {
-				l->setStretch(0, 5);
-				l->setStretch(1, 1);
 				// draw the img
 				img->setPixmap(
 					_frames[i].img.scaled(
@@ -108,15 +115,18 @@ void PreviewsWidget::drawPreviews()
 					)
 				);
 				// write frame number
-				l->addWidget(new QLabel(QString::number(_frames[i].num)));
+				QLabel *lbl = new QLabel(QString::number(_frames[i].num));
+				lbl->setFixedHeight(18);
+				lbl->setStyleSheet("border:none;");
+				l->addWidget(lbl);
 			}
 			else {
-				// empty frame
 				img->setText("");
 			}
 		}
 		else {
 			img->setText("Buffer not big enough");
+			img->setWordWrap(true);
 		}
 
 		// connect all elements
@@ -161,8 +171,9 @@ void PreviewsWidget::clear(QLayout* layout)
 */
 void PreviewsWidget::calculateFrameNumber() 
 {
-	_frame_h = (height() - _frame_margin_h * 2) / 6 * 5; // 5/6 is dedicated to the img
-	_frame_w = _frame_ratio * _frame_h; // frame w based on original frame ratio
+	_frame_h   = (height() - _frame_margin_h * 2) - 20; // 20 ~ label height
+	_frame_w   = _frame_ratio * _frame_h; // frame w based on original frame ratio
 	_frame_num = width() / (_frame_w + _frame_margin_w * 2);
+	_mid_index = (_frame_num - 1) / 2;
 }
 

@@ -85,6 +85,10 @@ public slots:
 	void changeStartEndBtn(const bool markerStarted);
 
 private slots:
+
+	void showAbout();
+	void showManual();
+
 	//  Video
 	void on_nextFrameBtn_clicked();
 	void on_prevFrameBtn_clicked();

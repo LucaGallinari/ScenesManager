@@ -17,6 +17,7 @@ private:
 	int		_frame_margin_w;	// margin between previews
 	int		_frame_margin_h;
 	qint64  _mid;				// mid frame number
+	int		_mid_index;			// mid frame inex
 
 	ImagesBuffer *_bmng;
 	std::vector<Frame> _frames;
