@@ -4,16 +4,24 @@
 
 #include "ImagesBuffer.h"
 
+/*! \brief Create and setup the images buffer
+*
+*	Create and setup the images buffer
+*
+*	@param maxsize max size of the buffer
+*/
 ImagesBuffer::ImagesBuffer(const unsigned maxsize = 1) : _maxsize(maxsize)
 {
 	if (maxsize <= 0) {
 		_maxsize = 1;
 	}
-
 	_mid = (_maxsize - 1) / 2;
-	qDebug() << "Init buffer of " << _maxsize << " frames and mid is " << _mid;
 }
 
+/*! \brief Destroyer
+*
+*	Destroyer
+*/
 ImagesBuffer::~ImagesBuffer()
 {
 	_buffer.clear();
@@ -140,7 +148,6 @@ bool ImagesBuffer::seekToFrame(const qint64 num)
 		return false;
 	}
 
-	dumpBuffer();
 	return true;
 	// emit 
 }
@@ -375,8 +382,6 @@ bool ImagesBuffer::getMidFrame(Frame &f) {
 	f = _buffer[_mid];
 	return true;
 }
-
-
 
 /*! \brief a video was loaded?
 *

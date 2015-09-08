@@ -144,6 +144,12 @@
     <ClCompile Include="GeneratedFiles\qrc_windowicons.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
+    <ClCompile Include="Debug\moc_WindowTitleFilter.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="Release\moc_WindowTitleFilter.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="PlayerWidget.h">
@@ -177,6 +183,9 @@
       <Filter>Resource Files</Filter>
     </CustomBuild>
     <CustomBuild Include="TitleBar.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="WindowTitleFilter.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
   </ItemGroup>
@@ -237,9 +246,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MenuBar.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="WindowTitleFilter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GeneratedFiles\ui_mainwindow.h">

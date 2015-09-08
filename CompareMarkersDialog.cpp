@@ -1,6 +1,4 @@
 
-
-
 #include <QGridLayout>
 #include <QFileDialog>
 #include <QTextStream>
@@ -15,7 +13,13 @@
 #include "CompareMarkersDialog.h"
 #include "ui_comparemarkersdialog.h"
 
-
+/*! \brief Create and setup the compare markers dialog
+*
+*	Create and setup the compare markers dialog
+*
+*	@param smFile actually loaded markers file in the mainwindow
+*	@param parent parent
+*/
 CompareMarkersDialog::CompareMarkersDialog(QString smFile, QWidget *parent) :
 	QDialog(parent), ui(new Ui::CompareMarkersDialog)
 {
@@ -42,12 +46,20 @@ CompareMarkersDialog::CompareMarkersDialog(QString smFile, QWidget *parent) :
 	connect(ui->closeBtn, SIGNAL(clicked()), this, SLOT(close()));
 }
 
+/*! \brief Destroyer
+*
+*	Destroyer
+*/
 CompareMarkersDialog::~CompareMarkersDialog()
 {
 	delete ui;
 }
 
 
+/*! \brief Setup before comparing the 2 opened markers files
+*
+*	Setup before comparing the 2 opened markers files
+*/
 void CompareMarkersDialog::on_compareBtn_clicked()
 {
 	if (fileName != "" && fileName2 != "") {
@@ -80,6 +92,10 @@ void CompareMarkersDialog::on_compareBtn_clicked()
 	}
 }
 
+/*! \brief Open first file
+*
+*	Open first file
+*/
 void CompareMarkersDialog::on_smFileBtn_clicked()
 {
 	fileName = QFileDialog::getOpenFileName(NULL, QObject::tr("Choose the Scenes Manager markers file"), "", QObject::tr("Text files (*.txt)"));
@@ -87,6 +103,10 @@ void CompareMarkersDialog::on_smFileBtn_clicked()
 
 }
 
+/*! \brief Open second file
+*
+*	Open second file
+*/
 void CompareMarkersDialog::on_extFileBtn_clicked()
 {
 	fileName2 = QFileDialog::getOpenFileName(NULL, QObject::tr("Choose your markers file"), "", QObject::tr("Text files (*.txt)"));
@@ -94,6 +114,10 @@ void CompareMarkersDialog::on_extFileBtn_clicked()
 
 }
 
+/*! \brief Extract text from the input file
+*
+*	Extract text from the input file
+*/
 void CompareMarkersDialog::copyTxt(QString fileName, bool whichFile){
 	//This function copy all contents of fileName in a temporary QStringList and after copy it to list used in the class
 
@@ -116,6 +140,10 @@ void CompareMarkersDialog::copyTxt(QString fileName, bool whichFile){
 	else          foreach(QString s, temp_l) list2->append(s);
 }
 
+/*! \brief Compare files
+*
+*	Compare files
+*/
 void CompareMarkersDialog::compare_differentF(QTextCursor c1, QTextCursor c2){
 	//This function compares the files that contains markers of the video
 
@@ -337,6 +365,10 @@ void CompareMarkersDialog::compare_differentF(QTextCursor c1, QTextCursor c2){
 
 }
 
+/*! \brief Compare files
+*
+*	Compare files
+*/
 void CompareMarkersDialog::addCursorBlock(QTextCursor c1, QTextCursor c2, bool cond, int temp_i){
 	//This function add one space and one couple of markers at the same line, in both labels
 	qDebug() << !cond;
@@ -353,27 +385,46 @@ void CompareMarkersDialog::addCursorBlock(QTextCursor c1, QTextCursor c2, bool c
 	}
 }
 
-//These 4 functions write Bold or Normal Text, using one of the cursor of TextField
+/*! \brief Insert bold text in list1
+*
+*	Insert bold text in list1
+*/
 void CompareMarkersDialog::c1_Bwrite(QTextCursor c1, char nline){
 	c1.insertText(list1->value(nline), *boldFormat);
 	c1.insertBlock();
 }
 
+/*! \brief Insert normal text in list1
+*
+*	Insert normal text in list1
+*/
 void CompareMarkersDialog::c1_Twrite(QTextCursor c1, char nline){
 	c1.insertText(list1->value(nline), *textFormat);
 	c1.insertBlock();
 }
 
+/*! \brief Insert bold text in list2
+*
+*	Insert bold text in list2
+*/
 void CompareMarkersDialog::c2_Bwrite(QTextCursor c2, char nline){
 	c2.insertText(list2->value(nline), *boldFormat);
 	c2.insertBlock();
 }
 
+/*! \brief Insert normal text in list2
+*
+*	Insert normal text in list2
+*/
 void CompareMarkersDialog::c2_Twrite(QTextCursor c2, char nline){
 	c2.insertText(list2->value(nline), *textFormat);
 	c2.insertBlock();
 }
 
+/*! \brief Split a single marker line
+*
+*	Split a single marker line
+*/
 QString CompareMarkersDialog::splitList(QString temp_s, int temp_index){
 	//Function to separate text by ", "
 
@@ -382,9 +433,11 @@ QString CompareMarkersDialog::splitList(QString temp_s, int temp_index){
 	return temp_l.value(temp_index);
 }
 
+/*! \brief Function to decide which color use for markers
+*
+*	Function to decide which color use for markers
+*/
 void CompareMarkersDialog::fillCol(){
-	//Function to decide which color use for markers
-
 	ColList = new QList<QColor>();
 	*ColList << QColor(Qt::lightGray);
 	*ColList << QColor(Qt::red);
@@ -394,9 +447,11 @@ void CompareMarkersDialog::fillCol(){
 
 }
 
+/*! \brief Function to put background color in marker's space
+*
+*	Function to put background color in marker's space
+*/
 void CompareMarkersDialog::setBckCol(){
-	//Function to put background color in marker's space
-
 	boldFormat->setBackground(ColList->value(0));
 	ColList->append(ColList->value(0));
 	ColList->pop_front();

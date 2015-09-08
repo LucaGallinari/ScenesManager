@@ -30,7 +30,7 @@
 #include <stdint.h>
 
 
-/*! \brief TODO
+/*! \brief Constructor
 *
 *   Constructor
 */
@@ -39,7 +39,7 @@ QVideoDecoder::QVideoDecoder()
 	InitVars();
 	initCodec();
 }
-/*! \brief TODO
+/*! \brief Constructor
 *
 *   Constructor
 */
@@ -127,7 +127,7 @@ void QVideoDecoder::close()
 *
 *   Open a file and setup all variables
 *	@param filename path of the file to open
-*	@ret success or not
+*	@return success or not
 */
 bool QVideoDecoder::openFile(const QString filename)
 {
@@ -242,7 +242,7 @@ bool QVideoDecoder::openFile(const QString filename)
 *	than 'idealFrameNumber' is found.
 *	TODO: if we already passed the wanted frame number?
 *	@param idealFrameNumber desired frame number
-*	@ret success or not
+*	@return success or not
 */
 bool QVideoDecoder::decodeSeekFrame (const qint64 idealFrameNumber)
 {

@@ -7,9 +7,14 @@
 #include "PlayerWidget.h"
 #include "mainwindow.h"
 
-/*! \brief PlayerWidget Constructor.
+
+/*! \brief Setup and connect all s&s
 *
-*   TODO
+*	Setup and connect all s&s
+*
+*	@param parent parent
+*	@param mainwin pointer to the mainwindow so we can use s&s
+*	@param buff pointer to the images buffer
 */
 PlayerWidget::PlayerWidget(
 	QWidget *parent, 
@@ -30,9 +35,12 @@ PlayerWidget::PlayerWidget(
 	connect(this, SIGNAL(endOfStream()), mainwin, SLOT(endOfStream()));
 }
 
+/*! \brief Destroyer
+*
+*	Destroyer
+*/
 PlayerWidget::~PlayerWidget()
 {}
-
 
 /*! \brief display last loaded frame.
 *
@@ -241,7 +249,7 @@ bool PlayerWidget::playVideo()
 	if (!_bmng->isVideoLoaded())
 		return false;
 	playbackTimer->start(frameMs);
-	return true; //TODO: check if start() went ok
+	return true;
 }
 
 /*! \brief pause the video.
@@ -265,7 +273,7 @@ bool PlayerWidget::pauseVideo()
 		return false;
 	}
 
-	return true; //TODO: check if stop() went ok
+	return true;
 }
 
 /*! \brief stop the video.
@@ -288,7 +296,7 @@ bool PlayerWidget::stopVideo(const bool reset)
 	if (reset)
 		seekToFrame(0);
 	emit frameChanged();
-	return true; //TODO: check if playPuase() and seekToFrame() went ok
+	return true;
 }
 
 

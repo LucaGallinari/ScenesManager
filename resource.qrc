@@ -6,5 +6,8 @@
         <file alias="saveW.png">images/icons/ic_get_app_white_24dp_1x.png</file>
         <file alias="clearW.png">images/icons/ic_clear_white_24dp_1x.png</file>
         <file alias="flipW.png">images/icons/ic_flip_white_24dp_1x.png</file>
+        <file alias="markerStart.png">images/icons/markerStart.png</file>
+        <file alias="markerEndStart.png">images/icons/markerEndStart.png</file>
+        <file alias="markerEnd.png">images/icons/markerEnd.png</file>
     </qresource>
 </RCC>

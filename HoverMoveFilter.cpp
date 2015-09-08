@@ -1,12 +1,23 @@
-#include "hovermovefilter.h"
-#include "mainwindow.h"
+
 #include <QHoverEvent>
 
+#include "mainwindow.h"
+#include "HoverMoveFilter.h"
+
+/*! \brief Constructor
+*
+*	Constructor
+*/
 HoverMoveFilter::HoverMoveFilter(QObject *parent) :
     QObject(parent)
-{
-}
+{}
 
+/*! \brief Implement d&d of the window
+*
+*	Implement d&d of the window
+*
+*	@return standard event processing return
+*/
 bool HoverMoveFilter::eventFilter(QObject *obj, QEvent *event)
 {
     if (event->type() == QEvent::HoverMove) {

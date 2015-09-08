@@ -5,6 +5,11 @@
 #include <QAction>
 #include <QtWidgets/QMenuBar>
 
+/*!
+*	@brief Class used to implement a custom QMenuBar
+*
+*	Class used to implement a custom QMenuBar
+*/
 class MenuBar : public QMenuBar
 {
 public:

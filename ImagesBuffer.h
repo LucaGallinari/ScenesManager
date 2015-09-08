@@ -12,6 +12,17 @@ struct Frame {
 	qint64 pts;				// decoder presentation timestamp TODO: useless?
 };
 
+/*!
+*	@brief Class used to manage a buffer of images
+*
+*	Class used to manage a buffer of images
+*	All images will be retrieved from the opend video file using QVideoDecoder.
+*	It allows the extraction of a single "alone" frame (without updating the buffer)
+*	or the extracion of multiple images and store them into the buffer.
+*	
+*	There is a overlap control system between the current buffer and the wanted
+*	target buffer so that we can skip decoding some images.
+*/
 class ImagesBuffer
 {
 

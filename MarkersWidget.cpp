@@ -10,9 +10,13 @@
 #include "MarkersWidget.h"
 
 
-/*! \brief PlayerWidget Constructor.
+/*! \brief Create and setup the markers widget
 *
-*   TODO
+*	Create and setup the markers widget
+*
+*	@param parent parent
+*	@param mainwin pointer to the mainwindow so we can use s&s
+*	@param markersList pointer to the markerslist component of the UI
 */
 MarkersWidget::MarkersWidget(
 	QWidget *parent, 
@@ -22,33 +26,40 @@ MarkersWidget::MarkersWidget(
 {
 	_inputFile = "";
 	_markerStarted = false;
-	autoSort = true;
 
 	// S&S to mainwin
 	connect(this, SIGNAL(jumpToFrame(qint64)), mainwin, SLOT(jumpToFrame(qint64)));
 	connect(this, SIGNAL(startBtnToggle(bool)), mainwin, SLOT(changeStartEndBtn(bool)));
 }
 
-
+/*! \brief Destroyer
+*
+*	Destroyer
+*/
 MarkersWidget::~MarkersWidget()
 {}
-
 
 /***************************************
 ***********    EXTERNALS    ************
 ***************************************/
 
+/*! \brief Start/end a marker
+*
+*	Start/end a marker.
+*
+*	@param endVal end marker value
+*	@param startVal start marker value, skipped if -1
+*/
 void MarkersWidget::endAndStartMarker(const qint64 endVal, const qint64 startVal)
 {
+	// already started marker present?
 	if (!_markerStarted) {
 		startMarker(startVal);
 	}
 	else {
 		endMarker(endVal);
 
-		if (autoSort) {
-			sort();
-		}
+		sort();
 		checkMarkersOverlaps();
 		
 		// start a new marker?
@@ -59,6 +70,12 @@ void MarkersWidget::endAndStartMarker(const qint64 endVal, const qint64 startVal
 	emit startBtnToggle(_markerStarted);
 }
 
+/*! \brief Custom context menu
+*
+*	Custom context menu. This function overwrite the original context menu.
+*
+*	@param globalPos click position
+*/
 void MarkersWidget::showContextMenu(const QPoint& globalPos)
 {
 	QMenu myMenu;
@@ -69,39 +86,42 @@ void MarkersWidget::showContextMenu(const QPoint& globalPos)
 	QList<QTableWidgetItem*> sel = _markersList->selectedItems();
 
 	if (sel.length() == 0) {// no sel
-		qDebug() << "no sel";
 		return;
 	}
 
 	QAction* selectedAction = myMenu.exec(globalPos);
 
+	// operations
 	if (selectedAction) {
 		if (selectedAction->text() == "Remove") {
 			int row = sel[0]->row();
-			qDebug() << "sel0 - remove " << row;
 			removeMarker(row);
 		}
 		else if (selectedAction->text() == "Jump to frame 'From'") {
 			qint64 frameNum = sel[0]->text().toInt();
-			qDebug() << "sel1 - jump to " << frameNum;
 			emit jumpToFrame(frameNum);
 		}
 		else if (selectedAction->text() == "Jump to frame 'To'") {
 			qint64 frameNum = sel[1]->text().toInt();
-			qDebug() << "sel2 - jump to " << frameNum;
 			emit jumpToFrame(frameNum);
 		}
 	}
 }
 
+/*! \brief Change a marker value
+*
+*	Change a marker value.
+*
+*	@param row row index
+*	@param col column index (0=start, 1=end)
+*	@param val value to set
+*/
 void MarkersWidget::markerChanged(const int row, const int col, const qint64 val)
 {
 	// 1 = end, 0 = start
 	col ? _markers[row]._end = val : _markers[row]._start = val;
 
-	if (autoSort) {
-		sort();
-	}
+	sort();
 	checkMarkersOverlaps();
 
 	clearUIList();
@@ -114,6 +134,12 @@ void MarkersWidget::markerChanged(const int row, const int col, const qint64 val
 ********    MARKERS ACTIONS    *********
 ***************************************/
 
+/*! \brief Start a marker
+*
+*	Start a marker
+*
+*	@param startVal start marker value
+*/
 void MarkersWidget::startMarker(const qint64 startVal)
 {
 	_currMarker = _markers.size();
@@ -128,6 +154,12 @@ void MarkersWidget::startMarker(const qint64 startVal)
 	_markerStarted = true;
 }
 
+/*! \brief End a marker
+*
+*	End a marker
+*
+*	@param endVal end marker value
+*/
 void MarkersWidget::endMarker(const qint64 endVal)
 {
 	// update internal list
@@ -140,6 +172,13 @@ void MarkersWidget::endMarker(const qint64 endVal)
 	_markerStarted = false;
 }
 
+/*! \brief Add a marker with given start and end value
+*
+*	Add a marker with given start and end value
+*
+*	@param startVal start marker value
+*	@param endVal end marker value
+*/
 void MarkersWidget::addMarker(const qint64 startVal, const qint64 endVal)
 {
 	// update internal list
@@ -149,24 +188,38 @@ void MarkersWidget::addMarker(const qint64 startVal, const qint64 endVal)
 	addMarkerToUIList(QString::number(startVal), QString::number(endVal));
 }
 
+/*! \brief Add a marker to the list
+*
+*	Add a marker to the list
+*
+*	@param startVal start marker value
+*	@param endVal end marker value
+*	@param overlap overlap with another marker
+*/
 void MarkersWidget::addMarkerToUIList(const QString startVal, const QString endVal, const bool overlap)
 {
 	int pos = _markersList->rowCount();
 	QTableWidgetItem *start = new QTableWidgetItem(QObject::tr("%1").arg(startVal));
 	QTableWidgetItem *end = new QTableWidgetItem(QObject::tr("%1").arg(endVal));
 	if (overlap) {
-		start->setBackgroundColor(QColor("red"));
-		end->setBackgroundColor(QColor("red"));
+		start->setBackgroundColor(QColor(186, 33, 33, 255));
+		end->setBackgroundColor(QColor(186, 33, 33, 255));
 	}
 	else {
-		start->setBackgroundColor(Qt::white);
-		end->setBackgroundColor(Qt::white);
+		start->setBackgroundColor(QColor(23, 23, 23, 255));
+		end->setBackgroundColor(QColor(23, 23, 23, 255));
 	}
 	_markersList->insertRow(pos);
 	_markersList->setItem(pos, 0, start);
 	_markersList->setItem(pos, 1, end);
 }
 
+/*! \brief Remove a marker by row index
+*
+*	Remove a marker by row index
+*
+*	@param row row index
+*/
 void MarkersWidget::removeMarker(const int row)
 {
 	// if the curr marker is "new" we have to reset variables
@@ -189,6 +242,12 @@ void MarkersWidget::removeMarker(const int row)
 **********    I/O METHODS    ***********
 ***************************************/
 
+/*! \brief Load markers from a file
+*
+*	Load markers from a file
+*
+*	@return file's name if successful, NULL if not
+*/
 QString MarkersWidget::loadFile()
 {
 	QString temp = _inputFile;
@@ -202,7 +261,7 @@ QString MarkersWidget::loadFile()
 	QFile file(_inputFile);
 
 	if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-		QMessageBox::critical(NULL, "Error", "Cannot read from the file!");
+		QMessageBox::critical(NULL, "Error", "Cannot read from the file! Check folders and files permissions.");
 		_inputFile = temp;
 		return "";
 	}
@@ -211,30 +270,57 @@ QString MarkersWidget::loadFile()
 	clearListAndUI();
 
 	// read line x line and fill the internal vector
-	// TODO: errors while parsing
 	while (!file.atEnd()) {
 		QString line = QString(file.readLine());
 		if (line != "") { // avoid last empty line of the stream
 			line.truncate(line.length() - 1); // remove '\n'
 			line.replace(",", "");
 			QStringList list = line.split(" ");
-			_markers.push_back(*new Marker(list[0].toInt(), list[1].toInt()));
+
+			// check errors
+			if (list.length() != 2) { 
+				QMessageBox::critical(NULL, "Error", "Error while parsing the file: expected a line with 2 markers.");
+				_inputFile = "";
+				return "";
+			}
+
+			bool ok1, ok2;
+			qint64 start = list[0].toInt(&ok1);
+			qint64 end = list[1].toInt(&ok2);
+			// check errors
+			if (!ok1 || !ok2) {
+				QMessageBox::critical(NULL, "Error", "Error while parsing the file: found a non numeric marker.");
+				_inputFile = "";
+				return "";
+			}
+			// check errors
+			if (start >= end) {
+				QMessageBox::critical(NULL, "Error", "Error while parsing the file: found a marker with start >= end.");
+				_inputFile = "";
+				return "";
+			}
+			
+			_markers.push_back(*new Marker(start, end));
+
 		}
 	}
 
-	if (autoSort) {
-		sort();
-	}
+	sort();
 	checkMarkersOverlaps();
 
 	printListToUI();
 	return _inputFile;
 }
 
+/*! \brief Save markers to a file
+*
+*	Save markers to a file
+*
+*	@return file's name if successful, NULL if not
+*/
 QString MarkersWidget::saveFile()
 {
 	_markerStarted = false;
-	//TODO: check if markers are ok
 
 	// new markers file?
 	if (_inputFile == "") {
@@ -245,7 +331,7 @@ QString MarkersWidget::saveFile()
 	QFile file(_inputFile);
 
 	if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-		QMessageBox::critical(NULL, "Error", "Cannot create the file or write to it!");
+		QMessageBox::critical(NULL, "Error", "Cannot create the file or write to it! Check folders and files permissions.");
 		return false;
 	}
 
@@ -257,6 +343,12 @@ QString MarkersWidget::saveFile()
 	return _inputFile;
 }
 
+/*! \brief Create a new markers file
+*
+*	Create a new markers file
+*
+*	@return success or not
+*/
 bool MarkersWidget::newFile()
 {
 	_inputFile = "";
@@ -271,6 +363,10 @@ bool MarkersWidget::newFile()
 ************    HELPERS    *************
 ***************************************/
 
+/*! \brief Check overlaps between markers's ranges
+*
+*	Set overlap=true if there are overlaps between markers's ranges
+*/
 void MarkersWidget::checkMarkersOverlaps()
 {
 	int len = _markers.size();
@@ -301,6 +397,10 @@ void MarkersWidget::checkMarkersOverlaps()
 	}
 }
 
+/*! \brief Write all markers onto the UI list
+*
+*	Write all markers onto the UI list
+*/
 void MarkersWidget::printListToUI()
 {
 	for (auto m : _markers) {
@@ -308,17 +408,29 @@ void MarkersWidget::printListToUI()
 	}
 }
 
+/*! \brief Sort markers by start value first and end value after
+*
+*	Sort markers by start value first and end value after
+*/
 void MarkersWidget::sort()
 {
 	std::sort(_markers.begin(), _markers.end());
 }
 
+/*! \brief Clear markers list + UI list
+*
+*	Clear markers list + UI list
+*/
 void MarkersWidget::clearListAndUI()
 {
 	clearUIList();
 	_markers.clear();
 }
 
+/*! \brief Remove all markers from the UI list
+*
+*	Remove all markers from the UI list
+*/
 void MarkersWidget::clearUIList() 
 {
 	while (_markersList->rowCount() > 0)
@@ -326,10 +438,17 @@ void MarkersWidget::clearUIList()
 }
 
 
+
 /***************************************
 ************    GETTERS    *************
 ***************************************/
 
+/*! \brief Get input file string
+*
+*	Get input file string
+*
+*	@param input file string
+*/
 QString MarkersWidget::getInputFile() {
 	return _inputFile;
 }

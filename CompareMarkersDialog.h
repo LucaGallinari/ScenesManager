@@ -1,7 +1,6 @@
 #ifndef COMPAREMARKERSDIALOG_H
 #define COMPAREMARKERSDIALOG_H
 
-
 #include <QTextEdit>
 #include <QWidget>
 #include <QFileDialog>
@@ -11,6 +10,11 @@ namespace Ui {
 	class CompareMarkersDialog;
 }
 
+/*!
+*	@brief Class used to compare 2 markers files
+*
+*	Class used to compare 2 markers files.
+*/
 class CompareMarkersDialog : public QDialog
 {
 	Q_OBJECT
@@ -41,8 +45,6 @@ private slots:
 private:
 
 	Ui::CompareMarkersDialog *ui;
-
-
 	QString fileName, fileName2;
 
 	//StringList to keep out text lin of markers files
@@ -53,16 +55,13 @@ private:
 	QTextEdit *f1;
 	QTextEdit *f2;
 
-
 	//List of colors for background text, text and bold format
 	QList<QColor> *ColList;
 	QTextCharFormat *textFormat;
 	QTextCharFormat *boldFormat;
 
-
 	void copyTxt(QString, bool);
 	void compare_differentF(QTextCursor, QTextCursor);
-
 
 	void setBckCol();
 

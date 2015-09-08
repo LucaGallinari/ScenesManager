@@ -7,6 +7,15 @@
 #include <QTimer>
 #include <QPushButton>
 
+/*!
+*	@brief Class used to display the video frame
+*
+*	Class used to display the video frame.
+*	The frame is displayed within a Label for simplicity and beacuse the playback
+*	function is not a core requirement of the application. 
+*	All standard functions of video playbacking are present (play, pause, stop)
+*	along with frame functions (seek, prev, next).
+*/
 class PlayerWidget : public QWidget 
 {
 	Q_OBJECT
@@ -24,7 +33,6 @@ private:
 	qint64	videoLength; // ms
 
 	void	displayFrame();
-
 
 public:
 	explicit PlayerWidget(

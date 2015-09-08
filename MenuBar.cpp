@@ -1,7 +1,11 @@
 
-#include "menubar.h"
+#include "MenuBar.h"
 
-
+/*!
+*	@brief Create and setup a cutom QMenuBar
+*
+*	Create and setup a cutom QMenuBar
+*/
 MenuBar::MenuBar(QWidget *parent) : QMenuBar(parent)
 {
 	setObjectName("menubar");
@@ -12,18 +16,20 @@ MenuBar::MenuBar(QWidget *parent) : QMenuBar(parent)
 	menuFile->addAction(actionQuit);
 
 	//	 Video
-	QMenu* menuVideo = new QMenu("Video", this);
+	QMenu* menuVideo		= new QMenu("Video", this);
 	actionLoad_video		= new QAction("Load Video...", menuVideo);
-	actionLoad_video->setShortcut(QKeySequence(tr("Ctrl+L")));
 	actionPlay_Pause		= new QAction("Play/Pause", menuVideo);
-	actionPlay_Pause->setShortcut(QKeySequence(tr("Ctrl+space")));
 	actionStop				= new QAction("Stop", menuVideo);
-	actionNext_Frame = new QAction("Next Frame", menuVideo);
-	actionNext_Frame->setShortcut(QKeySequence(tr("Ctrl+X")));
-	actionPrevious_Frame = new QAction("Previous Frame", menuVideo);
-	actionPrevious_Frame->setShortcut(QKeySequence(tr("Ctrl+Z")));
+	actionNext_Frame		= new QAction("Next Frame", menuVideo);
+	actionPrevious_Frame	= new QAction("Previous Frame", menuVideo);
 	actionGo_To_Frame		= new QAction("Go To Frame...", menuVideo);
 	actionVideo_Info		= new QAction("Video Info...", menuVideo);
+
+	actionLoad_video->setShortcut(QKeySequence(tr("Ctrl+L")));
+	actionPlay_Pause->setShortcut(QKeySequence(tr("Ctrl+space")));
+	actionNext_Frame->setShortcut(QKeySequence(tr("Ctrl+X")));
+	actionPrevious_Frame->setShortcut(QKeySequence(tr("Ctrl+Z")));
+
 	menuVideo->addAction(actionLoad_video);
 	menuVideo->addSeparator();
 	menuVideo->addAction(actionPlay_Pause);
@@ -36,13 +42,14 @@ MenuBar::MenuBar(QWidget *parent) : QMenuBar(parent)
 	menuVideo->addAction(actionVideo_Info);
 
 	//	 Markers
-	QMenu* menuMarkers = new QMenu("Markers", this);
+	QMenu* menuMarkers			= new QMenu("Markers", this);
 	actionCompare				= new QAction("Compare...", menuMarkers);
 	actionNew_File				= new QAction("New File", menuMarkers);
 	actionSave_File				= new QAction("Save File...", menuMarkers);
 	actionLoad_File				= new QAction("Load File...", menuMarkers);
 	actionStart_StartEnd_Marker = new QAction("Start/StartEnd Marker", menuMarkers);
 	actionEnd_Marker			= new QAction("End Marker", menuMarkers);
+
 	menuMarkers->addAction(actionCompare);
 	menuMarkers->addSeparator();
 	menuMarkers->addAction(actionNew_File);
@@ -53,9 +60,10 @@ MenuBar::MenuBar(QWidget *parent) : QMenuBar(parent)
 	menuMarkers->addAction(actionEnd_Marker);
 
 	//	 Help
-	QMenu* menuHelp = new QMenu("Help", this);
-	actionManual = new QAction("Manual", menuHelp);
-	actionAbout = new QAction("About", menuHelp);
+	QMenu* menuHelp	= new QMenu("Help", this);
+	actionManual	= new QAction("Manual", menuHelp);
+	actionAbout		= new QAction("About", menuHelp);
+
 	menuHelp->addAction(actionManual);
 	menuHelp->addAction(actionAbout);
 

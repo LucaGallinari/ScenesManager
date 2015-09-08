@@ -1,7 +1,3 @@
-/*
-
-*/
-
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
@@ -11,6 +7,7 @@
 #include <QDebug>
 #include <QWidget>
 
+#include "TitleBar.h"
 #include "PlayerWidget.h"
 #include "PreviewsWidget.h"
 #include "MarkersWidget.h"
@@ -20,6 +17,11 @@ namespace Ui {
 	class MainWindow;
 }
 
+/*! 
+*	@brief MainWindow of the application
+*
+*	MainWindow of the application
+*/
 class MainWindow : public QMainWindow {
 	Q_OBJECT
 
@@ -27,11 +29,11 @@ public:
 	explicit MainWindow(QWidget *parent = 0);
 	~MainWindow();
 
-
 	//	Mouse Events
 	void mousePressEvent(QMouseEvent *e);
 	void mouseReleaseEvent(QMouseEvent *e);
 	void mouseMove(QPoint newPos, QPoint oldPos);
+	TitleBar* titleBar();
 
 protected:
 	PlayerWidget *_playerWidg;
@@ -39,6 +41,8 @@ protected:
 	ImagesBuffer *_bmng;
 	MarkersWidget *_markersWidg;
 	CompareMarkersDialog *_dial;
+
+	TitleBar *titlebar;
 
 	void changeEvent(QEvent *e);
 	void resizeEvent(QResizeEvent *e);
@@ -48,12 +52,14 @@ private:
 
 	bool mMaxNormal;
 
-	bool autoSort;//TODO: use a checkbox
 	int _currMarkerRow;
 	int _currMarkerCol;
 
 	QPixmap playIcon;
 	QPixmap pauseIcon;
+
+	QPixmap startMarkerIcon;
+	QPixmap endStartMarkerIcon;
 
 	//	Title bar
 	QPoint	mClickedPos;

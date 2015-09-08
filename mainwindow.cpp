@@ -1,13 +1,3 @@
-/*
-
-	ISSUE TODO:
-		- ...
-	TODO:
-		- popup while filling the buffer
-		- progress bar while processing
-		- UI restyle
-
-*/
 
 #include <QFileDialog>
 #include <QInputDialog>
@@ -25,7 +15,12 @@
 #include <QtWidgets/QSizeGrip>
 #include <QMouseEvent>
 
-
+/*! \brief Create and setup a new MainWindow
+*
+*	Create and setup a new MainWindow
+*
+*	@param parent parent
+*/
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
 	ui(new Ui::MainWindow)
@@ -45,7 +40,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	installEventFilter(new WindowTitleFilter(this));
 
 	// create title
-	TitleBar *titlebar = new TitleBar(ui->aTopWidget, this);
+	titlebar = new TitleBar(ui->aTopWidget, this);
 	ui->aTopLayout->addWidget(titlebar);
 
 	// create menu
@@ -76,9 +71,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	qDebug() << "Starting up";
 
 	//TODO: set this dynamically
-	int numPrev = 10;
+	int numPrev = 30;
 
-	autoSort = true;
 	_currMarkerRow = -1;
 	_currMarkerCol = -1;
 
@@ -98,6 +92,10 @@ MainWindow::MainWindow(QWidget *parent) :
 	initializeIcons();
 }
 
+/*! \brief Remove the ui object
+*
+*	Remove the ui object
+*/
 MainWindow::~MainWindow()
 {
 	delete ui;
@@ -200,7 +198,6 @@ void MainWindow::showManual()
 
 }
 
-
 /*! \brief Open a dialog with our info
 *
 *	Open a dialog with our info
@@ -271,8 +268,11 @@ void MainWindow::resizeEvent(QResizeEvent *e)
 *	Initialize player icons.
 */
 void MainWindow::initializeIcons() {
-	playIcon  = QPixmap(":/icons/playW.png");
+	playIcon = QPixmap(":/icons/playW.png");
 	pauseIcon = QPixmap(":/icons/pauseW.png");
+
+	startMarkerIcon = QPixmap("://markerStart.png");
+	endStartMarkerIcon = QPixmap("://markerEndStart.png");
 }
 
 
@@ -280,11 +280,21 @@ void MainWindow::initializeIcons() {
 ****** SLOTS ******
 *******************/
 
+/*! \brief Update the video slider position
+*
+*	Update the video slider position
+*/
 void MainWindow::updateSlider()
 {
 	ui->videoSlider->setValue(round(_playerWidg->currentTimePercentage() * sliderMaxVal));
 }
 
+/*! \brief Properly change play pause button icons and tooltip
+*
+*	Properly change play pause button icons and tooltip
+*
+*	@param playState playing or not
+*/
 void MainWindow::changePlayPause(bool playState)
 {
 	if (playState) {
@@ -335,8 +345,6 @@ void MainWindow::updateTime(qint64 time)
 	);
 }
 
-
-
 /*! \brief Update progress bar text.
 *
 *	This functions updates the progress bar text.
@@ -349,8 +357,9 @@ void MainWindow::updateProgressText(QString m)
 	ui->progressLbl->repaint();
 }
 
-/*! \brief .
+/*! \brief Signal that the player reached the end of the stream
 *
+*	Signal that the player reached the end of the stream
 *	
 */
 void MainWindow::endOfStream()
@@ -358,9 +367,11 @@ void MainWindow::endOfStream()
 	_prevWidg->reloadAndDrawPreviews(_playerWidg->currentFrameNumber());
 }
 
-/*! \brief .
+/*! \brief Seek to the wanted frame number
 *
-*
+*	Seek to the wanted frame number
+*	
+*	@param num frame number
 */
 void MainWindow::jumpToFrame(const qint64 num)
 {
@@ -372,19 +383,21 @@ void MainWindow::jumpToFrame(const qint64 num)
 	_prevWidg->reloadAndDrawPreviews(num);
 }
 
-/*! \brief .
+/*! \brief Properly change start/end markers button icons and tooltip
 *
+*	Properly change start/end markers button icons and tooltip
 *
+*	@param markerStarted marker already started or not?
 */
 void MainWindow::changeStartEndBtn(const bool markerStarted)
 {
 	if (markerStarted) {
-		ui->startMarkerBtn->setToolTip("End current marker and start a new one");
-		ui->startMarkerBtn->setText("} {");
+		ui->startMarkerBtn->setToolTip("End marker and start a new one");
+		ui->startMarkerBtn->setIcon(QIcon(endStartMarkerIcon));
 	}
 	else {
-		ui->startMarkerBtn->setToolTip("Insert a new marker");
-		ui->startMarkerBtn->setText("{");
+		ui->startMarkerBtn->setToolTip("Start marker");
+		ui->startMarkerBtn->setIcon(QIcon(startMarkerIcon));
 	}
 }
 
@@ -457,7 +470,7 @@ void MainWindow::on_seekFrameBtn_clicked()
 	);
 
 	if (!ok) {
-		QMessageBox::critical(this,"Error","Invalid frame number");
+		QMessageBox::critical(NULL, "Error", "Invalid frame number");
 		return;
 	}
 
@@ -568,10 +581,6 @@ void MainWindow::on_markersSaveBtn_clicked()
 	if (path != "") {
 		ui->markersFileText->setText(path);
 	}
-	else {
-		QMessageBox::critical(this, "Error", "Error while saving! Check folders and files permissions..");
-		return;
-	}
 }
 
 void MainWindow::on_markersLoadBtn_clicked()
@@ -580,10 +589,6 @@ void MainWindow::on_markersLoadBtn_clicked()
 	QString path = _markersWidg->loadFile();
 	if (path != "") {
 		ui->markersFileText->setText(path);
-	}
-	else {
-		QMessageBox::critical(this, "Error", "Error while loading! Check folders and files permissions..");
-		return;
 	}
 }
 
@@ -594,7 +599,7 @@ void MainWindow::on_markersNewBtn_clicked()
 		ui->markersFileText->setText("");
 	}
 	else {
-		QMessageBox::critical(this, "Error", "Error while clearing the list! Try reloading..");
+		QMessageBox::critical(NULL, "Error", "Error while clearing the list! Try reloading the application.");
 		return;
 	}
 }
@@ -613,9 +618,17 @@ void MainWindow::on_markersTableWidget_cellChanged(int row, int column)
 	*/
 	if (row == _currMarkerRow) {
 		bool ok;
+		int otherCol = column ? 0 : 1;
 		int val = ui->markersTableWidget->item(row, column)->text().toUInt(&ok);
 		if (!ok) {
-			QMessageBox::critical(this,"Error","Expected a number");
+			QMessageBox::critical(NULL,"Error","Marker not valid: expected a number");
+			ui->markersTableWidget->item(row, column)->setText("0");
+			return;
+		}
+
+		int otherVal = ui->markersTableWidget->item(row, otherCol)->text().toUInt();
+		if ((otherVal != 0) && ((otherCol==0 && otherVal>=val) || (otherCol==1 && otherVal<=val))) {
+			QMessageBox::critical(NULL, "Error", "Marker range is not valid: start must be > of end value");
 			ui->markersTableWidget->item(row, column)->setText("0");
 			return;
 		}
@@ -636,6 +649,11 @@ void MainWindow::on_infoBtn_clicked()
 /**********************************************
 ************  MOUSE MOVE EVENTS  **************
 ***********************************************/
+
+TitleBar* MainWindow::titleBar() 
+{
+	return titlebar;
+}
 
 void MainWindow::mousePressEvent(QMouseEvent *e)
 {

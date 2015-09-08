@@ -1,5 +1,11 @@
-#include "titlebar.h"
 
+#include "TitleBar.h"
+
+/*!
+*	@brief Create and setup a cutom TitleBar
+*
+*	Create and setup a cutom TitleBar
+*/
 TitleBar::TitleBar(QWidget *parent, QWidget *mainw) : QWidget(parent)
 {
 	mainwin = mainw;
@@ -42,16 +48,31 @@ TitleBar::TitleBar(QWidget *parent, QWidget *mainw) : QWidget(parent)
 	connect(mMaximizeButton, SIGNAL(clicked()), this, SLOT(showMaxRestore()));
 }
 
+/*!
+*	@brief Modify title label if title changed
+*
+*	Modify title label if title changed
+*/
 void TitleBar::titleChanged()
 {
 	mLabel->setText(mainwin->windowTitle());
 }
 
+/*!
+*	@brief Minimize
+*
+*	Minimize
+*/
 void TitleBar::showSmall()
 {
 	mainwin->showMinimized();
 }
 
+/*!
+*	@brief Maximize/Normal
+*
+*	Maximize/Normal
+*/
 void TitleBar::showMaxRestore()
 {
 	if (mMaxNormal) {
@@ -66,12 +87,20 @@ void TitleBar::showMaxRestore()
 	}
 }
 
+/*! \brief Manage press event
+*
+*	Manage press event by mapping the position of the cursor
+*/
 void TitleBar::mousePressEvent(QMouseEvent *me)
 {
 	mStartPos = me->globalPos();
 	mClickPos = mapToParent(me->pos());
 }
 
+/*! \brief Manage window d&d
+*
+*	Manage window d&d by setting the position based on movement
+*/
 void TitleBar::mouseMoveEvent(QMouseEvent *me)
 {
 	if (mMaxNormal)

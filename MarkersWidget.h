@@ -8,6 +8,16 @@
 
 #include <ImagesBuffer.h>
 
+/*!
+*	@brief Class used to manage the markers
+*
+*	Class used to manage markers.
+*	Markers can be loaded/stored from/to a file. The system directly order markers
+*	by the marker start number. Overlapping markers are highlighted with a
+*	red background.
+*	A custom context menu is also implemented to allow users to delete a marker 
+*	or jump to start/end marker.
+*/
 class MarkersWidget : public QWidget
 {
 	Q_OBJECT
@@ -45,8 +55,6 @@ private:
 		}
 	};
 
-	bool autoSort;//TODO: use a checkbox
-
 	QString					_inputFile;
 	int						_currMarker;
 	std::vector<Marker>		_markers;
@@ -76,6 +84,4 @@ private slots:
 
 };
 
-
 #endif // MARKERSWIDGET_H
-

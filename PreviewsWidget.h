@@ -5,6 +5,14 @@
 #include <QHBoxLayout>
 #include <ImagesBuffer.h>
 
+/*!
+*	@brief Class used to display previews of the loaded video
+*
+*	Class used to display previews of the loaded video.
+*	The number of previews is calculated based on dimensions of the window, it's
+*	better to DO NOT update the previews while the video is playing because it 
+*	can greatly decrease rendering performance causing lag and stutters.
+*/
 class PreviewsWidget : public QWidget
 {
 	Q_OBJECT
@@ -13,7 +21,7 @@ private:
 	int		_frame_num;
 	int		_frame_w;
 	int		_frame_h;
-	double	_frame_ratio;
+	double	_frame_ratio;		// dimensions ratio
 	int		_frame_margin_w;	// margin between previews
 	int		_frame_margin_h;
 	qint64  _mid;				// mid frame number
@@ -39,6 +47,5 @@ public:
 signals:
 	void updateProgressText(QString);
 };
-
 
 #endif // PREVIEWSWIDGET_H

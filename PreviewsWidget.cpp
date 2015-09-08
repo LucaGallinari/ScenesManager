@@ -4,9 +4,13 @@
 
 #include "PreviewsWidget.h"
 
-/*! \brief PlayerWidget Constructor.
+/*! \brief Create and setup the previews widget 
 *
-*   TODO
+*	Create and setup the previews widget 
+*
+*	@param parent parent
+*	@param mainwin pointer to the mainwindow so we can use s&s
+*	@param buff pointer to the images buffer
 */
 PreviewsWidget::PreviewsWidget(
 	QWidget *parent,
@@ -31,6 +35,10 @@ PreviewsWidget::PreviewsWidget(
 
 }
 
+/*! \brief Destroyer
+*
+*	Destroyer
+*/
 PreviewsWidget::~PreviewsWidget()
 {}
 
@@ -68,6 +76,7 @@ void PreviewsWidget::reloadLayout()
 /*! \brief reload images and draw
 *
 *	Reload the images from the buffer and draw them
+*	@param mid middle frame number
 */
 void PreviewsWidget::reloadAndDrawPreviews(const qint64 mid)
 {

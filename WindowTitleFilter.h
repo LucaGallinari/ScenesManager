@@ -3,13 +3,20 @@
 
 #include <QObject>
 
+/*!
+*	@brief Class used to allow d&d of the window even without borders
+*
+*	Class used to allow d&d of the window even without borders
+*/
 class WindowTitleFilter : public QObject
 {
+	Q_OBJECT;
+
 public:
-    WindowTitleFilter(QObject* parent);
+	WindowTitleFilter(QObject* parent);
 
 protected:
-    bool eventFilter(QObject *obj, QEvent *event);
+	bool eventFilter(QObject *obj, QEvent *event);
 };
 
 #endif // WINDOWTITLEFILTER_H

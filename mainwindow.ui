@@ -28,7 +28,7 @@
 font-family: Verdana,Geneva,sans-serif; 
 }
 
-QDialog {
+QDialog, QMessageBox {
 	color: #222;
 }
 
@@ -177,11 +177,10 @@ QTableView, QTableWidget {
 	border:0;
 	gridline-color:#1d1d1d;
 }
-/*QTableView::item,*/ QTableWidget::item {
-	background: transparent;
-	/*border-color:1px solid red;*/
+QTableWidget::item {
 	color:#f0f0f0;
 }
+
 QWidget#markersWidget QPushButton {
 	color: white;	
 	border-radius: 4px;
@@ -477,6 +476,12 @@ QTableWidget QTableCornerButton::section {
                      <normaloff>:/icons/playW.png</normaloff>
                      <disabledoff>:/icons/playG.png</disabledoff>:/icons/playW.png</iconset>
                    </property>
+                   <property name="iconSize">
+                    <size>
+                     <width>20</width>
+                     <height>20</height>
+                    </size>
+                   </property>
                   </widget>
                  </item>
                  <item>
@@ -493,6 +498,12 @@ QTableWidget QTableCornerButton::section {
                    <property name="icon">
                     <iconset resource="playericons.qrc">
                      <normaloff>:/icons/stopW.png</normaloff>:/icons/stopW.png</iconset>
+                   </property>
+                   <property name="iconSize">
+                    <size>
+                     <width>20</width>
+                     <height>20</height>
+                    </size>
                    </property>
                   </widget>
                  </item>
@@ -511,6 +522,12 @@ QTableWidget QTableCornerButton::section {
                     <iconset resource="playericons.qrc">
                      <normaloff>:/icons/prevFW.png</normaloff>:/icons/prevFW.png</iconset>
                    </property>
+                   <property name="iconSize">
+                    <size>
+                     <width>20</width>
+                     <height>20</height>
+                    </size>
+                   </property>
                   </widget>
                  </item>
                  <item>
@@ -527,6 +544,12 @@ QTableWidget QTableCornerButton::section {
                    <property name="icon">
                     <iconset resource="playericons.qrc">
                      <normaloff>:/icons/nextFW.png</normaloff>:/icons/nextFW.png</iconset>
+                   </property>
+                   <property name="iconSize">
+                    <size>
+                     <width>20</width>
+                     <height>20</height>
+                    </size>
                    </property>
                   </widget>
                  </item>
@@ -545,6 +568,12 @@ QTableWidget QTableCornerButton::section {
                     <iconset resource="resource.qrc">
                      <normaloff>:/searchW.png</normaloff>:/searchW.png</iconset>
                    </property>
+                   <property name="iconSize">
+                    <size>
+                     <width>20</width>
+                     <height>20</height>
+                    </size>
+                   </property>
                   </widget>
                  </item>
                  <item>
@@ -561,6 +590,12 @@ QTableWidget QTableCornerButton::section {
                    <property name="icon">
                     <iconset resource="playericons.qrc">
                      <normaloff>:/icons/infoW.png</normaloff>:/icons/infoW.png</iconset>
+                   </property>
+                   <property name="iconSize">
+                    <size>
+                     <width>20</width>
+                     <height>20</height>
+                    </size>
                    </property>
                   </widget>
                  </item>
@@ -600,8 +635,21 @@ QTableWidget QTableCornerButton::section {
                      <height>16777215</height>
                     </size>
                    </property>
+                   <property name="toolTip">
+                    <string>Start Marker</string>
+                   </property>
                    <property name="text">
-                    <string>{</string>
+                    <string/>
+                   </property>
+                   <property name="icon">
+                    <iconset resource="resource.qrc">
+                     <normaloff>:/markerStart.png</normaloff>:/markerStart.png</iconset>
+                   </property>
+                   <property name="iconSize">
+                    <size>
+                     <width>20</width>
+                     <height>20</height>
+                    </size>
                    </property>
                   </widget>
                  </item>
@@ -622,8 +670,21 @@ QTableWidget QTableCornerButton::section {
                      <height>16777215</height>
                     </size>
                    </property>
+                   <property name="toolTip">
+                    <string>End Marker</string>
+                   </property>
                    <property name="text">
-                    <string>}</string>
+                    <string/>
+                   </property>
+                   <property name="icon">
+                    <iconset resource="resource.qrc">
+                     <normaloff>:/markerEnd.png</normaloff>:/markerEnd.png</iconset>
+                   </property>
+                   <property name="iconSize">
+                    <size>
+                     <width>20</width>
+                     <height>20</height>
+                    </size>
                    </property>
                   </widget>
                  </item>
@@ -1033,8 +1094,8 @@ QTableWidget QTableCornerButton::section {
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="resource.qrc"/>
   <include location="playericons.qrc"/>
+  <include location="resource.qrc"/>
  </resources>
  <connections/>
 </ui>
