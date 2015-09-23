@@ -41,24 +41,38 @@ public:
 
 	//	Getters
 	QString getInputFile();
+	bool	fileNotSaved();
 
 private:
 
+	//! Single Marker element
 	struct Marker {
 	public:
-		qint64 _start;
-		qint64 _end;
-		bool _overlap;
+		qint64 _start;	//!< start frame num
+		qint64 _end;	//!< end frame num
+		bool _overlap;	//!< overlapping with other marker
+
+		/*! \brief constructor
+		*
+		*	@param s start frame number
+		*	@param e end frame number
+		*/
 		Marker(const qint64 s = 0, const qint64 e = 0) : _start(s), _end(e), _overlap(false) {}
+
+		/*! \brief compare left marker (this) with the one passed
+		*
+		*	@param right marker operand
+		*/
 		bool operator < (const Marker &other) const {
 			return (_start < other._start) || ((_start == other._start) && (_end < other._end));
 		}
 	};
 
 	QString					_inputFile;
-	int						_currMarker;
-	std::vector<Marker>		_markers;
-	QTableWidget			*_markersList;
+	bool					_inputFileModified; //!< check if modified or not
+	int						_currMarker;		//!< current selected marker 
+	std::vector<Marker>		_markers;			//!< vector of markers
+	QTableWidget			*_markersList;		//!< ui pointer to the markers list
 
 
 	//	Markers actions

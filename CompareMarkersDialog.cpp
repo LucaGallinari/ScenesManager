@@ -7,6 +7,7 @@
 #include <QTextCursor>
 #include <QDebug>
 #include <QLabel>
+#include <QMessageBox>
 
 #include <math.h>
 
@@ -69,8 +70,12 @@ void CompareMarkersDialog::on_compareBtn_clicked()
 
 		// Function to append string line of files in QStringList
 		// second argument is a bool to choose which QStringList utilize
-		copyTxt(fileName, true);
-		copyTxt(fileName2, false);
+		if (!copyTxt(fileName, true)) {
+			return;
+		}
+		if (!copyTxt(fileName2, false)) {
+			return;
+		}
 
 		// Reset text
 		f1->setText("");
@@ -98,7 +103,7 @@ void CompareMarkersDialog::on_compareBtn_clicked()
 */
 void CompareMarkersDialog::on_smFileBtn_clicked()
 {
-	fileName = QFileDialog::getOpenFileName(NULL, QObject::tr("Choose the Scenes Manager markers file"), "", QObject::tr("Text files (*.txt)"));
+	fileName = QFileDialog::getOpenFileName(NULL, QObject::tr("Choose the Shot Manager markers file"), "", QObject::tr("Text files (*.txt)"));
 	ui->smFileText->setText(fileName);
 
 }
@@ -116,13 +121,15 @@ void CompareMarkersDialog::on_extFileBtn_clicked()
 
 /*! \brief Extract text from the input file
 *
-*	Extract text from the input file
+*	Extract text from the input file while checking if markers are valid.
 */
-void CompareMarkersDialog::copyTxt(QString fileName, bool whichFile){
+bool CompareMarkersDialog::copyTxt(QString fileName, bool whichFile){
 	//This function copy all contents of fileName in a temporary QStringList and after copy it to list used in the class
 
 	QFile inputFile(fileName);
 	QStringList temp_l;
+	qint64 countLine = 1;
+	qint64 lastEnd = 0;	// "end" value of the marker before the actual line
 
 	//every line of the file is copied in a space of the list
 	if (inputFile.open(QIODevice::ReadOnly))
@@ -130,7 +137,49 @@ void CompareMarkersDialog::copyTxt(QString fileName, bool whichFile){
 		QTextStream in(&inputFile);
 		while (!in.atEnd())
 		{
-			temp_l.append(in.readLine());
+			QString line = in.readLine();
+			temp_l.append(line);
+
+			QStringList vals = line.split(", ");
+			// first check length
+			if (vals.length() != 2) {
+				QMessageBox::critical(
+					NULL, "Error", 
+					QString("Error in %1:\nLine %2 DO NOT have exactly 2 numbers.").arg(fileName).arg(countLine)
+				);
+				return false;
+			}
+			bool ok, ok2;
+			qint64 start = vals[0].toLongLong(&ok);
+			qint64 end = vals[1].toLongLong(&ok2);
+			// second check length
+			if (!ok || !ok2)  {
+				QMessageBox::critical(
+					NULL, "Error", 
+					QString("Error in %1:\nFound a non-numeric value at line: %2").arg(fileName).arg(countLine)
+				);
+				return false;
+			}
+			// is a non-valid marker?
+			if (start >= end) {
+				QMessageBox::critical(
+					NULL, "Error",
+					QString("Error in %1:\nLine %2 has start value >= end value.").arg(fileName).arg(countLine)
+					);
+				return false;
+			}
+			// check markers value if this isn't the first line
+			if (countLine != 1) {
+				if (start <= lastEnd) {
+					QMessageBox::critical(
+						NULL, "Error",
+						QString("Error in %1:\nLine %2 has start value <= end value of the line before.").arg(fileName).arg(countLine)
+						);
+					return false;
+				}
+			}
+			lastEnd = end;
+			++countLine;
 		}
 		inputFile.close();
 	}
@@ -138,6 +187,7 @@ void CompareMarkersDialog::copyTxt(QString fileName, bool whichFile){
 	//whichFile parameter determinates which file we are reading
 	if (whichFile) foreach(QString s, temp_l) list1->append(s);
 	else          foreach(QString s, temp_l) list2->append(s);
+	return true;
 }
 
 /*! \brief Compare files
@@ -362,7 +412,6 @@ void CompareMarkersDialog::compare_differentF(QTextCursor c1, QTextCursor c2){
 			};
 		}
 	}
-
 }
 
 /*! \brief Compare files

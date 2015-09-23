@@ -202,7 +202,7 @@ bool QVideoDecoder::openFile(const QString filename)
 	duration		= pFormatCtx->duration;
 	baseFrameRate	= av_q2d(pFormatCtx->streams[videoStream]->r_frame_rate);
 	frameMSec		= 1000 / baseFrameRate;
-	if (type == "matroska,webm") {
+	if (type == "matroska,webm" || type.indexOf("mp4") != -1) {
 		frameMSecReal =
 			(double)(pFormatCtx->streams[videoStream]->time_base.den /
 			pFormatCtx->streams[videoStream]->time_base.num) /
@@ -219,14 +219,12 @@ bool QVideoDecoder::openFile(const QString filename)
 	w				= pCodecCtx->width;
 	h				= pCodecCtx->height;
 	
-	// if (type=="mpeg") {
 	firstDts = pFormatCtx->streams[videoStream]->first_dts;
 	if (firstDts == AV_NOPTS_VALUE) 
 		firstDts = 0;
 	startTs = pFormatCtx->streams[videoStream]->start_time;
 	if (startTs == AV_NOPTS_VALUE)
 		firstDts = 0;
-	//}
 
 	ok = true;
 
@@ -279,6 +277,10 @@ bool QVideoDecoder::decodeSeekFrame (const qint64 idealFrameNumber)
 				if (type == "mpeg" || type == "asf") {
 					f = (long)((packet.dts - startTs) * (baseFrameRate*timeBase) + 0.5);
 					t = ffmpeg::av_rescale_q(packet.dts - startTs, timeBaseRat, millisecondbase);
+				}
+				else if (type.indexOf("mp4") != -1) {
+					f = (long)((packet.dts + firstDts) * (baseFrameRate*timeBase) + 0.5);
+					t = ffmpeg::av_rescale_q(packet.dts + firstDts, timeBaseRat, millisecondbase);
 				}
 				else if (type == "matroska,webm") {
 					t = av_frame_get_best_effort_timestamp(pFrame);
@@ -436,7 +438,7 @@ bool QVideoDecoder::correctSeekToKeyFrame(const qint64 idealFrameNumber)
 	qint64 desiredDts;
 	qint64 startDts = INT64_MIN;
 	int flag;
-
+	//  
 	if (type == "mpeg") { // .mpg
 		// ffmpeg bug?: with H.264 avformat_seek_file often seeks not in a keyframe, 
 		// thus the following avcodec_decode_video2 iterations may go past desiredDts
@@ -444,6 +446,15 @@ bool QVideoDecoder::correctSeekToKeyFrame(const qint64 idealFrameNumber)
 		if (desiredDts < firstDts)	desiredDts = firstDts;
 		startDts = -0x7ffffffffffffff;
 		flag = AVSEEK_FLAG_BACKWARD;
+	}
+	else if (type.indexOf("mp4") != -1){ // .mp4
+
+		qint64 targetDts = idealFrameNumber * frameMSecReal;
+
+		// av_seek_frame(pFormatCtx, videoStream, targetDts, AVSEEK_FLAG_FRAME);
+		// flag = AVSEEK_FLAG_BACKWARD;
+		ffmpeg::avformat_seek_file(pFormatCtx, videoStream, startDts, targetDts, INT64_MAX, AVSEEK_FLAG_BACKWARD);
+		return true;
 	}
 	else if (type == "asf"){ // .asf (wmv)
 
@@ -453,6 +464,8 @@ bool QVideoDecoder::correctSeekToKeyFrame(const qint64 idealFrameNumber)
 	else if (type == "matroska,webm") { // .mkv
 		// this prediction is not perfect but it gives a good start point close 
 		// to the desired frame number
+		// this is a known ffmpeg bug where av_seek_frame will seek to the NEXT
+		// key frame of a given frame and not to the PREVIOUS.
 		qint64 targetDts = idealFrameNumber *
 			(pFormatCtx->streams[videoStream]->time_base.den /
 			pFormatCtx->streams[videoStream]->time_base.num) /
@@ -722,8 +735,8 @@ double QVideoDecoder::getFrameMsec() {
 
 /*! \brief Get video frame ms (real)
 *
-*	Retrieve video frame ms (real). Actually only "matroska"'s files have a
-*	different theorycal and real frame msec.
+*	Retrieve video frame ms (real). Actually only "matroska" and "mp4" files
+*	have a different theorycal and real frame msec.
 */
 double QVideoDecoder::getFrameMsecReal() {
 	return frameMSecReal;
@@ -848,6 +861,7 @@ void QVideoDecoder::dumpFormat(const int is_output)
 
 	// General infos
 	if (!is_output) {
+		qDebug() << "" << (baseFrameRate*timeBase);
 		qDebug() << "Time Base: " << timeBase;
 		qDebug() << "Start: " << startTs;
 		qDebug() << "First Dts: " << firstDts;

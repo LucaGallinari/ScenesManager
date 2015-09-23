@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Scenes Manager</string>
+   <string>ShotManager</string>
   </property>
   <property name="windowIcon">
    <iconset resource="resource.qrc">
@@ -360,7 +360,13 @@ QTableWidget QTableCornerButton::section {
                </sizepolicy>
               </property>
               <property name="text">
-               <string>Video frames are displayed here...</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;img src=&quot;:/brands/shotmanager.png&quot;/&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;br/&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;- You can open a video file (*.avi *.asf *.mpg *.wmv *.mkv *.mp4) using the &lt;/span&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;shortcut &amp;quot;Ctrl+L&amp;quot; or opening the &amp;quot;Video&amp;quot; menu at the top of this window.&lt;/span&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;br/&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;- You can open a markers file using the &amp;quot;Choose&amp;quot; button located in the &lt;/span&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;right column.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="textFormat">
+               <enum>Qt::RichText</enum>
+              </property>
+              <property name="pixmap">
+               <pixmap resource="resource.qrc">:/brands/shotmanager.png</pixmap>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -423,7 +429,7 @@ QTableWidget QTableCornerButton::section {
                     </size>
                    </property>
                    <property name="text">
-                    <string/>
+                    <string>00:00:00</string>
                    </property>
                    <property name="alignment">
                     <set>Qt::AlignCenter</set>
@@ -738,6 +744,9 @@ QTableWidget QTableCornerButton::section {
              <widget class="QLabel" name="markersTitle">
               <property name="text">
                <string>MARKERS</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
              </widget>
             </item>

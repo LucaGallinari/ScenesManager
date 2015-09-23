@@ -7,9 +7,9 @@
 
 struct Frame {
 	QPixmap img;
-	qint64 num = -1;		// absolute frame number
-	qint64 time = -1;		// 
-	qint64 pts;				// decoder presentation timestamp TODO: useless?
+	qint64 num = -1;		//!< absolute frame number
+	qint64 time = -1;		//!< frame timestamp
+	qint64 pts;				//!< decoder presentation timestamp, NOT USED
 };
 
 /*!
@@ -26,16 +26,16 @@ struct Frame {
 class ImagesBuffer
 {
 
-	QVideoDecoder		_decoder;	// ffmpeg decoder
+	QVideoDecoder		_decoder;	//!< ffmpeg decoder
 
-	std::vector<Frame>	_buffer;	// Frame array
+	std::vector<Frame>	_buffer;	//!< Frame array
 	unsigned			_maxsize;
-	unsigned			_mid;		// mid element index
+	unsigned			_mid;		//!< mid element index
 
 	//	Help variables
-	int		frameMs;				// ms of a single frame
+	int		frameMs;				//!< ms of a single frame
 	qint64	numFrames;
-	qint64	videoLength;			// ms
+	qint64	videoLength;			//!< ms of the entire video
 
 	//  Helpers
 	void image2Pixmap(QImage &img, QPixmap &pixmap);
@@ -46,7 +46,6 @@ class ImagesBuffer
 		const bool addBack
 	);
 	const int isFrameLoaded(const qint64 num);
-
 
 	bool seekToFrame(const qint64 num);
 

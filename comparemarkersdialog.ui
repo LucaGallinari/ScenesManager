@@ -67,7 +67,7 @@ QLineEdit {
           </size>
          </property>
          <property name="text">
-          <string>Scenes manager markers file</string>
+          <string>ShotManager markers file</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>

@@ -34,6 +34,13 @@
 
 #include "ffmpeg.h"
 
+/*!
+*	@brief Class used to decode frames from the file video
+*
+*	This class has been extended from the original Roggen's QVideoDecoder because
+*	it didn't support many file formats and there were some bugs.
+*	This class uses ffmpeg primiteves to decode single frames from file video.
+*/
 class QVideoDecoder
 {
 	protected:
@@ -46,29 +53,29 @@ class QVideoDecoder
 		ffmpeg::AVPacket		packet;
 		ffmpeg::SwsContext		*img_convert_ctx;
 		uint8_t					*buffer;
-		int						videoStream; // index of the video stream
+		int						videoStream; //!< index of the video stream
 		int						numBytes;
 
 		// Video informations
-		QString					path; // file path
-		QString					type; // format type
-		int						w; // frame width
-		int						h; // framw height
-		qint64					duration; // video duration
-		qint64					startTs; // first real frame ts
-		qint64					firstDts; // dts of first packet, can differ from startTs
+		QString					path; //!< file path
+		QString					type; //!< format type
+		int						w; //!< frame width
+		int						h; //!< framw height
+		qint64					duration; //!< video duration
+		qint64					startTs; //!< first real frame ts
+		qint64					firstDts; //!< dts of first packet, can differ from startTs
 
-		double					baseFrameRate; // fps (theorycal)
-		double					baseFRateReal; // fps (real)
-		double					frameMSec; // ms of each frame (theorycal)
-		double					frameMSecReal; // ms of each frame (real)
-		double					timeBase; // base time reference
+		double					baseFrameRate; //!< fps (theorycal)
+		double					baseFRateReal; //!< fps (real)
+		double					frameMSec; //!< ms of each frame (theorycal)
+		double					frameMSecReal; //!< ms of each frame (real)
+		double					timeBase; //!< base time reference
 		ffmpeg::AVRational		timeBaseRat;
-		ffmpeg::AVRational		millisecondbase; // wanted base time reference
+		ffmpeg::AVRational		millisecondbase; //!< wanted base time reference
 
 		// State infos
 		bool ok;
-		bool LastFrameOk; // last frame is valid
+		bool LastFrameOk; //!< last frame is valid
 		QImage LastFrame;
 		qint64 LastFrameNumber, LastFrameTime, LastIdealFrameNumber;
 		qint64 LastLastFrameNumber, LastLastFrameTime;

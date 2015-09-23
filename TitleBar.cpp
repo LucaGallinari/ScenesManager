@@ -13,6 +13,8 @@ TitleBar::TitleBar(QWidget *parent, QWidget *mainw) : QWidget(parent)
 
 	setObjectName("titlebar");
 
+
+	//	Top right buttons/icons
 	mMinimizeButton = new QToolButton(this);
 	mMaximizeButton = new QToolButton(this);
 	mCloseButton	= new QToolButton(this);
@@ -27,14 +29,25 @@ TitleBar::TitleBar(QWidget *parent, QWidget *mainw) : QWidget(parent)
 	mMinimizeButton->setIcon(minicon);
 	mMaximizeButton->setIcon(maxicon);
 
-	mLabel = new QLabel(this);
-	mLabel->setText(mainwin->windowTitle());
-	mLabel->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+	//	Logo
+	QLabel *logo = new QLabel();
+	QPixmap p = QIcon("://logo3.png").pixmap(QSize(22, 22));
+	logo->setPixmap(p.scaled(22, 22, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+	logo->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
 
+	//	Title
+	QFont f("Arial", 12, QFont::Bold);
+	mLabel = new QLabel();
+	mLabel->setText(mainwin->windowTitle());
+	mLabel->setFont(f);
+	mLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+
+	//	Title layout
 	QHBoxLayout *hbox = new QHBoxLayout(this); 
 	hbox->setSpacing(0);
 	hbox->setMargin(0);
 
+	hbox->addWidget(logo);
 	hbox->addWidget(mLabel);
 	hbox->addWidget(mMinimizeButton);
 	hbox->addWidget(mMaximizeButton);

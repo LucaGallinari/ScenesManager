@@ -120,23 +120,31 @@ bool ImagesBuffer::seekToFrame(const qint64 num)
 
 	// no overlap if the buffer is empty
 	if (_buffer.size() != 0) {
-		qint64 dist = num - _buffer[_mid].num; // distance between old and new buffer
-		unsigned distAbs = abs(dist);
-		bool overlap = distAbs < _maxsize; // overlap between old and new buffer
 
-		if (overlap) {
-			qint64 numOverlap = _maxsize - distAbs; // num elements overlapping
-			if (dist > 0) { // seeking forward so erase first elements of the buffer
-				startFrameNumber += numOverlap; // update start frame number
-				_buffer.erase(_buffer.begin(), _buffer.begin() + distAbs);
+		// It may happen that the mid element is a non valid frame 
+		if (_buffer[_mid].num != -1) {
+
+			qint64 dist = num - _buffer[_mid].num; // distance between old and new buffer
+			unsigned distAbs = abs(dist);
+			bool overlap = distAbs < _maxsize; // overlap between old and new buffer
+
+			if (overlap) {
+				qint64 numOverlap = _maxsize - distAbs; // num elements overlapping
+				if (dist > 0) { // seeking forward so erase first elements of the buffer
+					startFrameNumber += numOverlap; // update start frame number
+					_buffer.erase(_buffer.begin(), _buffer.begin() + distAbs);
+				}
+				else {
+					_buffer.erase(_buffer.end() - distAbs, _buffer.end());
+					addBack = false;
+				}
+				numElements -= numOverlap;
 			}
-			else {
-				_buffer.erase(_buffer.end() - distAbs, _buffer.end());
-				addBack = false;
+			else { // no overlap, clear
+				_buffer.clear();
 			}
-			numElements -= numOverlap;
 		}
-		else { // no overlap, clear
+		else { // not valid mid, reset
 			_buffer.clear();
 		}
 	}
@@ -199,8 +207,11 @@ bool ImagesBuffer::fillBuffer(
 		else
 			_buffer.emplace(_buffer.begin() + i, f);
 	}
-	if (_buffer[_mid].num == -1)
+	if (_buffer[_mid].num == -1) {
 		return false;
+	}
+
+	dumpBuffer();
 	return true;
 }
 

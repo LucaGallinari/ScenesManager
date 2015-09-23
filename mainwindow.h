@@ -72,10 +72,10 @@ private:
 	int sliderPageStep;
 	int sliderMaxVal;
 
-	//	Button's icons objects
+	//	Utility
+	void checkMarkersFileNotSaved();
+	void changeMarkersFileUI(const bool state);
 	void initializeIcons();
-
-	//	Actions related
 	void showInfo();
 
 public slots:

@@ -26,9 +26,11 @@ MarkersWidget::MarkersWidget(
 {
 	_inputFile = "";
 	_markerStarted = false;
+	_inputFileModified = false;
 
 	// S&S to mainwin
 	connect(this, SIGNAL(jumpToFrame(qint64)), mainwin, SLOT(jumpToFrame(qint64)));
+	connect(this, SIGNAL(startBtnToggle(bool)), mainwin, SLOT(changeStartEndBtn(bool)));
 	connect(this, SIGNAL(startBtnToggle(bool)), mainwin, SLOT(changeStartEndBtn(bool)));
 }
 
@@ -53,20 +55,28 @@ MarkersWidget::~MarkersWidget()
 void MarkersWidget::endAndStartMarker(const qint64 endVal, const qint64 startVal)
 {
 	// already started marker present?
-	if (!_markerStarted) {
-		startMarker(startVal);
-	}
-	else {
+	if (_markerStarted) {
+
+		if (_markers[_currMarker]._start >= endVal) {
+			QMessageBox::critical(NULL, "Error", "Marker range is not valid: start must be > of end value");
+			return;
+		}
 		endMarker(endVal);
 
 		sort();
 		checkMarkersOverlaps();
-		
+		clearUIList();
+		printListToUI();
+
 		// start a new marker?
 		if (startVal != -1) {
 			startMarker(startVal);
 		}
 	}
+	else {
+		startMarker(startVal);
+	}
+
 	emit startBtnToggle(_markerStarted);
 }
 
@@ -118,12 +128,12 @@ void MarkersWidget::showContextMenu(const QPoint& globalPos)
 */
 void MarkersWidget::markerChanged(const int row, const int col, const qint64 val)
 {
+	_inputFileModified = true;
 	// 1 = end, 0 = start
 	col ? _markers[row]._end = val : _markers[row]._start = val;
 
 	sort();
 	checkMarkersOverlaps();
-
 	clearUIList();
 	printListToUI();
 }
@@ -151,6 +161,7 @@ void MarkersWidget::startMarker(const qint64 startVal)
 	_markersList->insertRow(_currMarker);
 	_markersList->setItem(_currMarker, 0, start);
 
+	_inputFileModified = true;
 	_markerStarted = true;
 }
 
@@ -169,6 +180,7 @@ void MarkersWidget::endMarker(const qint64 endVal)
 	QTableWidgetItem *end = new QTableWidgetItem(QObject::tr("%1").arg(endVal));
 	_markersList->setItem(_currMarker, 1, end);
 
+	_inputFileModified = true;
 	_markerStarted = false;
 }
 
@@ -222,6 +234,7 @@ void MarkersWidget::addMarkerToUIList(const QString startVal, const QString endV
 */
 void MarkersWidget::removeMarker(const int row)
 {
+	_inputFileModified = true;
 	// if the curr marker is "new" we have to reset variables
 	if (_currMarker == row && _markerStarted) {
 		_markerStarted = false;
@@ -250,6 +263,7 @@ void MarkersWidget::removeMarker(const int row)
 */
 QString MarkersWidget::loadFile()
 {
+
 	QString temp = _inputFile;
 	_inputFile = QFileDialog::getOpenFileName(NULL, QObject::tr("Open a markers file"), "", QObject::tr("Text files (*.txt)"));
 	if (_inputFile=="") {
@@ -309,6 +323,7 @@ QString MarkersWidget::loadFile()
 	checkMarkersOverlaps();
 
 	printListToUI();
+	_inputFileModified = false;
 	return _inputFile;
 }
 
@@ -340,6 +355,7 @@ QString MarkersWidget::saveFile()
 		file.write(QString("%1, %2\n").arg(m._start).arg(m._end).toLatin1());
 	}
 
+	_inputFileModified = false;
 	return _inputFile;
 }
 
@@ -351,6 +367,7 @@ QString MarkersWidget::saveFile()
 */
 bool MarkersWidget::newFile()
 {
+	_inputFileModified = false;
 	_inputFile = "";
 	clearListAndUI();
 
@@ -395,6 +412,10 @@ void MarkersWidget::checkMarkersOverlaps()
 			_markers[i]._overlap = false;
 		}
 	}
+	// no overlap found on the last element? reset
+	if (flag_n < len - 1) {
+		_markers[len - 1]._overlap = false;
+	}
 }
 
 /*! \brief Write all markers onto the UI list
@@ -438,7 +459,6 @@ void MarkersWidget::clearUIList()
 }
 
 
-
 /***************************************
 ************    GETTERS    *************
 ***************************************/
@@ -447,8 +467,18 @@ void MarkersWidget::clearUIList()
 *
 *	Get input file string
 *
-*	@param input file string
+*	@return input file string
 */
 QString MarkersWidget::getInputFile() {
 	return _inputFile;
+}
+
+/*! \brief Input file has been modified but not saved?
+*
+*	Input file has been modified but not saved?
+*
+*	@return yes or no
+*/
+bool MarkersWidget::fileNotSaved() {
+	return _inputFileModified;
 }

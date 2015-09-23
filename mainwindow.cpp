@@ -184,7 +184,7 @@ void MainWindow::showManual()
 	lbl->setWordWrap(true);
 	firstLine->addWidget(lbl);
 
-	lbl = new QLabel("<a href=\"https://github.com/LucaGallinari/ScenesManager\">Scenes Manager</a>");	
+	lbl = new QLabel("<a href=\"https://github.com/LucaGallinari/ScenesManager\">Shot Manager</a>");	
 	lbl->setTextFormat(Qt::RichText);
 	lbl->setTextInteractionFlags(Qt::TextBrowserInteraction);
 	lbl->setOpenExternalLinks(true);
@@ -206,7 +206,7 @@ void MainWindow::showAbout()
 {
 	QDialog *aboutDialog = new QDialog(this);
 	aboutDialog->setStyleSheet("color:#222;");
-	aboutDialog->setFixedSize(QSize(300, 200));
+	aboutDialog->setFixedSize(QSize(400, 300));
 
 	QVBoxLayout *base = new QVBoxLayout();
 
@@ -214,24 +214,33 @@ void MainWindow::showAbout()
 	firstLine->setAlignment(Qt::AlignHCenter);
 	QHBoxLayout *secondLine = new QHBoxLayout();
 	secondLine->setAlignment(Qt::AlignHCenter);
+	QHBoxLayout *thirdLine = new QHBoxLayout();
+	thirdLine->setAlignment(Qt::AlignHCenter);
 
 	QLabel *lbl = new QLabel();
-	QPixmap p = QIcon("://logo3.png").pixmap(QSize(50,50));
+	QPixmap p = QIcon(":/brands/shotmanager.png").pixmap(QSize(116,59));
 
-	lbl->setPixmap(p.scaled(50,50,Qt::KeepAspectRatio,Qt::SmoothTransformation));
+	lbl->setPixmap(p.scaled(116,59,Qt::KeepAspectRatio,Qt::SmoothTransformation));
 	firstLine->addWidget(lbl),
-	firstLine->addWidget(new QLabel("Scenes Manager"));
+
+	lbl = new QLabel();
+	p = QIcon(":/brands/unimore.png").pixmap(QSize(200, 94));
+
+	lbl->setPixmap(p.scaled(200, 94, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+	thirdLine->addWidget(lbl),
+	//firstLine->addWidget(new QLabel("Shot Manager"));
 
 	lbl = new QLabel(
-		"This application allow users to manually mark separation between scenes in video files."
+		"This application allow users to manually mark separation between shots in video files."
 		"\nRealized by:\n\t - Gallinari Luca\n\t - Stabili Dario\n\t - Ravazzini Marco"
-		"\n\n\t\t2015"
+		"\n\n\t\t\t2015"
 		);
 	lbl->setWordWrap(true);
 	secondLine->addWidget(lbl);
 
 	base->addLayout(firstLine);
 	base->addLayout(secondLine);
+	base->addLayout(thirdLine);
 	aboutDialog->setLayout(base);
 
 	aboutDialog->show();
@@ -401,18 +410,64 @@ void MainWindow::changeStartEndBtn(const bool markerStarted)
 	}
 }
 
+/*! \brief Check if markers file is saved
+*
+*	Check if markers file is saved
+*/
+void MainWindow::checkMarkersFileNotSaved()
+{
+	if (_markersWidg->fileNotSaved()) {
+		QMessageBox::StandardButton reply = QMessageBox::question(
+			NULL,
+			"Markers file not saved",
+			"Markers file has been modified but not saved. Do you want to save it before closing?",
+			QMessageBox::Yes | QMessageBox::No
+		);
+		if (reply == QMessageBox::Yes) {
+			_markersWidg->saveFile();
+			changeMarkersFileUI(false);
+		}
+	}
+}
+
+/*! \brief Change markers file UI
+*
+*	Change markers file UI
+*
+*	@param state false=saved, true=modified
+*/
+void MainWindow::changeMarkersFileUI(const bool state)
+{
+	if (state) { // modified
+		if (_markersWidg->fileNotSaved()) {
+			ui->markersSaveBtn->setText("Save *");
+			ui->markersSaveBtn->setStyleSheet("background-color:#BA2121;");
+		}
+	}
+	else { // saved
+		if (!_markersWidg->fileNotSaved()) {
+			ui->markersSaveBtn->setText("Save");
+			ui->markersSaveBtn->setStyleSheet("background-color:#0078e7;");
+			updateProgressText("Markers file saved");
+		}
+	}
+}
+
+
 /**********************************************
 ******************** ACTIONS ******************
 ***********************************************/
 void MainWindow::on_actionQuit_triggered()
 {
+	checkMarkersFileNotSaved();
 	close();
+	return;
 }
 
 void MainWindow::on_actionLoad_video_triggered()
 {
 	// Prompt a video to load
-	QString fileName = QFileDialog::getOpenFileName(this, "Load Video",QString(),"Video (*.avi *.asf *.mpg *.wmv *.mkv)");
+	QString fileName = QFileDialog::getOpenFileName(this, "Load Video",QString(),"Video (*.avi *.asf *.mpg *.wmv *.mkv *.mp4)");
 	if (!fileName.isNull())
 	{
 		ui->videoSlider->setValue(0);
@@ -567,11 +622,13 @@ void MainWindow::on_startMarkerBtn_clicked()
 	else {// start
 		_markersWidg->endAndStartMarker(-1, frameNum);
 	}
+	changeMarkersFileUI(true);
 }
 
 void MainWindow::on_endMarkerBtn_clicked()
 {
 	_markersWidg->endAndStartMarker(_playerWidg->currentFrameNumber(), -1);
+	changeMarkersFileUI(true);
 }
 
 
@@ -580,23 +637,28 @@ void MainWindow::on_markersSaveBtn_clicked()
 	QString path = _markersWidg->saveFile();
 	if (path != "") {
 		ui->markersFileText->setText(path);
+		changeMarkersFileUI(false);
 	}
 }
 
 void MainWindow::on_markersLoadBtn_clicked()
 {
+	checkMarkersFileNotSaved();
 	_currMarkerRow = -1;
 	QString path = _markersWidg->loadFile();
 	if (path != "") {
 		ui->markersFileText->setText(path);
+		changeMarkersFileUI(false);
 	}
 }
 
 void MainWindow::on_markersNewBtn_clicked()
 {
+	checkMarkersFileNotSaved();
 	_currMarkerRow = -1;
 	if (_markersWidg->newFile()) {
 		ui->markersFileText->setText("");
+		changeMarkersFileUI(false);
 	}
 	else {
 		QMessageBox::critical(NULL, "Error", "Error while clearing the list! Try reloading the application.");
@@ -619,20 +681,27 @@ void MainWindow::on_markersTableWidget_cellChanged(int row, int column)
 	if (row == _currMarkerRow) {
 		bool ok;
 		int otherCol = column ? 0 : 1;
-		int val = ui->markersTableWidget->item(row, column)->text().toUInt(&ok);
+		qint64 val = ui->markersTableWidget->item(row, column)->text().toUInt(&ok);
 		if (!ok) {
 			QMessageBox::critical(NULL,"Error","Marker not valid: expected a number");
 			ui->markersTableWidget->item(row, column)->setText("0");
 			return;
 		}
 
-		int otherVal = ui->markersTableWidget->item(row, otherCol)->text().toUInt();
-		if ((otherVal != 0) && ((otherCol==0 && otherVal>=val) || (otherCol==1 && otherVal<=val))) {
-			QMessageBox::critical(NULL, "Error", "Marker range is not valid: start must be > of end value");
-			ui->markersTableWidget->item(row, column)->setText("0");
+		qint64 otherVal = ui->markersTableWidget->item(row, otherCol)->text().toUInt();
+		if ((otherCol == 0 && otherVal >= val) || (otherCol == 1 && otherVal <= val)) {
+			// set invalid column number to otherVal-1 if column=startColumn or otherVal+1 if endColumn
+			qint64 targetVal = otherVal + (column ? +1 : -1);
+			QMessageBox::critical(
+				NULL, "Error", 
+				QString("Marker range is not valid: start must be > of end value.\nMarker value will be setted to the first valid number: %1").arg(targetVal)
+			);
+			// set
+			ui->markersTableWidget->item(row, column)->setText(QString::number(targetVal));
 			return;
 		}
 		_markersWidg->markerChanged(row, column, val);
+		changeMarkersFileUI(true);
 	}
 }
 

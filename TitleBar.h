@@ -33,7 +33,7 @@ private:
 	QWidget *mainwin;
 
 	QLabel *mLabel;
-	bool mMaxNormal; // window maximized or minimized?
+	bool mMaxNormal; //!< window maximized or minimized?
 
 	//	Window buttons
 	QToolButton *mMinimizeButton;

@@ -10,4 +10,8 @@
         <file alias="markerEndStart.png">images/icons/markerEndStart.png</file>
         <file alias="markerEnd.png">images/icons/markerEnd.png</file>
     </qresource>
+    <qresource prefix="/brands">
+        <file alias="shotmanager.png">images/brands/shotmanager.png</file>
+        <file alias="unimore.png">images/brands/unimore.png</file>
+    </qresource>
 </RCC>

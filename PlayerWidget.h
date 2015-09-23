@@ -27,10 +27,10 @@ private:
 	Frame			_actualFrame;
 
 	//	Help variables
-	bool	playState;
-	int		frameMs; // ms of a single frame
+	bool	playState;		//!< playing or paused
+	int		frameMs;		//!< ms of a single frame
 	qint64	numFrames;
-	qint64	videoLength; // ms
+	qint64	videoLength;	//!< ms of the entire video
 
 	void	displayFrame();
 

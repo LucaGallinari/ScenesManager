@@ -47,25 +47,25 @@ private:
 	Ui::CompareMarkersDialog *ui;
 	QString fileName, fileName2;
 
-	//StringList to keep out text lin of markers files
+	//	StringList to keep out text lin of markers files
 	QStringList *list1;
 	QStringList *list2;
 
-	//TextEdit where put comparation of markers
+	//	TextEdit where put comparation of markers
 	QTextEdit *f1;
 	QTextEdit *f2;
 
-	//List of colors for background text, text and bold format
+	//	List of colors for background text, text and bold format
 	QList<QColor> *ColList;
 	QTextCharFormat *textFormat;
 	QTextCharFormat *boldFormat;
 
-	void copyTxt(QString, bool);
+	bool copyTxt(QString, bool);
 	void compare_differentF(QTextCursor, QTextCursor);
 
 	void setBckCol();
 
-	//List for splitting
+	//	List for splitting
 	QString splitList(QString, int);
 
 	void fillCol();
@@ -75,6 +75,7 @@ private:
 	void c1_Twrite(QTextCursor c1, char);
 	void c2_Bwrite(QTextCursor c2, char);
 	void c2_Twrite(QTextCursor c2, char);
+
 
 };
 
