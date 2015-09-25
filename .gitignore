@@ -73,6 +73,6 @@ TestResult.xml
 #*.lib
 
 # Executables
-*.exe
+# *.exe
 *.out
 *.app
