@@ -1,4 +1,4 @@
-# ScenesManager
+# ShotManager
 C++ project for a university course that provides a simple and intuitive interface to mark scenes separation inside a video.
 
 ### MARKERS

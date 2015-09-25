@@ -2,6 +2,11 @@
 # Custom
 /build-ScenesManager-Desktop_Qt_5_4_1_MSVC2013_64bit-Debug/
 /GeneratedFiles/
+/doxygen/
+*.rc
+*.sln
+*.vcxproj
+*.filters
 
 # User-specific files
 *.suo

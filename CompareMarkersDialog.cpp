@@ -140,7 +140,7 @@ bool CompareMarkersDialog::copyTxt(QString fileName, bool whichFile){
 			QString line = in.readLine();
 			temp_l.append(line);
 
-			QStringList vals = line.split(", ");
+			QStringList vals = line.split(" ");
 			// first check length
 			if (vals.length() != 2) {
 				QMessageBox::critical(
@@ -478,7 +478,7 @@ QString CompareMarkersDialog::splitList(QString temp_s, int temp_index){
 	//Function to separate text by ", "
 
 	QStringList temp_l;
-	temp_l = temp_s.split(", ");
+	temp_l = temp_s.split(" ");
 	return temp_l.value(temp_index);
 }
 

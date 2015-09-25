@@ -288,7 +288,6 @@ QString MarkersWidget::loadFile()
 		QString line = QString(file.readLine());
 		if (line != "") { // avoid last empty line of the stream
 			line.truncate(line.length() - 1); // remove '\n'
-			line.replace(",", "");
 			QStringList list = line.split(" ");
 
 			// check errors
@@ -352,7 +351,7 @@ QString MarkersWidget::saveFile()
 
 	// write line x line
 	for (auto m : _markers) {
-		file.write(QString("%1, %2\n").arg(m._start).arg(m._end).toLatin1());
+		file.write(QString("%1 %2\n").arg(m._start).arg(m._end).toLatin1());
 	}
 
 	_inputFileModified = false;
