@@ -26,6 +26,7 @@
   <property name="styleSheet">
    <string notr="true">* {
 font-family: Verdana,Geneva,sans-serif; 
+font-size:10pt;
 }
 
 QDialog, QMessageBox {
@@ -242,7 +243,7 @@ QTableWidget QTableCornerButton::section {
       <property name="minimumSize">
        <size>
         <width>0</width>
-        <height>50</height>
+        <height>52</height>
        </size>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -360,7 +361,7 @@ QTableWidget QTableCornerButton::section {
                </sizepolicy>
               </property>
               <property name="text">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;img src=&quot;:/brands/shotmanager.png&quot;/&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;br/&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;- You can open a video file (*.avi *.asf *.mpg *.wmv *.mkv *.mp4) using the &lt;/span&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;shortcut &amp;quot;Ctrl+L&amp;quot; or opening the &amp;quot;Video&amp;quot; menu at the top of this window.&lt;/span&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;br/&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;- You can open a markers file using the &amp;quot;Choose&amp;quot; button located in the &lt;/span&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;right column.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string/>
               </property>
               <property name="textFormat">
                <enum>Qt::RichText</enum>

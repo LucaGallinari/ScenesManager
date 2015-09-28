@@ -71,5 +71,5 @@ MenuBar::MenuBar(QWidget *parent) : QMenuBar(parent)
 	addMenu(menuVideo);
 	addMenu(menuMarkers);
 	addMenu(menuHelp);
-	setMaximumHeight(25);
+    setMaximumHeight(28);
 }

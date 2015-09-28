@@ -103,7 +103,7 @@ void CompareMarkersDialog::on_compareBtn_clicked()
 */
 void CompareMarkersDialog::on_smFileBtn_clicked()
 {
-	fileName = QFileDialog::getOpenFileName(NULL, QObject::tr("Choose the Shot Manager markers file"), "", QObject::tr("Text files (*.txt)"));
+    fileName = QFileDialog::getOpenFileName(NULL, QObject::tr("Choose the Shot Manager markers file"), "", QObject::tr("Text files (*)"));
 	ui->smFileText->setText(fileName);
 
 }
@@ -114,7 +114,7 @@ void CompareMarkersDialog::on_smFileBtn_clicked()
 */
 void CompareMarkersDialog::on_extFileBtn_clicked()
 {
-	fileName2 = QFileDialog::getOpenFileName(NULL, QObject::tr("Choose your markers file"), "", QObject::tr("Text files (*.txt)"));
+    fileName2 = QFileDialog::getOpenFileName(NULL, QObject::tr("Choose your markers file"), "", QObject::tr("Text files (*)"));
 	ui->extFileText->setText(fileName2);
 
 }

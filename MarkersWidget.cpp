@@ -265,7 +265,7 @@ QString MarkersWidget::loadFile()
 {
 
 	QString temp = _inputFile;
-	_inputFile = QFileDialog::getOpenFileName(NULL, QObject::tr("Open a markers file"), "", QObject::tr("Text files (*.txt)"));
+    _inputFile = QFileDialog::getOpenFileName(NULL, QObject::tr("Open a markers file"), "", QObject::tr("Text Files (*)"));
 	if (_inputFile=="") {
 		_inputFile = temp;
 		return "";
