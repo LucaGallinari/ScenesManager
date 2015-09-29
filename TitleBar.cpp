@@ -59,6 +59,7 @@ TitleBar::TitleBar(QWidget *parent, QWidget *mainw) : QWidget(parent)
 	connect(mCloseButton, SIGNAL(clicked()), mainwin, SLOT(close()));
 	connect(mMinimizeButton, SIGNAL(clicked()), this, SLOT(showSmall()));
 	connect(mMaximizeButton, SIGNAL(clicked()), this, SLOT(showMaxRestore()));
+    setMaximumHeight(24);
 }
 
 /*!

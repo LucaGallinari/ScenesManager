@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 {
 	 QApplication a(argc, argv);
 	 MainWindow w;
-	 w.setWindowFlags(Qt::Widget | Qt::FramelessWindowHint | Qt::X11BypassWindowManagerHint);
+     w.setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);// | Qt::X11BypassWindowManagerHint);
 	 w.show();
 	 return a.exec();
 }
