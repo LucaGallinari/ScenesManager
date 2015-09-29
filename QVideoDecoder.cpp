@@ -291,9 +291,6 @@ bool QVideoDecoder::decodeSeekFrame (const qint64 idealFrameNumber)
 					t = ffmpeg::av_rescale_q(packet.dts, timeBaseRat, millisecondbase);
 				}
 
-				qDebug() << "real num: " << f;
-				qDebug() << "real time: " << t;
-
 				if (LastFrameOk) {
 					// If we decoded 2 frames in a row, the last times are okay
 					LastLastFrameTime = LastFrameTime;
@@ -310,9 +307,6 @@ bool QVideoDecoder::decodeSeekFrame (const qint64 idealFrameNumber)
 				// this is the desired frame or at least one just after it
 				if (idealFrameNumber == -1 || LastFrameNumber >= idealFrameNumber)
 				{
-					qDebug() << "fake num: " << idealFrameNumber;
-					qDebug() << "dts: " << packet.dts << endl;
-					
 					// Convert and save the frame
 					img_convert_ctx = ffmpeg::sws_getCachedContext(
 						img_convert_ctx, w, h, 
@@ -512,9 +506,7 @@ bool QVideoDecoder::correctSeekToKeyFrame(const qint64 idealFrameNumber)
 						t = av_frame_get_best_effort_timestamp(pFrame);
 
 						// if i am after the desired frame, have to reseek
-						if (t > desiredDts) {
-							qDebug() << "Sono oltre, vorrei " << targetDts << " ma sono a " << t;
-							qDebug() << "Vado indietro di 3s da: " << targetDts;
+                        if (t > desiredDts) {
 							targetDts -= 3000; // TODO: a better value?
 							if (targetDts < 0)
 								targetDts = 0;
@@ -522,8 +514,7 @@ bool QVideoDecoder::correctSeekToKeyFrame(const qint64 idealFrameNumber)
 							avcodec_flush_buffers(pCodecCtx);
 						}
 						else { // i am before, seek done
-							done = true;
-							qDebug() << "Ho trovato il seek giusto: " << targetDts;
+                            done = true;
 							av_seek_frame(pFormatCtx, videoStream, targetDts, AVSEEK_FLAG_BACKWARD);
 							avcodec_flush_buffers(pCodecCtx);
 						}
@@ -543,7 +534,7 @@ bool QVideoDecoder::correctSeekToKeyFrame(const qint64 idealFrameNumber)
 	
 	if (ffmpeg::avformat_seek_file(pFormatCtx, videoStream, startDts, desiredDts, INT64_MAX, flag) < 0) {
 		return false;
-		// qDebug() << "!!!SEEK ERROR!!!";
+        // qDebug() << "!!!SEEK ERROR!!!"
 	}
 	return true;
 }

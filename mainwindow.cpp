@@ -669,6 +669,9 @@ void MainWindow::on_markersNewBtn_clicked()
 void MainWindow::on_markersTableWidget_customContextMenuRequested(const QPoint &pos)
 {
 	_markersWidg->showContextMenu(ui->markersTableWidget->mapToGlobal(pos));
+	if (_markersWidg->fileNotSaved()) {
+		changeMarkersFileUI(true);
+	}
 }
 
 void MainWindow::on_markersTableWidget_cellChanged(int row, int column)

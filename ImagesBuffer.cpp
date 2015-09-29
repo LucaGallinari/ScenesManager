@@ -211,7 +211,7 @@ bool ImagesBuffer::fillBuffer(
 		return false;
 	}
 
-	dumpBuffer();
+    // dumpBuffer();
 	return true;
 }
 
