@@ -1,7 +1,7 @@
 /*
    ShotManager (2015 x64)
 		Luca Gallinari
-		Datio Stabili
+		Dario Stabili
 		Marco Ravazzini
 
 	C++ project for a university course that provides a simple and intuitive 
