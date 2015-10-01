@@ -69,6 +69,8 @@ class QVideoDecoder
 		double					baseFRateReal; //!< fps (real)
 		double					frameMSec; //!< ms of each frame (theorycal)
 		double					frameMSecReal; //!< ms of each frame (real)
+		double					frameDuration; //!< real packet duration MKV ONLY
+		double					chooseMSec; //!< 
 		double					timeBase; //!< base time reference
 		ffmpeg::AVRational		timeBaseRat;
 		ffmpeg::AVRational		millisecondbase; //!< wanted base time reference
@@ -83,6 +85,7 @@ class QVideoDecoder
 		// Initialization functions
 		virtual void initCodec();
 		virtual void InitVars();
+		bool getFirstPacketInformation();
 
 		// Seek
 		virtual bool decodeSeekFrame(const qint64 idealFrameNumber);

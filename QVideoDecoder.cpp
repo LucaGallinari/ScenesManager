@@ -98,8 +98,8 @@ void QVideoDecoder::InitVars()
 */
 void QVideoDecoder::close()
 {
-	if(!ok)
-		return;
+	/*if(!ok)
+		return;*/
 
 	// Free the RGB image
 	if(buffer)
@@ -209,27 +209,94 @@ bool QVideoDecoder::openFile(const QString filename)
 			(double)(pFormatCtx->streams[videoStream]->codec->time_base.den /
 			(double)pFormatCtx->streams[videoStream]->codec->time_base.num)*
 			pCodecCtx->ticks_per_frame;
+
+		if (!getFirstPacketInformation()) {
+			return false;
+		}
+
+		/*	THIS IS BAD CODING but
+		*   this is the only way that i found so far to retrieve the ms of a single frame
+		*	in mkv video file. One of frameMsec and frameMsecReal is used as a single frame
+		*	duration but i didn't find any solution, except this, to find which is correct.
+		*	The problem is that some MKV files use frameMsec as base frame duration and
+		*	some MKV use frameMsecReal as frame duration.
+		*/
+		if (frameDuration == floor(frameMSec)) {
+			chooseMSec = frameMSec;
+		}
+		else {
+			chooseMSec = frameMSecReal;
+		}
 	}
 	else {
 		frameMSecReal = frameMSec;
+		firstDts = pFormatCtx->streams[videoStream]->first_dts;
+		if (firstDts == AV_NOPTS_VALUE)
+			firstDts = 0;
+		startTs = pFormatCtx->streams[videoStream]->start_time;
+		if (startTs == AV_NOPTS_VALUE)
+			startTs = 0;
 	}
 	baseFRateReal	= 1000 / (double) frameMSecReal;
 	timeBaseRat		= pFormatCtx->streams[videoStream]->time_base;
 	timeBase		= av_q2d(timeBaseRat);
 	w				= pCodecCtx->width;
 	h				= pCodecCtx->height;
-	
-	firstDts = pFormatCtx->streams[videoStream]->first_dts;
-	if (firstDts == AV_NOPTS_VALUE) 
-		firstDts = 0;
-	startTs = pFormatCtx->streams[videoStream]->start_time;
-	if (startTs == AV_NOPTS_VALUE)
-		firstDts = 0;
 
 	ok = true;
-
 	dumpFormat(0);
 
+	return true;
+}
+
+
+/*! \brief Try to retrieve usefull inforamtion from the first packet
+*
+*   This is the only way that i found so far to retrieve the ms of a single frame
+*	in mkv video file. One of frameMsec and frameMsecReal is used as a single frame
+*	duration but i could not find any solution, except this, to find which is correct.
+*	And 
+*	@return true on success, false when the file is not supported
+*/
+bool QVideoDecoder::getFirstPacketInformation()
+{
+	bool done = false;
+	while (!done) {
+
+		// Read a frame
+		if (av_read_frame(pFormatCtx, &packet)<0)
+			return false;	// end of stream? impossible     
+
+		// Packet of the video stream?
+		if (packet.stream_index == videoStream) {
+
+			int frameFinished;
+			avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished, &packet);
+
+			// Frame is completely decoded?
+			if (frameFinished) {
+
+				frameDuration = packet.duration;
+				firstDts = packet.dts;
+				startTs = packet.dts;
+				done = true;
+
+				if (pFormatCtx->streams[videoStream]->first_dts == AV_NOPTS_VALUE) {
+					/*	TODO: I could not find any solution when the firstDts value is not valid.
+					*	If you try to seek to 0 it will fail. Maybe in future ffmpeg version
+					*	this will be resolved.
+					*/
+					return false;
+				}
+			}  // frameFinished
+		}  // stream_index==videoStream
+
+		av_free_packet(&packet);
+	}
+	if (av_seek_frame(pFormatCtx, videoStream, 0, AVSEEK_FLAG_BACKWARD) < 0) {
+		return false;
+	}
+	avcodec_flush_buffers(pCodecCtx);
 	return true;
 }
 
@@ -283,13 +350,20 @@ bool QVideoDecoder::decodeSeekFrame (const qint64 idealFrameNumber)
 					t = ffmpeg::av_rescale_q(packet.dts + firstDts, timeBaseRat, millisecondbase);
 				}
 				else if (type == "matroska,webm") {
-					t = av_frame_get_best_effort_timestamp(pFrame);
+					// t = av_frame_get_best_effort_timestamp(pFrame);
+					// f = round(t / frameMSec);
+					t = ffmpeg::av_rescale_q(packet.dts - firstDts, timeBaseRat, millisecondbase);
 					f = round(t / frameMSec);
 				}
 				else { // avi
 					f = packet.dts;
 					t = ffmpeg::av_rescale_q(packet.dts, timeBaseRat, millisecondbase);
 				}
+				qDebug() << "id:" << idealFrameNumber;
+				qDebug() << "f:" << f;
+				qDebug() << "t:" << t;
+				qDebug() << "dur:" << packet.duration;
+				qDebug() << "dts:" << packet.dts << endl;
 
 				if (LastFrameOk) {
 					// If we decoded 2 frames in a row, the last times are okay
@@ -456,73 +530,40 @@ bool QVideoDecoder::correctSeekToKeyFrame(const qint64 idealFrameNumber)
 		flag = AVSEEK_FLAG_BACKWARD;
 	}
 	else if (type == "matroska,webm") { // .mkv
+		bool reset = false; // used to avoid deadlock situation into the "while"
+
 		// this prediction is not perfect but it gives a good start point close 
 		// to the desired frame number
-		// this is a known ffmpeg bug where av_seek_frame will seek to the NEXT
-		// key frame of a given frame and not to the PREVIOUS.
-		qint64 targetDts = idealFrameNumber *
-			(pFormatCtx->streams[videoStream]->time_base.den /
-			pFormatCtx->streams[videoStream]->time_base.num) /
-			(pFormatCtx->streams[videoStream]->codec->time_base.den /
-			pFormatCtx->streams[videoStream]->codec->time_base.num)*
-			pCodecCtx->ticks_per_frame;
-
-		desiredDts = round(idealFrameNumber * frameMSec);
-
-		av_seek_frame(pFormatCtx, videoStream, targetDts, AVSEEK_FLAG_FRAME);
+		// while targetDts is based on the packets DTS, desiredDts is based on 
+		// the wanted DTS
+		qint64 targetDts = idealFrameNumber * chooseMSec; 
+		if (av_seek_frame(pFormatCtx, videoStream, targetDts, AVSEEK_FLAG_BACKWARD) < 0) {
+			return false;
+		}
 		avcodec_flush_buffers(pCodecCtx);
+		qint64 currDts = pFormatCtx->streams[videoStream]->cur_dts;
 		
-		bool done = false;
-		bool firstEOF = true;
-		qint64 t;
+		while (currDts > targetDts) {
 
-		while (!done) {
-
-			// Read a frame
-			if (av_read_frame(pFormatCtx, &packet) < 0) {
-				// first end of stream? try to seek backward
-				if (firstEOF) {
-					firstEOF = false;
-
-					targetDts -= 3000; // TODO: a better value?
-					if (targetDts < 0)
-						targetDts = 0;
-					av_seek_frame(pFormatCtx, videoStream, targetDts, AVSEEK_FLAG_BACKWARD);
-					avcodec_flush_buffers(pCodecCtx);
-
+			// if i am after the desired frame, have to reseek
+			targetDts -= (60 * chooseMSec); // go back of 60frames. TODO: a better value?
+			qDebug() << "back";
+			if (targetDts < 0) {
+				if (reset) {//already resetted before this? Possible deadlock!
+					return true; // false?
 				}
-				else { // another end of stream? frame not found
-					return false;
-				}
-
-			} else {
-
-				if (packet.stream_index == videoStream) {
-
-					int frameFinished;
-					avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished, &packet);
-
-					if (frameFinished) {
-						t = av_frame_get_best_effort_timestamp(pFrame);
-
-						// if i am after the desired frame, have to reseek
-                        if (t > desiredDts) {
-							targetDts -= 3000; // TODO: a better value?
-							if (targetDts < 0)
-								targetDts = 0;
-							av_seek_frame(pFormatCtx, videoStream, targetDts, AVSEEK_FLAG_BACKWARD);
-							avcodec_flush_buffers(pCodecCtx);
-						}
-						else { // i am before, seek done
-                            done = true;
-							av_seek_frame(pFormatCtx, videoStream, targetDts, AVSEEK_FLAG_BACKWARD);
-							avcodec_flush_buffers(pCodecCtx);
-						}
-					}
-				}
+				targetDts = 0;
+				reset = true;
+			}
+			else {
+				reset = false;
 			}
 
-			av_free_packet(&packet);
+			if (av_seek_frame(pFormatCtx, videoStream, targetDts, AVSEEK_FLAG_BYTE) < 0) {
+				return false;
+			}
+			avcodec_flush_buffers(pCodecCtx);
+			currDts = pFormatCtx->streams[videoStream]->cur_dts;
 		}
 		return true;
 	}
@@ -534,7 +575,7 @@ bool QVideoDecoder::correctSeekToKeyFrame(const qint64 idealFrameNumber)
 	
 	if (ffmpeg::avformat_seek_file(pFormatCtx, videoStream, startDts, desiredDts, INT64_MAX, flag) < 0) {
 		return false;
-        // qDebug() << "!!!SEEK ERROR!!!"
+		// qDebug() << "!!!SEEK ERROR!!!"
 	}
 	return true;
 }
@@ -852,13 +893,13 @@ void QVideoDecoder::dumpFormat(const int is_output)
 
 	// General infos
 	if (!is_output) {
-		qDebug() << "" << (baseFrameRate*timeBase);
 		qDebug() << "Time Base: " << timeBase;
 		qDebug() << "Start: " << startTs;
 		qDebug() << "First Dts: " << firstDts;
 		qDebug() << "FPS: " << baseFrameRate;
 		qDebug() << "Frame ms: " << frameMSec;
-		qDebug() << "special ms: " << frameMSecReal;
+		qDebug() << "Special ms: " << frameMSecReal;
+		qDebug() << "Frame duration ms: " << frameDuration;
 		qDebug() << "Frame w: " << w;
 		qDebug() << "Frame h: " << h;
 		qDebug() << "Number of frames: " << getNumFrames();
