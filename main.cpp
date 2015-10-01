@@ -1,12 +1,14 @@
 /*
-   QTFFmpegWrapper Demo (2015 x64)
+   ShotManager (2015 x64)
 		Luca Gallinari
+		Datio Stabili
+		Marco Ravazzini
 
-	This wrapper is a porting of the QTFFmpegWrapper made by Daniel Roggen.
-	Changes:
-		FFmpeg git-a254452 2011-09-19	->	FFmpeg git-0671dc5 2015-07-22
-		32 bit FFmpeg libs				->	64 bit FFmpeg libs
-		Internal console for debugging	->	qDebug() for debugging
+	C++ project for a university course that provides a simple and intuitive 
+	interface to mark shots separation inside a video.
+	You can find all the documentation you need in the github repository:
+	https://github.com/LucaGallinari/ShotManager
+
 */
 
 #include <QtWidgets/QApplication>
@@ -16,7 +18,7 @@ int main(int argc, char *argv[])
 {
 	 QApplication a(argc, argv);
 	 MainWindow w;
-     w.setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);// | Qt::X11BypassWindowManagerHint);
+	 w.setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);// | Qt::X11BypassWindowManagerHint);
 	 w.show();
 	 return a.exec();
 }

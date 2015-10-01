@@ -1,18 +1,34 @@
 /*
-   QTFFmpegWrapper Demo
-   Copyright (C) 2009,2010:
-		 Daniel Roggen, droggen@gmail.com
 
-   All rights reserved.
+   ShotManager (2015 x64)
+		Luca Gallinari
+		Datio Stabili
+		Marco Ravazzini
+
+	IMPORTANT:
+	This wrapper is a porting of the QTFFmpegWrapper made by Daniel Roggen.
+	Changes:
+		FFmpeg git-a254452 2011-09-19	->	FFmpeg git-0671dc5 2015-07-22
+		32 bit FFmpeg libs				->	64 bit FFmpeg libs
+		Internal console for debugging	->	qDebug() for debugging
+
+	We made a lot of changes and now it supports many formats and it works better.
+
+	--------------------------------------------------------------------------------
+   
+	QTFFmpegWrapper
+	Copyright (C) 2009,2010:
+		Daniel Roggen, droggen@gmail.com
+	All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without modification, 
 	are permitted provided that the following conditions are met:
 
-   1.	Redistributions of source code must retain the above copyright notice, this 
-		list of conditions and the following disclaimer.
-   2.	Redistributions in binary form must reproduce the above copyright notice, 
-		this list of conditions and the following disclaimer in the documentation 
-		and/or other materials provided with the distribution.
+		1.	Redistributions of source code must retain the above copyright notice, this 
+			list of conditions and the following disclaimer.
+		2.	Redistributions in binary form must reproduce the above copyright notice, 
+			this list of conditions and the following disclaimer in the documentation 
+			and/or other materials provided with the distribution.
 
 	THIS SOFTWARE IS PROVIDED BY COPYRIGHT HOLDERS ``AS IS'' AND ANY EXPRESS OR IMPLIED 
 	WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
